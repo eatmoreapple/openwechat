@@ -13,5 +13,8 @@ func (m MessageHandlerGroup) ProcessMessage(message *Message) {
 }
 
 func (m *MessageHandlerGroup) RegisterHandler(handler MessageHandler) {
+	if m.handlers == nil {
+		m.handlers = make([]MessageHandler, 0)
+	}
 	m.handlers = append(m.handlers, handler)
 }

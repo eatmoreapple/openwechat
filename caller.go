@@ -196,10 +196,6 @@ func (c *Caller) WebWxSendImageMsg(file *os.File, request BaseRequest, info Logi
 	return parseBaseResponseError(resp)
 }
 
-//func (c *Caller) WebWxBatchGetContact()  {
-//
-//}
-
 func parseBaseResponseError(resp *ReturnResponse) error {
 	if resp.Err() != nil {
 		return resp.Err()

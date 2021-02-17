@@ -23,7 +23,7 @@ type BaseResponse struct {
 }
 
 func (b BaseResponse) Ok() bool {
-	returnRet == 0
+	return b.Ret == 0
 }
 
 func (b BaseResponse) Error() string {

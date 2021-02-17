@@ -157,6 +157,9 @@ func (b *Bot) prepare() {
 }
 
 func (b *Bot) RegisterMessageHandler(handler MessageHandler) {
+	if b.messageHandlerGroups == nil {
+		b.messageHandlerGroups = &MessageHandlerGroup{}
+	}
 	b.messageHandlerGroups.RegisterHandler(handler)
 }
 
