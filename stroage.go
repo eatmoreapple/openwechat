@@ -1,5 +1,7 @@
 package openwechat
 
+// WechatStorage
+// 可以根据自己的情况来实现该接口
 type WechatStorage interface {
 	SetLoginInfo(loginInfo LoginInfo)
 	SetBaseRequest(baseRequest BaseRequest)
@@ -10,6 +12,7 @@ type WechatStorage interface {
 }
 
 // implement WechatStorage
+// WechatStorage接口的实现
 type SimpleWechatStorage struct {
 	loginInfo       LoginInfo
 	baseRequest     BaseRequest

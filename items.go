@@ -26,6 +26,7 @@ func (b BaseResponse) Ok() bool {
 	return b.Ret == 0
 }
 
+// 实现error接口
 func (b BaseResponse) Error() string {
 	switch b.Ret {
 	case 0:

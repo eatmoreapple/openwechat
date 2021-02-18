@@ -33,12 +33,14 @@ const (
 	jsonContentType = "application/json; charset=utf-8"
 )
 
+// 消息类型
 const (
 	TextMessage  = 1
 	ImageMessage = 3
 	AppMessage   = 6
 )
 
+// 登录状态
 const (
 	statusSuccess = "200"
 	statusScanned = "201"

@@ -17,6 +17,7 @@ type Bot struct {
 	exit                 chan bool
 }
 
+// 判断当前用户是否正常在线
 func (b *Bot) Alive() bool {
 	if b.self == nil {
 		return false
@@ -29,6 +30,7 @@ func (b *Bot) Alive() bool {
 	}
 }
 
+// 获取当前的用户
 func (b *Bot) GetCurrentUser() (*Self, error) {
 	if b.self == nil {
 		return nil, errors.New("user not login")
@@ -36,6 +38,8 @@ func (b *Bot) GetCurrentUser() (*Self, error) {
 	return b.self, nil
 }
 
+// 用户登录
+// 该方法会一直阻塞，直到用户扫码登录，或者二维码过期
 func (b *Bot) Login() error {
 	b.prepare()
 	uuid, err := b.Caller.GetLoginUUID()
@@ -65,17 +69,22 @@ func (b *Bot) Login() error {
 	}
 }
 
+// 登录逻辑
 func (b *Bot) login(data []byte) error {
+	// 判断是否有登录回调，如果有执行它
 	if b.LoginCallBack != nil {
 		b.LoginCallBack(data)
 	}
+	// 获取登录的一些基本的信息
 	info, err := b.Caller.GetLoginInfo(data)
 	if err != nil {
 		return err
 	}
 
+	// 将LoginInfo存到storage里面
 	b.storage.SetLoginInfo(*info)
 
+	// 构建BaseRequest
 	request := BaseRequest{
 		Uin:      info.WxUin,
 		Sid:      info.WxSid,
@@ -83,23 +92,30 @@ func (b *Bot) login(data []byte) error {
 		DeviceID: GetRandomDeviceId(),
 	}
 
+	// 将BaseRequest存到storage里面方便后续调用
 	b.storage.SetBaseRequest(request)
+	// 获取初始化的用户信息和一些必要的参数
 	resp, err := b.Caller.WebInit(request)
 	if err != nil {
 		return err
 	}
+	// 设置当前的用户
 	b.self = &Self{Bot: b, User: &resp.User}
 	b.storage.SetWebInitResponse(*resp)
 
+	// 通知手机客户端已经登录
 	if err = b.Caller.WebWxStatusNotify(request, *resp, *info); err != nil {
 		return err
 	}
+	// 开启协程，轮训获取是否有新的消息返回
 	go func() {
 		b.stopAsyncCALL(b.asyncCall())
 	}()
 	return nil
 }
 
+// 轮训请求
+// 根据状态码判断是否有新的请求
 func (b *Bot) asyncCall() error {
 	var (
 		err  error
@@ -112,9 +128,11 @@ func (b *Bot) asyncCall() error {
 		if err != nil {
 			return err
 		}
+		// 如果不是正常的状态码返回，发生了错误，直接退出
 		if !resp.Success() {
 			return fmt.Errorf("unknow code got %s", resp.RetCode)
 		}
+		// 如果Selector不为0，则获取消息
 		if !resp.NorMal() {
 			if err = b.getMessage(); err != nil {
 				return err
@@ -130,6 +148,8 @@ func (b *Bot) stopAsyncCALL(err error) {
 		b.err = err
 	}
 }
+
+// 获取新的消息
 func (b *Bot) getMessage() error {
 	info := b.storage.GetLoginInfo()
 	response := b.storage.GetWebInitResponse()
@@ -138,10 +158,14 @@ func (b *Bot) getMessage() error {
 	if err != nil {
 		return err
 	}
+	// 更新SyncKey并且重新存入storage
 	response.SyncKey = resp.SyncKey
 	b.storage.SetWebInitResponse(response)
+	// 遍历所有的新的消息，依次处理
 	for _, message := range resp.AddMsgList {
+		// 根据不同的消息类型来进行处理，方便后续统一调用
 		processMessage(message, b)
+		// 调用自定义的处理方法
 		b.messageHandlerGroups.ProcessMessage(message)
 	}
 	return nil

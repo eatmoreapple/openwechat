@@ -43,6 +43,7 @@ type Message struct {
 	senderInGroupUserName string
 }
 
+// 获取消息的发送者
 func (m *Message) Sender() (*User, error) {
 	members, err := m.Bot.self.Members(true)
 	if err != nil {
@@ -59,6 +60,7 @@ func (m *Message) Sender() (*User, error) {
 	return nil, errors.New("no such user found")
 }
 
+// 获取消息在群里面的发送者
 func (m *Message) SenderInGroup() (*User, error) {
 	if !m.IsSendByGroup() {
 		return nil, errors.New("message is not from group")
@@ -79,19 +81,22 @@ func (m *Message) SenderInGroup() (*User, error) {
 	return nil, errors.New("no such user found")
 }
 
-//
+// 判断消息是否由自己发送
 func (m *Message) IsSendBySelf() bool {
 	return m.FromUserName == m.Bot.self.User.UserName
 }
 
+// 判断消息是否由好友发送
 func (m *Message) IsSendByFriend() bool {
 	return !m.IsSendByGroup() && strings.HasPrefix(m.FromUserName, "@")
 }
 
+// 判断消息是否由群组发送
 func (m *Message) IsSendByGroup() bool {
 	return strings.HasPrefix(m.FromUserName, "@@")
 }
 
+// 回复消息
 func (m *Message) Reply(msgType int, content, mediaId string) error {
 	msg := NewSendMessage(msgType, content, m.Bot.self.User.UserName, m.FromUserName, mediaId)
 	info := m.Bot.storage.GetLoginInfo()
@@ -99,10 +104,12 @@ func (m *Message) Reply(msgType int, content, mediaId string) error {
 	return m.Bot.Caller.WebWxSendMsg(msg, info, request)
 }
 
+// 回复文本消息
 func (m *Message) ReplyText(content string) error {
 	return m.Reply(TextMessage, content, "")
 }
 
+// 回复图片消息
 func (m *Message) ReplyImage(file *os.File) error {
 	info := m.Bot.storage.GetLoginInfo()
 	request := m.Bot.storage.GetBaseRequest()
