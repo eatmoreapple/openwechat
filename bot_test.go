@@ -6,10 +6,10 @@ import (
 )
 
 func TestDefaultBot(t *testing.T) {
+	bot := DefaultBot()
 	messageHandler := func(message *Message) {
 		fmt.Println(message)
 	}
-	bot := DefaultBot()
 	bot.RegisterMessageHandler(messageHandler)
 	bot.UUIDCallback = PrintlnQrcodeUrl
 	if err := bot.Login(); err != nil {
