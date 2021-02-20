@@ -2,6 +2,11 @@ package openwechat
 
 import "fmt"
 
+/*
+一些网络返回信息的封装
+*/
+
+// 登录信息
 type LoginInfo struct {
 	Ret         int    `xml:"ret"`
 	Message     string `xml:"message"`
@@ -12,11 +17,14 @@ type LoginInfo struct {
 	IsGrayScale int    `xml:"isgrayscale"`
 }
 
+// 初始的请求信息
+// 几乎所有的请求都要携带该参数
 type BaseRequest struct {
 	Uin                 int
 	Sid, Skey, DeviceID string
 }
 
+// 大部分返回对象都携带该信息
 type BaseResponse struct {
 	ErrMsg string
 	Ret    int
@@ -58,6 +66,7 @@ type SyncKey struct {
 	List  []struct{ Key, Val int64 }
 }
 
+// 初始化的相应信息
 type WebInitResponse struct {
 	BaseResponse        BaseResponse
 	Count               int
@@ -75,6 +84,7 @@ type WebInitResponse struct {
 	ContactList         []User
 }
 
+// 公众号的订阅信息
 type MPSubscribeMsg struct {
 	UserName       string
 	Time           int64

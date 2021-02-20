@@ -156,13 +156,14 @@ func (m *Message) IsSystem() bool {
 	return m.MsgType == 10000
 }
 
-//func (m Message) Agree() error {
+//func (m *Message) Agree() error {
 //	if !m.IsFriendAdd() {
 //		return fmt.Errorf("the excepted message type is 37, but got %d", m.MsgType)
 //	}
 //	m.ClientManager.Client.WebWxVerifyUser(m.ClientManager.storage, m.RecommendInfo, "")
 //}
 
+// 发送消息的结构体
 type SendMessage struct {
 	Type         int
 	Content      string
@@ -173,6 +174,7 @@ type SendMessage struct {
 	MediaId      string
 }
 
+// SendMessage的构造方法
 func NewSendMessage(msgType int, content, fromUserName, toUserName, mediaId string) *SendMessage {
 	return &SendMessage{
 		Type:         msgType,
@@ -185,14 +187,17 @@ func NewSendMessage(msgType int, content, fromUserName, toUserName, mediaId stri
 	}
 }
 
+// 文本消息的构造方法
 func NewTextSendMessage(content, fromUserName, toUserName string) *SendMessage {
 	return NewSendMessage(TextMessage, content, fromUserName, toUserName, "")
 }
 
+// 媒体消息的构造方法
 func NewMediaSendMessage(msgType int, fromUserName, toUserName, mediaId string) *SendMessage {
 	return NewSendMessage(msgType, "", fromUserName, toUserName, mediaId)
 }
 
+// 一些特殊类型的消息会携带该结构体信息
 type RecommendInfo struct {
 	Alias      string
 	AttrStatus int64

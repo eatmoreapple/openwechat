@@ -122,6 +122,7 @@ func (c *Client) SyncCheck(info LoginInfo, response WebInitResponse) (*http.Resp
 	params.Add("deviceid", GetRandomDeviceId())
 	params.Add("_", strconv.FormatInt(time.Now().Unix(), 10))
 	syncKeyStringSlice := make([]string, 0)
+	// 将SyncKey里面的元素按照特定的格式拼接起来
 	for _, item := range response.SyncKey.List {
 		i := fmt.Sprintf("%d_%d", item.Key, item.Val)
 		syncKeyStringSlice = append(syncKeyStringSlice, i)
@@ -130,7 +131,6 @@ func (c *Client) SyncCheck(info LoginInfo, response WebInitResponse) (*http.Resp
 	params.Add("synckey", syncKey)
 	path.RawQuery = params.Encode()
 	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
-	req.Header.Add("User-Agent", "Mozilla/5.0")
 	return c.Do(req)
 }
 

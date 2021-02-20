@@ -54,6 +54,7 @@ func (g *Group) SendImage(file *os.File) error {
 	return g.sendImage(file)
 }
 
+// 获取所有的群成员
 func (g *Group) Members() (Members, error) {
 	group, err := g.Detail()
 	if err != nil {

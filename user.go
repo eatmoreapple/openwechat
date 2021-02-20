@@ -51,11 +51,12 @@ func (u *User) String() string {
 	return fmt.Sprintf("<User:%s>", u.NickName)
 }
 
-//
+// 获取用户头像
 func (u *User) GetAvatarResponse() (*http.Response, error) {
 	return u.Self.Bot.Caller.Client.WebWxGetHeadImg(u.HeadImgUrl)
 }
 
+// 下载用户头像
 func (u *User) SaveAvatar(filename string) error {
 	resp, err := u.GetAvatarResponse()
 	if err != nil {
@@ -93,6 +94,7 @@ func (u *User) remakeName(remarkName string) error {
 	return u.Self.Bot.Caller.WebWxOplog(request, remarkName, u.UserName)
 }
 
+// 获取用户的详情
 func (u *User) Detail() (*User, error) {
 	members := Members{u}
 	request := u.Self.Bot.storage.GetBaseRequest()
@@ -114,18 +116,21 @@ type Self struct {
 	groups     Groups
 }
 
+// 获取所有的好友、群组、公众号信息
 func (s *Self) Members(update ...bool) (Members, error) {
+	// 首先判断缓存里有没有,如果没有则去更新缓存
 	if s.members == nil {
 		if err := s.updateMembers(); err != nil {
 			return nil, err
-		} else {
-			return s.members, nil
 		}
+		return s.members, nil
 	}
+	// 判断是否需要更新,如果传入的参数不为nil,则取最后一个
 	var isUpdate bool
 	if len(update) > 0 {
 		isUpdate = update[len(update)-1]
 	}
+	// 如果需要更新，则直接更新缓存
 	if isUpdate {
 		if err := s.updateMembers(); err != nil {
 			return nil, err
@@ -134,6 +139,7 @@ func (s *Self) Members(update ...bool) (Members, error) {
 	return s.members, nil
 }
 
+// 更新联系人处理
 func (s *Self) updateMembers() error {
 	info := s.Bot.storage.GetLoginInfo()
 	members, err := s.Bot.Caller.WebWxGetContact(info)
@@ -145,7 +151,9 @@ func (s *Self) updateMembers() error {
 	return nil
 }
 
+// 获取文件传输助手对象，封装成Friend返回
 func (s *Self) FileHelper() (*Friend, error) {
+	// 如果缓存里有，直接返回，否则去联系人里面找
 	if s.fileHelper != nil {
 		return s.fileHelper, nil
 	}
@@ -156,6 +164,7 @@ func (s *Self) FileHelper() (*Friend, error) {
 	for _, member := range members {
 		if member.UserName == "filehelper" {
 			fileHelper := &Friend{member}
+			// 将找到的缓存起来,方便下次调用
 			s.fileHelper = fileHelper
 			return s.fileHelper, nil
 		}
@@ -163,6 +172,7 @@ func (s *Self) FileHelper() (*Friend, error) {
 	return nil, errors.New("filehelper does not exist")
 }
 
+// 获取所有的好友
 func (s *Self) Friends(update ...bool) (Friends, error) {
 	if s.friends == nil {
 		if err := s.updateFriends(update...); err != nil {
@@ -172,6 +182,7 @@ func (s *Self) Friends(update ...bool) (Friends, error) {
 	return s.friends, nil
 }
 
+// 获取所有的群组
 func (s *Self) Groups(update ...bool) (Groups, error) {
 	if s.groups == nil {
 		if err := s.updateGroups(update...); err != nil {
@@ -181,6 +192,7 @@ func (s *Self) Groups(update ...bool) (Groups, error) {
 	return s.groups, nil
 }
 
+// 更新好友处理
 func (s *Self) updateFriends(update ...bool) error {
 	var isUpdate bool
 	if len(update) > 0 {
@@ -202,6 +214,7 @@ func (s *Self) updateFriends(update ...bool) error {
 	return nil
 }
 
+// 更新群组处理
 func (s *Self) updateGroups(update ...bool) error {
 	var isUpdate bool
 	if len(update) > 0 {
@@ -223,12 +236,18 @@ func (s *Self) updateGroups(update ...bool) error {
 	return nil
 }
 
+// 更新所有的联系人信息
 func (s *Self) UpdateMembersDetail() error {
+	// 先获取所有的联系人
 	members, err := s.Members()
 	if err != nil {
 		return err
 	}
+	// 获取他们的数量
 	count := members.Count()
+	// 一次更新50个,分情况讨论
+
+	// 获取总的需要更新的次数
 	var times int
 	if count < 50 {
 		times = 1
@@ -238,6 +257,7 @@ func (s *Self) UpdateMembersDetail() error {
 	newMembers := make(Members, 0)
 	request := s.Self.Bot.storage.GetBaseRequest()
 	var pMembers Members
+	// 分情况依次更新
 	for i := 0; i < times; i++ {
 		if times == 1 {
 			pMembers = members
@@ -250,8 +270,10 @@ func (s *Self) UpdateMembersDetail() error {
 		}
 		newMembers = append(newMembers, nMembers...)
 	}
+	// 最后判断是否全部更新完毕
 	total := times * 50
 	if total < count {
+		// 将全部剩余的更新完毕
 		left := total - count
 		pMembers = members[total : total+left]
 		nMembers, err := s.Self.Bot.Caller.WebWxBatchGetContact(pMembers, request)
