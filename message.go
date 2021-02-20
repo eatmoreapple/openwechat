@@ -1,6 +1,7 @@
 package openwechat
 
 import (
+	"context"
 	"errors"
 	"os"
 	"strings"
@@ -44,6 +45,7 @@ type Message struct {
 	senderInGroupUserName string
 	mu                    sync.RWMutex
 	item                  map[string]interface{}
+	Context               context.Context
 }
 
 // 获取消息的发送者
