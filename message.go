@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -41,6 +42,8 @@ type Message struct {
 	VoiceLength           int
 	Bot                   *Bot
 	senderInGroupUserName string
+	mu                    sync.RWMutex
+	item                  map[string]interface{}
 }
 
 // 获取消息的发送者
@@ -154,6 +157,23 @@ func (m *Message) IsRecalled() bool {
 
 func (m *Message) IsSystem() bool {
 	return m.MsgType == 10000
+}
+
+// 用在多个messageHandler之间传递信息
+func (m *Message) Set(key string, value interface{}) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.item == nil {
+		m.item = make(map[string]interface{})
+	}
+	m.item[key] = value
+}
+
+func (m *Message) Get(key string) (value interface{}, exist bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	value, exist = m.item[key]
+	return
 }
 
 //func (m *Message) Agree() error {
