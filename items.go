@@ -34,7 +34,6 @@ func (b BaseResponse) Ok() bool {
 	return b.Ret == 0
 }
 
-// 实现error接口
 func (b BaseResponse) Error() string {
 	switch b.Ret {
 	case 0:
@@ -42,7 +41,7 @@ func (b BaseResponse) Error() string {
 	case 1:
 		return "param error"
 	case -14:
-		return "ticker error"
+		return "ticket error"
 	case 1100:
 		return "not login warn"
 	case 1101:
@@ -52,12 +51,9 @@ func (b BaseResponse) Error() string {
 	case 1203:
 		return "login env error"
 	case 1205:
-		return "op too often"
+		return "opt too often"
 	default:
-		if b.ErrMsg != "" {
-			return b.ErrMsg
-		}
-		return fmt.Sprintf("base response error code %d", b.Ret)
+		return fmt.Sprintf("base response ret code %d", b.Ret)
 	}
 }
 
@@ -125,6 +121,30 @@ func (s *SyncCheckResponse) Success() bool {
 
 func (s *SyncCheckResponse) NorMal() bool {
 	return s.Success() && s.Selector == "0"
+}
+
+// 实现error接口
+func (s *SyncCheckResponse) Error() string {
+	switch s.RetCode {
+	case "0":
+		return ""
+	case "1":
+		return "param error"
+	case "-14":
+		return "ticker error"
+	case "1100":
+		return "not login warn"
+	case "1101":
+		return "not login check"
+	case "1102":
+		return "cookie invalid error"
+	case "1203":
+		return "login env error"
+	case "1205":
+		return "op too often"
+	default:
+		return fmt.Sprintf("sync check response error code %s", s.RetCode)
+	}
 }
 
 type WebWxSyncResponse struct {

@@ -143,10 +143,8 @@ func (b *Bot) asyncCall() error {
 }
 
 func (b *Bot) stopAsyncCALL(err error) {
-	if err != nil {
-		b.exit <- true
-		b.err = err
-	}
+	b.exit <- true
+	b.err = err
 }
 
 // 获取新的消息
@@ -180,6 +178,7 @@ func (b *Bot) prepare() {
 	}
 }
 
+// 注册消息处理的函数
 func (b *Bot) RegisterMessageHandler(handler MessageHandler) {
 	if b.messageHandlerGroups == nil {
 		b.messageHandlerGroups = &MessageHandlerGroup{}
@@ -187,12 +186,13 @@ func (b *Bot) RegisterMessageHandler(handler MessageHandler) {
 	b.messageHandlerGroups.RegisterHandler(handler)
 }
 
+// 当消息同步发生了错误或者用户主动在手机上退出，该方法会立即返回，否则会一直阻塞
 func (b *Bot) Block() {
 	<-b.exit
 }
 
 func NewBot(caller *Caller, storage WechatStorage) *Bot {
-	return &Bot{Caller: caller, storage: storage}
+	return &Bot{Caller: caller, storage: storage, exit: make(chan bool)}
 }
 
 func DefaultBot() *Bot {
