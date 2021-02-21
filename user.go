@@ -29,7 +29,7 @@ type User struct {
 	RemarkPYQuanPin   string
 	Signature         string
 	MemberCount       int
-	MemberList        []*User
+	MemberList        Members
 	OwnerUin          int
 	Statues           int
 	AttrStatus        int
@@ -161,15 +161,12 @@ func (s *Self) FileHelper() (*Friend, error) {
 	if err != nil {
 		return nil, err
 	}
-	for _, member := range members {
-		if member.UserName == "filehelper" {
-			fileHelper := &Friend{member}
-			// 将找到的缓存起来,方便下次调用
-			s.fileHelper = fileHelper
-			return s.fileHelper, nil
-		}
+	user, err := members.SearchByUserName("filehelper")
+	if err != nil {
+		return nil, err
 	}
-	return nil, errors.New("filehelper does not exist")
+	s.fileHelper = &Friend{user}
+	return s.fileHelper, nil
 }
 
 // 获取所有的好友
@@ -297,4 +294,13 @@ func (m Members) SetOwner(s *Self) {
 	for _, member := range m {
 		member.Self = s
 	}
+}
+
+func (m Members) SearchByUserName(username string) (*User, error) {
+	for _, member := range m {
+		if member.UserName == username {
+			return member, nil
+		}
+	}
+	return nil, errors.New("no such user found")
 }

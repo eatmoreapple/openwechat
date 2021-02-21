@@ -57,12 +57,11 @@ func (m *Message) Sender() (*User, error) {
 	if m.FromUserName == m.Bot.self.User.UserName {
 		return m.Bot.self.User, nil
 	}
-	for _, member := range members {
-		if member.UserName == m.FromUserName {
-			return member.Detail()
-		}
+	user, err := members.SearchByUserName(m.FromUserName)
+	if err != nil {
+		return nil, err
 	}
-	return nil, errors.New("no such user found")
+	return user.Detail()
 }
 
 // 获取消息在群里面的发送者
@@ -78,12 +77,7 @@ func (m *Message) SenderInGroup() (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-	for _, member := range group.MemberList {
-		if m.senderInGroupUserName == member.UserName {
-			return member, nil
-		}
-	}
-	return nil, errors.New("no such user found")
+	return group.MemberList.SearchByUserName(m.senderInGroupUserName)
 }
 
 // 判断消息是否由自己发送
