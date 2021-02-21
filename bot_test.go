@@ -98,3 +98,24 @@ func TestFriends_SearchByRemarkName(t *testing.T) {
 	fmt.Println(firends2)
 	fmt.Println(err)
 }
+
+func TestUser_GetAvatarResponse(t *testing.T) {
+	messageHandler := func(message *Message) {
+		fmt.Println(message)
+	}
+	bot := DefaultBot()
+	bot.RegisterMessageHandler(messageHandler)
+	bot.UUIDCallback = PrintlnQrcodeUrl
+	if err := bot.Login(); err != nil {
+		fmt.Println(err)
+		return
+	}
+	self, _ := bot.GetCurrentUser()
+	self.SaveAvatar("2.png")
+	friend, err := self.Friends()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	friend[0].SaveAvatar(friend[0].NickName + ".png")
+}

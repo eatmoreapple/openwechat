@@ -101,6 +101,7 @@ func (b *Bot) login(data []byte) error {
 	}
 	// 设置当前的用户
 	b.self = &Self{Bot: b, User: &resp.User}
+	b.self.Self = b.self
 	b.storage.SetWebInitResponse(*resp)
 
 	// 通知手机客户端已经登录
