@@ -5,7 +5,7 @@
 
 **使用前提**
 
-1、你的微信号必须能够在微信网页版成功登录（https://wx.qq.com/）
+1、你的微信号必须能够在[微信网页版](https://wx.qq.com)成功登录
 
 2、golang版本大于等于1.11
 
@@ -140,7 +140,7 @@ bot.Block()
 
 更多功能请在代码中探索。。。
 
-// todo support more
+// todo: add more support 
 
 
 
