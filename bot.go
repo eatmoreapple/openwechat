@@ -199,6 +199,11 @@ func DefaultBot() *Bot {
 	return NewBot(DefaultCaller(), NewSimpleWechatStorage())
 }
 
+func GetQrcodeUrl(uuid string) string {
+	return qrcodeUrl + uuid
+}
+
 func PrintlnQrcodeUrl(uuid string) {
-	println(qrcodeUrl + uuid)
+	println("访问下面网址扫描二维码登录")
+	println(GetQrcodeUrl(uuid))
 }
