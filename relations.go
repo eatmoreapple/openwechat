@@ -35,6 +35,26 @@ func (f Friends) Count() int {
 	return len(f)
 }
 
+func (f Friends) SearchByRemarkName(name string) (Friends, error) {
+	if f.Count() == 0 {
+		return nil, nil
+	}
+	self := f[0].Self
+	members, err := searchByRemarkName(name, self)
+	if err != nil {
+		return nil, err
+	}
+	var newFriends Friends
+	for _, member := range members {
+		friend := &Friend{member}
+		if newFriends == nil {
+			newFriends = make(Friends, 0)
+		}
+		newFriends = append(newFriends, friend)
+	}
+	return newFriends, nil
+}
+
 type Group struct{ *User }
 
 // implement fmt.Stringer

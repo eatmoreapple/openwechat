@@ -172,7 +172,7 @@ func (s *Self) FileHelper() (*Friend, error) {
 // 获取所有的好友
 func (s *Self) Friends(update ...bool) (Friends, error) {
 	if s.friends == nil {
-		if err := s.updateFriends(update...); err != nil {
+		if err := s.updateFriends(true); err != nil {
 			return nil, err
 		}
 	}
@@ -204,6 +204,7 @@ func (s *Self) updateFriends(update ...bool) error {
 	for _, member := range s.members {
 		if isFriend(*member) {
 			friend := &Friend{member}
+			friend.Self = s
 			friends = append(friends, friend)
 		}
 	}
@@ -252,16 +253,16 @@ func (s *Self) UpdateMembersDetail() error {
 		times = count / 50
 	}
 	newMembers := make(Members, 0)
-	request := s.Self.Bot.storage.GetBaseRequest()
+	request := s.Bot.storage.GetBaseRequest()
 	var pMembers Members
 	// 分情况依次更新
-	for i := 0; i < times; i++ {
+	for i := 1; i <= times; i++ {
 		if times == 1 {
 			pMembers = members
 		} else {
-			pMembers = members[i*50 : (i+1)*times]
+			pMembers = members[(i-1)*50 : i*50]
 		}
-		nMembers, err := s.Self.Bot.Caller.WebWxBatchGetContact(pMembers, request)
+		nMembers, err := s.Bot.Caller.WebWxBatchGetContact(pMembers, request)
 		if err != nil {
 			return err
 		}
@@ -271,9 +272,9 @@ func (s *Self) UpdateMembersDetail() error {
 	total := times * 50
 	if total < count {
 		// 将全部剩余的更新完毕
-		left := total - count
+		left := count - total
 		pMembers = members[total : total+left]
-		nMembers, err := s.Self.Bot.Caller.WebWxBatchGetContact(pMembers, request)
+		nMembers, err := s.Bot.Caller.WebWxBatchGetContact(pMembers, request)
 		if err != nil {
 			return err
 		}
@@ -303,4 +304,32 @@ func (m Members) SearchByUserName(username string) (*User, error) {
 		}
 	}
 	return nil, errors.New("no such user found")
+}
+
+func (m Members) SearchByRemarkName(name string) (Members, error) {
+	if m.Count() == 0 {
+		return nil, nil
+	}
+	self := m[0].Self
+	return searchByRemarkName(name, self)
+}
+
+func searchByRemarkName(name string, self *Self) (Members, error) {
+	if err := self.UpdateMembersDetail(); err != nil {
+		return nil, err
+	}
+	members, err := self.Members()
+	if err != nil {
+		return nil, err
+	}
+	var newMembers Members
+	for _, member := range members {
+		if member.RemarkName == name {
+			if newMembers == nil {
+				newMembers = make(Members, 0)
+			}
+			newMembers = append(newMembers, member)
+		}
+	}
+	return newMembers, nil
 }

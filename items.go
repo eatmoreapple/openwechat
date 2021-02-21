@@ -102,7 +102,7 @@ type UserDetailItem struct {
 type UserDetailItemList []UserDetailItem
 
 func NewUserDetailItemList(members Members) UserDetailItemList {
-	list := make(UserDetailItemList, members.Count()-1)
+	list := make(UserDetailItemList, 0)
 	for _, member := range members {
 		item := UserDetailItem{UserName: member.UserName, EncryChatRoomId: member.EncryChatRoomId}
 		list = append(list, item)
