@@ -146,6 +146,7 @@ func (b *Bot) asyncCall() error {
 func (b *Bot) stopAsyncCALL(err error) {
 	b.exit <- true
 	b.err = err
+	b.self = nil
 }
 
 // 获取新的消息
