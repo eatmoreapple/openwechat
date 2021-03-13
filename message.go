@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 )
 
 type Message struct {
@@ -192,6 +193,20 @@ func (m *Message) init(bot *Bot) {
 		data := strings.Split(m.Content, ":<br/>")
 		m.Content = strings.Join(data[1:], "")
 		m.senderInGroupUserName = data[0]
+		receiver, err := m.Receiver()
+		if err != nil {
+			return
+		}
+		displayName := receiver.DisplayName
+		if displayName == "" {
+			displayName = receiver.NickName
+		}
+		atFlag := "@" + displayName
+		index := len(atFlag) + 1 + 1
+		if strings.HasPrefix(m.Content, atFlag) && unicode.IsSpace(rune(m.Content[index])) {
+			m.IsAt = true
+			m.Content = m.Content[index+1:]
+		}
 	}
 }
 

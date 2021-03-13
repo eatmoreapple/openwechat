@@ -8,13 +8,14 @@ import (
 func TestDefaultBot(t *testing.T) {
 	bot := DefaultBot()
 	messageHandler := func(message *Message) {
-		fmt.Println(message)
+		fmt.Println(message.Content)
 	}
 	bot.RegisterMessageHandler(messageHandler)
 	bot.UUIDCallback = PrintlnQrcodeUrl
 	if err := bot.Login(); err != nil {
 		fmt.Println(err)
 		return
+
 	}
 	bot.Block()
 }
