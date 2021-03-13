@@ -14,33 +14,35 @@ type Message struct {
 		AppID string
 		Type  int
 	}
-	AppMsgType            int
-	Content               string
-	CreateTime            int64
-	EncryFileName         string
-	FileName              string
-	FileSize              string
-	ForwardFlag           int
-	FromUserName          string
-	HasProductId          int
-	ImgHeight             int
-	ImgStatus             int
-	ImgWidth              int
-	MediaId               string
-	MsgId                 string
-	MsgType               int
-	NewMsgId              int64
-	OriContent            string
-	PlayLength            int64
-	RecommendInfo         RecommendInfo
-	Status                int
-	StatusNotifyCode      int
-	StatusNotifyUserName  string
-	SubMsgType            int
-	Ticket                string
-	ToUserName            string
-	Url                   string
-	VoiceLength           int
+	AppMsgType           int
+	Content              string
+	CreateTime           int64
+	EncryFileName        string
+	FileName             string
+	FileSize             string
+	ForwardFlag          int
+	FromUserName         string
+	HasProductId         int
+	ImgHeight            int
+	ImgStatus            int
+	ImgWidth             int
+	MediaId              string
+	MsgId                string
+	MsgType              int
+	NewMsgId             int64
+	OriContent           string
+	PlayLength           int64
+	RecommendInfo        RecommendInfo
+	Status               int
+	StatusNotifyCode     int
+	StatusNotifyUserName string
+	SubMsgType           int
+	Ticket               string
+	ToUserName           string
+	Url                  string
+	VoiceLength          int
+
+	IsAt                  bool
 	Bot                   *Bot
 	senderInGroupUserName string
 	mu                    sync.RWMutex
@@ -78,6 +80,18 @@ func (m *Message) SenderInGroup() (*User, error) {
 		return nil, err
 	}
 	return group.MemberList.SearchByUserName(m.senderInGroupUserName)
+}
+
+func (m *Message) Receiver() (*User, error) {
+	if m.IsSendByGroup() {
+		if sender, err := m.Sender(); err != nil {
+			return nil, err
+		} else {
+			return sender.MemberList.SearchByUserName(m.ToUserName)
+		}
+	} else {
+		return m.Bot.self.MemberList.SearchByUserName(m.ToUserName)
+	}
 }
 
 // 判断消息是否由自己发送
@@ -172,6 +186,15 @@ func (m *Message) Get(key string) (value interface{}, exist bool) {
 	return
 }
 
+func (m *Message) init(bot *Bot) {
+	m.Bot = bot
+	if m.IsSendByGroup() {
+		data := strings.Split(m.Content, ":<br/>")
+		m.Content = strings.Join(data[1:], "")
+		m.senderInGroupUserName = data[0]
+	}
+}
+
 //func (m *Message) Agree() error {
 //	if !m.IsFriendAdd() {
 //		return fmt.Errorf("the excepted message type is 37, but got %d", m.MsgType)
@@ -229,13 +252,4 @@ type RecommendInfo struct {
 	Ticket     string
 	UserName   string
 	VerifyFlag int
-}
-
-func processMessage(message *Message, bot *Bot) {
-	message.Bot = bot
-	if message.IsSendByGroup() {
-		data := strings.Split(message.Content, ":<br/>")
-		message.Content = strings.Join(data[1:], "")
-		message.senderInGroupUserName = data[0]
-	}
 }

@@ -164,7 +164,7 @@ func (b *Bot) getMessage() error {
 	// 遍历所有的新的消息，依次处理
 	for _, message := range resp.AddMsgList {
 		// 根据不同的消息类型来进行处理，方便后续统一调用
-		processMessage(message, b)
+		message.init(b)
 		// 调用自定义的处理方法
 		b.messageHandlerGroups.ProcessMessage(message)
 	}
