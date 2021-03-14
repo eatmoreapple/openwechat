@@ -159,7 +159,7 @@ func (m *Message) IsVideo() bool {
 	return m.MsgType == 43 || m.MsgType == 62
 }
 
-func (m *Message) IsSharing() bool {
+func (m *Message) IsMedia() bool {
 	return m.MsgType == 49
 }
 
@@ -175,11 +175,27 @@ func (m *Message) IsNotify() bool {
 	return m.MsgType == 51 && m.StatusNotifyCode != 0
 }
 
-func (m *Message) GetMsgImageResponse() (*http.Response, error) {
-	if !m.IsPicture() {
-		return nil, errors.New("Picture type message required")
+func (m *Message) HasFile() bool {
+	return m.IsPicture() || m.IsVoice() || m.IsVideo() || m.IsMedia()
+}
+
+func (m *Message) GetFile() (*http.Response, error) {
+	if !m.HasFile() {
+		return nil, errors.New("invalid message type")
 	}
-	return m.Bot.Caller.Client.WebWxGetMsgImg(m, m.Bot.storage.GetLoginInfo())
+	if m.IsPicture() {
+		return m.Bot.Caller.Client.WebWxGetMsgImg(m, m.Bot.storage.GetLoginInfo())
+	}
+	if m.IsVoice() {
+		return m.Bot.Caller.Client.WebWxGetVoice(m, m.Bot.storage.GetLoginInfo())
+	}
+	if m.IsVideo() {
+		return m.Bot.Caller.Client.WebWxGetVideo(m, m.Bot.storage.GetLoginInfo())
+	}
+	if m.IsMedia() {
+		return m.Bot.Caller.Client.WebWxGetMedia(m, m.Bot.storage.GetLoginInfo())
+	}
+	return nil, errors.New("unsupported type")
 }
 
 // 用在多个messageHandler之间传递信息

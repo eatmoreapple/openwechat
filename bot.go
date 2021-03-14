@@ -193,7 +193,7 @@ func (b *Bot) Block() error {
 	if b.self == nil {
 		return errors.New("`Block` must be called after user login")
 	}
-	if _, closed := <-b.exit; closed {
+	if _, closed := <-b.exit; !closed {
 		return errors.New("can not call `Block` after user logout")
 	}
 	close(b.exit)

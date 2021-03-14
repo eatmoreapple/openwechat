@@ -359,3 +359,34 @@ func (c *Client) WebWxGetMsgImg(msg *Message, info LoginInfo) (*http.Response, e
 	path.RawQuery = params.Encode()
 	return c.Get(path.String())
 }
+
+func (c *Client) WebWxGetVoice(msg *Message, info LoginInfo) (*http.Response, error) {
+	path, _ := url.Parse(webWxGetVoiceUrl)
+	params := url.Values{}
+	params.Add("msgid", msg.MsgId)
+	params.Add("skey", info.SKey)
+	path.RawQuery = params.Encode()
+	return c.Get(path.String())
+}
+
+func (c *Client) WebWxGetVideo(msg *Message, info LoginInfo) (*http.Response, error) {
+	path, _ := url.Parse(webWxGetVideoUrl)
+	params := url.Values{}
+	params.Add("msgid", msg.MsgId)
+	params.Add("skey", info.SKey)
+	path.RawQuery = params.Encode()
+	return c.Get(path.String())
+}
+
+func (c *Client) WebWxGetMedia(msg *Message, info LoginInfo) (*http.Response, error) {
+	path, _ := url.Parse(webWxGetMediaUrl)
+	params := url.Values{}
+	params.Add("sender", msg.FromUserName)
+	params.Add("mediaid", msg.MediaId)
+	params.Add("encryfilename", msg.EncryFileName)
+	params.Add("fromuser", fmt.Sprintf("%d", info.WxUin))
+	params.Add("pass_ticket", info.PassTicket)
+	params.Add("webwx_data_ticket", getWebWxDataTicket(c.Jar.Cookies(path)))
+	path.RawQuery = params.Encode()
+	return c.Get(path.String())
+}

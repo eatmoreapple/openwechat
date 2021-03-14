@@ -2,22 +2,31 @@ package openwechat
 
 import (
 	"fmt"
+	"io/ioutil"
 	"testing"
 )
 
 func TestDefaultBot(t *testing.T) {
 	bot := DefaultBot()
 	messageHandler := func(message *Message) {
-		fmt.Println(message.Content)
+		if message.HasFile() {
+			if message.IsMedia() {
+				resp, err := message.GetFile()
+				if err == nil {
+					data, _ := ioutil.ReadAll(resp.Body)
+					ioutil.WriteFile(message.EncryFileName, data, 0x777)
+					resp.Body.Close()
+				}
+			}
+		}
 	}
 	bot.RegisterMessageHandler(messageHandler)
 	bot.UUIDCallback = PrintlnQrcodeUrl
 	if err := bot.Login(); err != nil {
 		fmt.Println(err)
 		return
-
 	}
-	bot.Block()
+	fmt.Println(bot.Block())
 }
 
 func TestBotMessageHandler(t *testing.T) {
