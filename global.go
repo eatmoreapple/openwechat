@@ -29,6 +29,7 @@ const (
 	webWxVerifyUserUrl      = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxverifyuser"
 	syncCheckUrl            = "https://webpush.wx2.qq.com/cgi-bin/mmwebwx-bin/synccheck"
 	webWxUpLoadMediaUrl     = "https://file.wx2.qq.com/cgi-bin/mmwebwx-bin/webwxuploadmedia"
+	webWxGetMsgImgUrl          = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxgetmsgimg"
 
 	jsonContentType = "application/json; charset=utf-8"
 )

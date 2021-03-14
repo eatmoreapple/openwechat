@@ -349,3 +349,13 @@ func (c *Client) WebWxVerifyUser(storage WechatStorage, info RecommendInfo, veri
 	req.Header.Add("Content-Type", jsonContentType)
 	return c.Do(req)
 }
+
+func (c *Client) WebWxGetMsgImg(msg *Message, info LoginInfo) (*http.Response, error) {
+	path, _ := url.Parse(webWxGetMsgImgUrl)
+	params := url.Values{}
+	params.Add("MsgID", msg.MsgId)
+	params.Add("skey", info.SKey)
+	params.Add("type", "slave")
+	path.RawQuery = params.Encode()
+	return c.Get(path.String())
+}

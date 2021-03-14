@@ -3,6 +3,7 @@ package openwechat
 import (
 	"context"
 	"errors"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
@@ -170,6 +171,17 @@ func (m *Message) IsSystem() bool {
 	return m.MsgType == 10000
 }
 
+func (m *Message) IsNotify() bool {
+	return m.MsgType == 51 && m.StatusNotifyCode != 0
+}
+
+func (m *Message) GetMsgImageResponse() (*http.Response, error) {
+	if !m.IsPicture() {
+		return nil, errors.New("Picture type message required")
+	}
+	return m.Bot.Caller.Client.WebWxGetMsgImg(m, m.Bot.storage.GetLoginInfo())
+}
+
 // 用在多个messageHandler之间传递信息
 func (m *Message) Set(key string, value interface{}) {
 	m.mu.Lock()
@@ -194,18 +206,17 @@ func (m *Message) init(bot *Bot) {
 		m.Content = strings.Join(data[1:], "")
 		m.senderInGroupUserName = data[0]
 		receiver, err := m.Receiver()
-		if err != nil {
-			return
-		}
-		displayName := receiver.DisplayName
-		if displayName == "" {
-			displayName = receiver.NickName
-		}
-		atFlag := "@" + displayName
-		index := len(atFlag) + 1 + 1
-		if strings.HasPrefix(m.Content, atFlag) && unicode.IsSpace(rune(m.Content[index])) {
-			m.IsAt = true
-			m.Content = m.Content[index+1:]
+		if err == nil {
+			displayName := receiver.DisplayName
+			if displayName == "" {
+				displayName = receiver.NickName
+			}
+			atFlag := "@" + displayName
+			index := len(atFlag) + 1 + 1
+			if strings.HasPrefix(m.Content, atFlag) && unicode.IsSpace(rune(m.Content[index])) {
+				m.IsAt = true
+				m.Content = m.Content[index+1:]
+			}
 		}
 	}
 }
