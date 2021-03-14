@@ -390,3 +390,13 @@ func (c *Client) WebWxGetMedia(msg *Message, info LoginInfo) (*http.Response, er
 	path.RawQuery = params.Encode()
 	return c.Get(path.String())
 }
+
+func (c *Client) Logout(info LoginInfo) (*http.Response, error) {
+	path, _ := url.Parse(webWxLogoutUrl)
+	params := url.Values{}
+	params.Add("redirect", "1")
+	params.Add("type", "1")
+	params.Add("skey", info.SKey)
+	path.RawQuery = params.Encode()
+	return c.Get(path.String())
+}

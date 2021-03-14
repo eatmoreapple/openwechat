@@ -221,6 +221,12 @@ func (c *Caller) WebWxSendImageMsg(file *os.File, request BaseRequest, info Logi
 	return parseBaseResponseError(resp)
 }
 
+// 用户退出
+func (c *Caller) Logout(info LoginInfo) error {
+	resp := NewReturnResponse(c.Client.Logout(info))
+	return parseBaseResponseError(resp)
+}
+
 // 处理响应返回的结果是否正常
 func parseBaseResponseError(resp *ReturnResponse) error {
 	if resp.Err() != nil {

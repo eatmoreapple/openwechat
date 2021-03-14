@@ -2,22 +2,14 @@ package openwechat
 
 import (
 	"fmt"
-	"io/ioutil"
 	"testing"
 )
 
 func TestDefaultBot(t *testing.T) {
 	bot := DefaultBot()
 	messageHandler := func(message *Message) {
-		if message.HasFile() {
-			if message.IsMedia() {
-				resp, err := message.GetFile()
-				if err == nil {
-					data, _ := ioutil.ReadAll(resp.Body)
-					ioutil.WriteFile(message.EncryFileName, data, 0x777)
-					resp.Body.Close()
-				}
-			}
+		if message.Content == "logout" {
+			bot.Logout()
 		}
 	}
 	bot.RegisterMessageHandler(messageHandler)

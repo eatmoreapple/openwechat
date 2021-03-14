@@ -32,6 +32,7 @@ const (
 	webWxGetMsgImgUrl       = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxgetmsgimg"
 	webWxGetVoiceUrl        = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxgetvoice"
 	webWxGetVideoUrl        = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxgetvideo"
+	webWxLogoutUrl        = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxlogout"
 	webWxGetMediaUrl        = "https://file.wx2.qq.com/cgi-bin/mmwebwx-bin/webwxgetmedia"
 
 	jsonContentType = "application/json; charset=utf-8"

@@ -69,6 +69,15 @@ func (b *Bot) Login() error {
 	}
 }
 
+func (b *Bot) Logout() error {
+	info := b.storage.GetLoginInfo()
+	if err := b.Caller.Logout(info); err != nil {
+		return err
+	}
+	b.stopAsyncCALL(errors.New("logout"))
+	return nil
+}
+
 // 登录逻辑
 func (b *Bot) login(data []byte) error {
 	// 判断是否有登录回调，如果有执行它
