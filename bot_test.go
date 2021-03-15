@@ -23,7 +23,7 @@ func TestDefaultBot(t *testing.T) {
 	group, _ := self.Groups()
 	friends, _ := self.Friends()
 	fmt.Println(group.Search(Cond{"NickName": "厉害了"}))
-	fmt.Println(friends.Search(Cond{"RemarkName": "阿青"}))
+	fmt.Println(friends.Search(Cond{"RemarkName": "阿青", "Sex": 2}))
 	fmt.Println(bot.Block())
 }
 

@@ -343,7 +343,7 @@ func (m Members) Search(cond Cond) (results Members, found bool) {
 			switch k {
 			case "UserName":
 				if value, ok := v.(string); ok {
-					return m.SearchByNickName(value)
+					return m.SearchByUserName(value)
 				}
 			case "NickName":
 				if value, ok := v.(string); ok {
@@ -359,16 +359,18 @@ func (m Members) Search(cond Cond) (results Members, found bool) {
 
 	for _, member := range m {
 		value := reflect.ValueOf(member).Elem()
+		var matchCount int
 		for k, v := range cond {
 			if field := value.FieldByName(k); field.IsValid() {
-				if field.Interface() == v {
-					found = true
-					if results == nil {
-						results = make(Members, 0)
-					}
-					results = append(results, member)
+				if field.Interface() != v {
+					break
 				}
+				matchCount++
 			}
+		}
+		if matchCount == len(cond) {
+			found = true
+			results = append(results, member)
 		}
 	}
 	return

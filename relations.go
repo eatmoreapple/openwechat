@@ -72,7 +72,7 @@ func (f Friends) Search(cond Cond) (friends Friends, found bool) {
 			switch k {
 			case "UserName":
 				if value, ok := v.(string); ok {
-					return f.SearchByNickName(value)
+					return f.SearchByUserName(value)
 				}
 			case "NickName":
 				if value, ok := v.(string); ok {
@@ -85,18 +85,20 @@ func (f Friends) Search(cond Cond) (friends Friends, found bool) {
 			}
 		}
 	}
-	for _, member := range f {
-		value := reflect.ValueOf(member).Elem()
+	for _, friend := range f {
+		value := reflect.ValueOf(friend).Elem()
+		var matchCount int
 		for k, v := range cond {
 			if field := value.FieldByName(k); field.IsValid() {
-				if field.Interface() == v {
-					found = true
-					if friends == nil {
-						friends = make(Friends, 0)
-					}
-					friends = append(friends, member)
+				if field.Interface() != v {
+					break
 				}
+				matchCount++
 			}
+		}
+		if matchCount == len(cond) {
+			found = true
+			friends = append(friends, friend)
 		}
 	}
 	return
@@ -184,14 +186,14 @@ func (g Groups) SearchByRemarkName(remarkName string) (results Groups, found boo
 	return
 }
 
-func (g Groups) Search(cond Cond) (groups Groups, found bool) {
+func (g Groups) Search(cond Cond) (results Groups, found bool) {
 
 	if len(cond) == 1 {
 		for k, v := range cond {
 			switch k {
 			case "UserName":
 				if value, ok := v.(string); ok {
-					return g.SearchByNickName(value)
+					return g.SearchByUserName(value)
 				}
 			case "NickName":
 				if value, ok := v.(string); ok {
@@ -205,18 +207,20 @@ func (g Groups) Search(cond Cond) (groups Groups, found bool) {
 		}
 	}
 
-	for _, member := range g {
-		value := reflect.ValueOf(member).Elem()
+	for _, group := range g {
+		value := reflect.ValueOf(group).Elem()
+		var matchCount int
 		for k, v := range cond {
 			if field := value.FieldByName(k); field.IsValid() {
-				if field.Interface() == v {
-					found = true
-					if groups == nil {
-						groups = make(Groups, 0)
-					}
-					groups = append(groups, member)
+				if field.Interface() != v {
+					break
 				}
+				matchCount++
 			}
+		}
+		if matchCount == len(cond) {
+			found = true
+			results = append(results, group)
 		}
 	}
 	return
