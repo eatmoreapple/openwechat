@@ -307,7 +307,56 @@ func (m Members) searchByUserNameLimit1(username string) (*User, error) {
 	return nil, errors.New("no such user found")
 }
 
+func (m Members) SearchByUserName(username string) (results Members, found bool) {
+	for _, member := range m {
+		if member.UserName == username {
+			found = true
+			results = append(results, member)
+		}
+	}
+	return
+}
+
+func (m Members) SearchByNickName(nickName string) (results Members, found bool) {
+	for _, member := range m {
+		if member.NickName == nickName {
+			found = true
+			results = append(results, member)
+		}
+	}
+	return
+}
+
+func (m Members) SearchByRemarkName(remarkName string) (results Members, found bool) {
+	for _, member := range m {
+		if member.RemarkName == remarkName {
+			found = true
+			results = append(results, member)
+		}
+	}
+	return
+}
+
 func (m Members) Search(cond Cond) (results Members, found bool) {
+	if len(cond) == 1 {
+		for k, v := range cond {
+			switch k {
+			case "UserName":
+				if value, ok := v.(string); ok {
+					return m.SearchByNickName(value)
+				}
+			case "NickName":
+				if value, ok := v.(string); ok {
+					return m.SearchByNickName(value)
+				}
+			case "RemarkName":
+				if value, ok := v.(string); ok {
+					return m.SearchByUserName(value)
+				}
+			}
+		}
+	}
+
 	for _, member := range m {
 		value := reflect.ValueOf(member).Elem()
 		for k, v := range cond {

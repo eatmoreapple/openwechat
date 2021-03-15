@@ -36,7 +36,55 @@ func (f Friends) Count() int {
 	return len(f)
 }
 
+func (f Friends) SearchByUserName(username string) (results Friends, found bool) {
+	for _, friend := range f {
+		if friend.UserName == username {
+			found = true
+			results = append(results, friend)
+		}
+	}
+	return
+}
+
+func (f Friends) SearchByNickName(nickName string) (results Friends, found bool) {
+	for _, friend := range f {
+		if friend.NickName == nickName {
+			found = true
+			results = append(results, friend)
+		}
+	}
+	return
+}
+
+func (f Friends) SearchByRemarkName(remarkName string) (results Friends, found bool) {
+	for _, friend := range f {
+		if friend.User.RemarkName == remarkName {
+			found = true
+			results = append(results, friend)
+		}
+	}
+	return
+}
+
 func (f Friends) Search(cond Cond) (friends Friends, found bool) {
+	if len(cond) == 1 {
+		for k, v := range cond {
+			switch k {
+			case "UserName":
+				if value, ok := v.(string); ok {
+					return f.SearchByNickName(value)
+				}
+			case "NickName":
+				if value, ok := v.(string); ok {
+					return f.SearchByNickName(value)
+				}
+			case "RemarkName":
+				if value, ok := v.(string); ok {
+					return f.SearchByUserName(value)
+				}
+			}
+		}
+	}
 	for _, member := range f {
 		value := reflect.ValueOf(member).Elem()
 		for k, v := range cond {
@@ -106,7 +154,57 @@ func (g Groups) Count() int {
 	return len(g)
 }
 
+func (g Groups) SearchByUserName(username string) (results Groups, found bool) {
+	for _, group := range g {
+		if group.UserName == username {
+			found = true
+			results = append(results, group)
+		}
+	}
+	return
+}
+
+func (g Groups) SearchByNickName(nickName string) (results Groups, found bool) {
+	for _, group := range g {
+		if group.NickName == nickName {
+			found = true
+			results = append(results, group)
+		}
+	}
+	return
+}
+
+func (g Groups) SearchByRemarkName(remarkName string) (results Groups, found bool) {
+	for _, group := range g {
+		if group.User.RemarkName == remarkName {
+			found = true
+			results = append(results, group)
+		}
+	}
+	return
+}
+
 func (g Groups) Search(cond Cond) (groups Groups, found bool) {
+
+	if len(cond) == 1 {
+		for k, v := range cond {
+			switch k {
+			case "UserName":
+				if value, ok := v.(string); ok {
+					return g.SearchByNickName(value)
+				}
+			case "NickName":
+				if value, ok := v.(string); ok {
+					return g.SearchByNickName(value)
+				}
+			case "RemarkName":
+				if value, ok := v.(string); ok {
+					return g.SearchByUserName(value)
+				}
+			}
+		}
+	}
+
 	for _, member := range g {
 		value := reflect.ValueOf(member).Elem()
 		for k, v := range cond {
