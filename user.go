@@ -162,7 +162,7 @@ func (s *Self) FileHelper() (*Friend, error) {
 	if err != nil {
 		return nil, err
 	}
-	user, err := members.SearchByUserName("filehelper")
+	user, err := members.searchByUserNameLimit1("filehelper")
 	if err != nil {
 		return nil, err
 	}
@@ -298,7 +298,7 @@ func (m Members) SetOwner(s *Self) {
 	}
 }
 
-func (m Members) SearchByUserName(username string) (*User, error) {
+func (m Members) searchByUserNameLimit1(username string) (*User, error) {
 	for _, member := range m {
 		if member.UserName == username {
 			return member, nil

@@ -61,7 +61,7 @@ func (m *Message) Sender() (*User, error) {
 	if m.FromUserName == m.Bot.self.User.UserName {
 		return m.Bot.self.User, nil
 	}
-	user, err := members.SearchByUserName(m.FromUserName)
+	user, err := members.searchByUserNameLimit1(m.FromUserName)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (m *Message) SenderInGroup() (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-	return group.MemberList.SearchByUserName(m.senderInGroupUserName)
+	return group.MemberList.searchByUserNameLimit1(m.senderInGroupUserName)
 }
 
 func (m *Message) Receiver() (*User, error) {
@@ -89,10 +89,10 @@ func (m *Message) Receiver() (*User, error) {
 		if sender, err := m.Sender(); err != nil {
 			return nil, err
 		} else {
-			return sender.MemberList.SearchByUserName(m.ToUserName)
+			return sender.MemberList.searchByUserNameLimit1(m.ToUserName)
 		}
 	} else {
-		return m.Bot.self.MemberList.SearchByUserName(m.ToUserName)
+		return m.Bot.self.MemberList.searchByUserNameLimit1(m.ToUserName)
 	}
 }
 
