@@ -1,7 +1,6 @@
 package openwechat
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -162,11 +161,11 @@ func (s *Self) FileHelper() (*Friend, error) {
 	if err != nil {
 		return nil, err
 	}
-	user, err := members.searchByUserNameLimit1("filehelper")
-	if err != nil {
-		return nil, err
+	users, found := members.SearchByUserName("filehelper", 1)
+	if !found {
+		return nil, noSuchUserFoundError
 	}
-	s.fileHelper = &Friend{user}
+	s.fileHelper = &Friend{users.First()}
 	return s.fileHelper, nil
 }
 
@@ -292,23 +291,34 @@ func (m Members) Count() int {
 	return len(m)
 }
 
+func (m Members) First() *User {
+	if m.Count() > 0 {
+		return m[0]
+	}
+	return nil
+}
+
+func (m Members) Last() *User {
+	if m.Count() > 0 {
+		return m[m.Count()-1]
+	}
+	return nil
+}
+
 func (m Members) SetOwner(s *Self) {
 	for _, member := range m {
 		member.Self = s
 	}
 }
 
-func (m Members) searchByUserNameLimit1(username string) (*User, error) {
-	for _, member := range m {
-		if member.UserName == username {
-			return member, nil
-		}
+func (m Members) SearchByUserName(username string, limit int) (results Members, found bool) {
+	if limit <= 0 {
+		limit = len(m)
 	}
-	return nil, errors.New("no such user found")
-}
-
-func (m Members) SearchByUserName(username string) (results Members, found bool) {
 	for _, member := range m {
+		if results.Count() == limit {
+			break
+		}
 		if member.UserName == username {
 			found = true
 			results = append(results, member)
@@ -317,8 +327,14 @@ func (m Members) SearchByUserName(username string) (results Members, found bool)
 	return
 }
 
-func (m Members) SearchByNickName(nickName string) (results Members, found bool) {
+func (m Members) SearchByNickName(nickName string, limit int) (results Members, found bool) {
+	if limit <= 0 {
+		limit = len(m)
+	}
 	for _, member := range m {
+		if results.Count() == limit {
+			break
+		}
 		if member.NickName == nickName {
 			found = true
 			results = append(results, member)
@@ -327,8 +343,14 @@ func (m Members) SearchByNickName(nickName string) (results Members, found bool)
 	return
 }
 
-func (m Members) SearchByRemarkName(remarkName string) (results Members, found bool) {
+func (m Members) SearchByRemarkName(remarkName string, limit int) (results Members, found bool) {
+	if limit <= 0 {
+		limit = len(m)
+	}
 	for _, member := range m {
+		if results.Count() == limit {
+			break
+		}
 		if member.RemarkName == remarkName {
 			found = true
 			results = append(results, member)
@@ -337,27 +359,35 @@ func (m Members) SearchByRemarkName(remarkName string) (results Members, found b
 	return
 }
 
-func (m Members) Search(cond Cond) (results Members, found bool) {
+func (m Members) Search(cond Cond, limit int) (results Members, found bool) {
+
 	if len(cond) == 1 {
 		for k, v := range cond {
 			switch k {
 			case "UserName":
 				if value, ok := v.(string); ok {
-					return m.SearchByUserName(value)
+					return m.SearchByUserName(value, limit)
 				}
 			case "NickName":
 				if value, ok := v.(string); ok {
-					return m.SearchByNickName(value)
+					return m.SearchByNickName(value, limit)
 				}
 			case "RemarkName":
 				if value, ok := v.(string); ok {
-					return m.SearchByUserName(value)
+					return m.SearchByUserName(value, limit)
 				}
 			}
 		}
 	}
 
+	if limit <= 0 {
+		limit = len(m)
+	}
+
 	for _, member := range m {
+		if results.Count() == limit {
+			break
+		}
 		value := reflect.ValueOf(member).Elem()
 		var matchCount int
 		for k, v := range cond {

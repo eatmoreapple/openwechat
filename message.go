@@ -61,11 +61,11 @@ func (m *Message) Sender() (*User, error) {
 	if m.FromUserName == m.Bot.self.User.UserName {
 		return m.Bot.self.User, nil
 	}
-	user, err := members.searchByUserNameLimit1(m.FromUserName)
-	if err != nil {
-		return nil, err
+	user, found := members.SearchByUserName(m.FromUserName, 1)
+	if !found {
+		return nil, noSuchUserFoundError
 	}
-	return user.Detail()
+	return user.First().Detail()
 }
 
 // 获取消息在群里面的发送者
@@ -81,7 +81,11 @@ func (m *Message) SenderInGroup() (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-	return group.MemberList.searchByUserNameLimit1(m.senderInGroupUserName)
+	users, found := group.MemberList.SearchByUserName(m.senderInGroupUserName, 1)
+	if !found {
+		return nil, noSuchUserFoundError
+	}
+	return users.First(), nil
 }
 
 func (m *Message) Receiver() (*User, error) {
@@ -89,10 +93,18 @@ func (m *Message) Receiver() (*User, error) {
 		if sender, err := m.Sender(); err != nil {
 			return nil, err
 		} else {
-			return sender.MemberList.searchByUserNameLimit1(m.ToUserName)
+			users, found := sender.MemberList.SearchByUserName(m.ToUserName, 1)
+			if !found {
+				return nil, noSuchUserFoundError
+			}
+			return users.First(), nil
 		}
 	} else {
-		return m.Bot.self.MemberList.searchByUserNameLimit1(m.ToUserName)
+		users, found := m.Bot.self.MemberList.SearchByUserName(m.ToUserName, 1)
+		if !found {
+			return nil, noSuchUserFoundError
+		}
+		return users.First(), nil
 	}
 }
 

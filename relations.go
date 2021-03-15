@@ -36,8 +36,28 @@ func (f Friends) Count() int {
 	return len(f)
 }
 
-func (f Friends) SearchByUserName(username string) (results Friends, found bool) {
+func (f Friends) First() *Friend {
+	if f.Count() > 0 {
+		return f[0]
+	}
+	return nil
+}
+
+func (f Friends) Last() *Friend {
+	if f.Count() > 0 {
+		return f[f.Count()-1]
+	}
+	return nil
+}
+
+func (f Friends) SearchByUserName(username string, limit int) (results Friends, found bool) {
+	if limit <= 0 {
+		limit = f.Count()
+	}
 	for _, friend := range f {
+		if results.Count() == limit {
+			break
+		}
 		if friend.UserName == username {
 			found = true
 			results = append(results, friend)
@@ -46,8 +66,14 @@ func (f Friends) SearchByUserName(username string) (results Friends, found bool)
 	return
 }
 
-func (f Friends) SearchByNickName(nickName string) (results Friends, found bool) {
+func (f Friends) SearchByNickName(nickName string, limit int) (results Friends, found bool) {
+	if limit <= 0 {
+		limit = f.Count()
+	}
 	for _, friend := range f {
+		if results.Count() == limit {
+			break
+		}
 		if friend.NickName == nickName {
 			found = true
 			results = append(results, friend)
@@ -56,8 +82,14 @@ func (f Friends) SearchByNickName(nickName string) (results Friends, found bool)
 	return
 }
 
-func (f Friends) SearchByRemarkName(remarkName string) (results Friends, found bool) {
+func (f Friends) SearchByRemarkName(remarkName string, limit int) (results Friends, found bool) {
+	if limit <= 0 {
+		limit = f.Count()
+	}
 	for _, friend := range f {
+		if results.Count() == limit {
+			break
+		}
 		if friend.User.RemarkName == remarkName {
 			found = true
 			results = append(results, friend)
@@ -66,26 +98,32 @@ func (f Friends) SearchByRemarkName(remarkName string) (results Friends, found b
 	return
 }
 
-func (f Friends) Search(cond Cond) (friends Friends, found bool) {
+func (f Friends) Search(cond Cond, limit int) (results Friends, found bool) {
 	if len(cond) == 1 {
 		for k, v := range cond {
 			switch k {
 			case "UserName":
 				if value, ok := v.(string); ok {
-					return f.SearchByUserName(value)
+					return f.SearchByUserName(value, limit)
 				}
 			case "NickName":
 				if value, ok := v.(string); ok {
-					return f.SearchByNickName(value)
+					return f.SearchByNickName(value, limit)
 				}
 			case "RemarkName":
 				if value, ok := v.(string); ok {
-					return f.SearchByRemarkName(value)
+					return f.SearchByRemarkName(value, limit)
 				}
 			}
 		}
 	}
+	if limit <= 0 {
+		limit = f.Count()
+	}
 	for _, friend := range f {
+		if results.Count() == limit {
+			break
+		}
 		value := reflect.ValueOf(friend).Elem()
 		var matchCount int
 		for k, v := range cond {
@@ -98,7 +136,7 @@ func (f Friends) Search(cond Cond) (friends Friends, found bool) {
 		}
 		if matchCount == len(cond) {
 			found = true
-			friends = append(friends, friend)
+			results = append(results, friend)
 		}
 	}
 	return
@@ -156,8 +194,28 @@ func (g Groups) Count() int {
 	return len(g)
 }
 
-func (g Groups) SearchByUserName(username string) (results Groups, found bool) {
+func (g Groups) First() *Group {
+	if g.Count() > 0 {
+		return g[0]
+	}
+	return nil
+}
+
+func (g Groups) Last() *Group {
+	if g.Count() > 0 {
+		return g[g.Count()-1]
+	}
+	return nil
+}
+
+func (g Groups) SearchByUserName(username string, limit int) (results Groups, found bool) {
+	if limit <= 0 {
+		limit = g.Count()
+	}
 	for _, group := range g {
+		if results.Count() == limit {
+			break
+		}
 		if group.UserName == username {
 			found = true
 			results = append(results, group)
@@ -166,8 +224,14 @@ func (g Groups) SearchByUserName(username string) (results Groups, found bool) {
 	return
 }
 
-func (g Groups) SearchByNickName(nickName string) (results Groups, found bool) {
+func (g Groups) SearchByNickName(nickName string, limit int) (results Groups, found bool) {
+	if limit <= 0 {
+		limit = g.Count()
+	}
 	for _, group := range g {
+		if results.Count() == limit {
+			break
+		}
 		if group.NickName == nickName {
 			found = true
 			results = append(results, group)
@@ -176,8 +240,14 @@ func (g Groups) SearchByNickName(nickName string) (results Groups, found bool) {
 	return
 }
 
-func (g Groups) SearchByRemarkName(remarkName string) (results Groups, found bool) {
+func (g Groups) SearchByRemarkName(remarkName string, limit int) (results Groups, found bool) {
+	if limit <= 0 {
+		limit = g.Count()
+	}
 	for _, group := range g {
+		if results.Count() == limit {
+			break
+		}
 		if group.User.RemarkName == remarkName {
 			found = true
 			results = append(results, group)
@@ -186,28 +256,33 @@ func (g Groups) SearchByRemarkName(remarkName string) (results Groups, found boo
 	return
 }
 
-func (g Groups) Search(cond Cond) (results Groups, found bool) {
+func (g Groups) Search(cond Cond, limit int) (results Groups, found bool) {
 
 	if len(cond) == 1 {
 		for k, v := range cond {
 			switch k {
 			case "UserName":
 				if value, ok := v.(string); ok {
-					return g.SearchByUserName(value)
+					return g.SearchByUserName(value, limit)
 				}
 			case "NickName":
 				if value, ok := v.(string); ok {
-					return g.SearchByNickName(value)
+					return g.SearchByNickName(value, limit)
 				}
 			case "RemarkName":
 				if value, ok := v.(string); ok {
-					return g.SearchByRemarkName(value)
+					return g.SearchByRemarkName(value, limit)
 				}
 			}
 		}
 	}
-
+	if limit <= 0 {
+		limit = g.Count()
+	}
 	for _, group := range g {
+		if g.Count() == limit {
+			break
+		}
 		value := reflect.ValueOf(group).Elem()
 		var matchCount int
 		for k, v := range cond {

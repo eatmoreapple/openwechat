@@ -1,6 +1,9 @@
 package openwechat
 
-import "regexp"
+import (
+	"errors"
+	"regexp"
+)
 
 var (
 	uuidRegexp        = regexp.MustCompile(`uuid = "(.*?)";`)
@@ -32,7 +35,7 @@ const (
 	webWxGetMsgImgUrl       = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxgetmsgimg"
 	webWxGetVoiceUrl        = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxgetvoice"
 	webWxGetVideoUrl        = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxgetvideo"
-	webWxLogoutUrl        = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxlogout"
+	webWxLogoutUrl          = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxlogout"
 	webWxGetMediaUrl        = "https://file.wx2.qq.com/cgi-bin/mmwebwx-bin/webwxgetmedia"
 
 	jsonContentType = "application/json; charset=utf-8"
@@ -51,4 +54,9 @@ const (
 	statusScanned = "201"
 	statusTimeout = "400"
 	statusWait    = "408"
+)
+
+// errors
+var (
+	noSuchUserFoundError = errors.New("no such user found")
 )
