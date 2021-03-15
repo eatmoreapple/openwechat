@@ -80,7 +80,7 @@ func (f Friends) Search(cond Cond) (friends Friends, found bool) {
 				}
 			case "RemarkName":
 				if value, ok := v.(string); ok {
-					return f.SearchByUserName(value)
+					return f.SearchByRemarkName(value)
 				}
 			}
 		}
@@ -199,7 +199,7 @@ func (g Groups) Search(cond Cond) (groups Groups, found bool) {
 				}
 			case "RemarkName":
 				if value, ok := v.(string); ok {
-					return g.SearchByUserName(value)
+					return g.SearchByRemarkName(value)
 				}
 			}
 		}

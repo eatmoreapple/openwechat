@@ -201,7 +201,7 @@ func (s *Self) updateFriends(update ...bool) error {
 			return err
 		}
 	}
-	friends := make(Friends, 0)
+	var friends Friends
 	for _, member := range s.members {
 		if isFriend(*member) {
 			friend := &Friend{member}
@@ -224,7 +224,7 @@ func (s *Self) updateGroups(update ...bool) error {
 			return err
 		}
 	}
-	groups := make(Groups, 0)
+	var groups Groups
 	for _, member := range s.members {
 		if isGroup(*member) {
 			group := &Group{member}
@@ -253,7 +253,7 @@ func (s *Self) UpdateMembersDetail() error {
 	} else {
 		times = count / 50
 	}
-	newMembers := make(Members, 0)
+	var newMembers Members
 	request := s.Bot.storage.GetBaseRequest()
 	var pMembers Members
 	// 分情况依次更新
