@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"reflect"
 )
 
 type User struct {
@@ -306,30 +307,22 @@ func (m Members) SearchByUserName(username string) (*User, error) {
 	return nil, errors.New("no such user found")
 }
 
-func (m Members) SearchByRemarkName(name string) (Members, error) {
-	if m.Count() == 0 {
-		return nil, nil
-	}
-	self := m[0].Self
-	return searchByRemarkName(name, self)
-}
-
-func searchByRemarkName(name string, self *Self) (Members, error) {
-	if err := self.UpdateMembersDetail(); err != nil {
-		return nil, err
-	}
-	members, err := self.Members()
-	if err != nil {
-		return nil, err
-	}
-	var newMembers Members
-	for _, member := range members {
-		if member.RemarkName == name {
-			if newMembers == nil {
-				newMembers = make(Members, 0)
+func (m Members) Search(cond Cond) (results Members, found bool) {
+	for _, member := range m {
+		value := reflect.ValueOf(member).Elem()
+		for k, v := range cond {
+			if field := value.FieldByName(k); field.IsValid() {
+				if field.Interface() == v {
+					found = true
+					if results == nil {
+						results = make(Members, 0)
+					}
+					results = append(results, member)
+				}
 			}
-			newMembers = append(newMembers, member)
 		}
 	}
-	return newMembers, nil
+	return
 }
+
+type Cond map[string]interface{}

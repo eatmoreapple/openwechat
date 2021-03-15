@@ -11,6 +11,7 @@ func TestDefaultBot(t *testing.T) {
 		if message.Content == "logout" {
 			bot.Logout()
 		}
+		fmt.Println(message.Content)
 	}
 	bot.RegisterMessageHandler(messageHandler)
 	bot.UUIDCallback = PrintlnQrcodeUrl
@@ -18,6 +19,11 @@ func TestDefaultBot(t *testing.T) {
 		fmt.Println(err)
 		return
 	}
+	self, _ := bot.GetCurrentUser()
+	group, _ := self.Groups()
+	friends, _ := self.Friends()
+	fmt.Println(group.Search(Cond{"NickName": "厉害了"}))
+	fmt.Println(friends.Search(Cond{"RemarkName": "阿青"}))
 	fmt.Println(bot.Block())
 }
 
@@ -75,30 +81,6 @@ func TestBotMessageSender(t *testing.T) {
 		return
 	}
 	bot.Block()
-}
-
-func TestFriends_SearchByRemarkName(t *testing.T) {
-	messageHandler := func(message *Message) {
-		fmt.Println(message)
-	}
-	bot := DefaultBot()
-	bot.RegisterMessageHandler(messageHandler)
-	bot.UUIDCallback = PrintlnQrcodeUrl
-	if err := bot.Login(); err != nil {
-		fmt.Println(err)
-		return
-	}
-	self, _ := bot.GetCurrentUser()
-	friends, err := self.Friends()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	d, err := friends[0].Detail()
-	fmt.Println(d, err)
-	firends2, err := friends.SearchByRemarkName("66")
-	fmt.Println(firends2)
-	fmt.Println(err)
 }
 
 func TestUser_GetAvatarResponse(t *testing.T) {

@@ -3,6 +3,7 @@ package openwechat
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 )
 
@@ -35,24 +36,40 @@ func (f Friends) Count() int {
 	return len(f)
 }
 
-func (f Friends) SearchByRemarkName(name string) (Friends, error) {
-	if f.Count() == 0 {
-		return nil, nil
-	}
-	self := f[0].Self
-	members, err := searchByRemarkName(name, self)
-	if err != nil {
-		return nil, err
-	}
-	var newFriends Friends
-	for _, member := range members {
-		friend := &Friend{member}
-		if newFriends == nil {
-			newFriends = make(Friends, 0)
+func (f Friends) Search(cond Cond) (friends Friends, found bool) {
+	for _, member := range f {
+		value := reflect.ValueOf(member).Elem()
+		for k, v := range cond {
+			if field := value.FieldByName(k); field.IsValid() {
+				if field.Interface() == v {
+					found = true
+					if friends == nil {
+						friends = make(Friends, 0)
+					}
+					friends = append(friends, member)
+				}
+			}
 		}
-		newFriends = append(newFriends, friend)
 	}
-	return newFriends, nil
+	return
+}
+
+func (f Friends) SendMsg(msg *SendMessage) error {
+	for _, friend := range f {
+		if err := friend.SendMsg(msg); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (f Friends) SendText(text string) error {
+	for _, friend := range f {
+		if err := friend.SendText(text); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 type Group struct{ *User }
@@ -87,6 +104,24 @@ type Groups []*Group
 
 func (g Groups) Count() int {
 	return len(g)
+}
+
+func (g Groups) Search(cond Cond) (groups Groups, found bool) {
+	for _, member := range g {
+		value := reflect.ValueOf(member).Elem()
+		for k, v := range cond {
+			if field := value.FieldByName(k); field.IsValid() {
+				if field.Interface() == v {
+					found = true
+					if groups == nil {
+						groups = make(Groups, 0)
+					}
+					groups = append(groups, member)
+				}
+			}
+		}
+	}
+	return
 }
 
 func isFriend(user User) bool {
