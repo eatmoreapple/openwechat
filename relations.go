@@ -3,7 +3,6 @@ package openwechat
 import (
 	"fmt"
 	"os"
-	"reflect"
 	"strings"
 )
 
@@ -50,93 +49,37 @@ func (f Friends) Last() *Friend {
 	return nil
 }
 
-func (f Friends) SearchByUserName(username string, limit int) (results Friends, found bool) {
+func (f Friends) SearchByUserName(limit int, username string) (results Friends) {
+	return f.Search(limit, func(friend *Friend) bool { return friend.User.UserName == username })
+}
+
+func (f Friends) SearchByNickName(limit int, nickName string) (results Friends) {
+	return f.Search(limit, func(friend *Friend) bool { return friend.User.NickName == nickName })
+}
+
+func (f Friends) SearchByRemarkName(limit int, remarkName string) (results Friends) {
+	return f.Search(limit, func(friend *Friend) bool { return friend.User.RemarkName == remarkName })
+}
+
+func (f Friends) Search(limit int, condFuncList ...func(friend *Friend) bool) (results Friends) {
+	if condFuncList == nil {
+		return f
+	}
 	if limit <= 0 {
 		limit = f.Count()
 	}
-	for _, friend := range f {
+	for _, member := range f {
 		if results.Count() == limit {
 			break
 		}
-		if friend.UserName == username {
-			found = true
-			results = append(results, friend)
-		}
-	}
-	return
-}
-
-func (f Friends) SearchByNickName(nickName string, limit int) (results Friends, found bool) {
-	if limit <= 0 {
-		limit = f.Count()
-	}
-	for _, friend := range f {
-		if results.Count() == limit {
-			break
-		}
-		if friend.NickName == nickName {
-			found = true
-			results = append(results, friend)
-		}
-	}
-	return
-}
-
-func (f Friends) SearchByRemarkName(remarkName string, limit int) (results Friends, found bool) {
-	if limit <= 0 {
-		limit = f.Count()
-	}
-	for _, friend := range f {
-		if results.Count() == limit {
-			break
-		}
-		if friend.User.RemarkName == remarkName {
-			found = true
-			results = append(results, friend)
-		}
-	}
-	return
-}
-
-func (f Friends) Search(cond Cond, limit int) (results Friends, found bool) {
-	if len(cond) == 1 {
-		for k, v := range cond {
-			switch k {
-			case "UserName":
-				if value, ok := v.(string); ok {
-					return f.SearchByUserName(value, limit)
-				}
-			case "NickName":
-				if value, ok := v.(string); ok {
-					return f.SearchByNickName(value, limit)
-				}
-			case "RemarkName":
-				if value, ok := v.(string); ok {
-					return f.SearchByRemarkName(value, limit)
-				}
+		var passCount int
+		for _, condFunc := range condFuncList {
+			if condFunc(member) {
+				passCount++
 			}
 		}
-	}
-	if limit <= 0 {
-		limit = f.Count()
-	}
-	for _, friend := range f {
-		if results.Count() == limit {
-			break
-		}
-		value := reflect.ValueOf(friend).Elem()
-		var matchCount int
-		for k, v := range cond {
-			if field := value.FieldByName(k); field.IsValid() {
-				if field.Interface() != v {
-					break
-				}
-				matchCount++
-			}
-		}
-		if matchCount == len(cond) {
-			found = true
-			results = append(results, friend)
+		if passCount == len(condFuncList) {
+			results = append(results, member)
 		}
 	}
 	return
@@ -208,94 +151,37 @@ func (g Groups) Last() *Group {
 	return nil
 }
 
-func (g Groups) SearchByUserName(username string, limit int) (results Groups, found bool) {
+func (g Groups) SearchByUserName(limit int, username string) (results Groups) {
+	return g.Search(limit, func(group *Group) bool { return group.UserName == username })
+}
+
+func (g Groups) SearchByNickName(limit int, nickName string) (results Groups) {
+	return g.Search(limit, func(group *Group) bool { return group.NickName == nickName })
+}
+
+func (g Groups) SearchByRemarkName(limit int, remarkName string) (results Groups) {
+	return g.Search(limit, func(group *Group) bool { return group.RemarkName == remarkName })
+}
+
+func (g Groups) Search(limit int, condFuncList ...func(group *Group) bool) (results Groups) {
+	if condFuncList == nil {
+		return g
+	}
 	if limit <= 0 {
 		limit = g.Count()
 	}
-	for _, group := range g {
+	for _, member := range g {
 		if results.Count() == limit {
 			break
 		}
-		if group.UserName == username {
-			found = true
-			results = append(results, group)
-		}
-	}
-	return
-}
-
-func (g Groups) SearchByNickName(nickName string, limit int) (results Groups, found bool) {
-	if limit <= 0 {
-		limit = g.Count()
-	}
-	for _, group := range g {
-		if results.Count() == limit {
-			break
-		}
-		if group.NickName == nickName {
-			found = true
-			results = append(results, group)
-		}
-	}
-	return
-}
-
-func (g Groups) SearchByRemarkName(remarkName string, limit int) (results Groups, found bool) {
-	if limit <= 0 {
-		limit = g.Count()
-	}
-	for _, group := range g {
-		if results.Count() == limit {
-			break
-		}
-		if group.User.RemarkName == remarkName {
-			found = true
-			results = append(results, group)
-		}
-	}
-	return
-}
-
-func (g Groups) Search(cond Cond, limit int) (results Groups, found bool) {
-
-	if len(cond) == 1 {
-		for k, v := range cond {
-			switch k {
-			case "UserName":
-				if value, ok := v.(string); ok {
-					return g.SearchByUserName(value, limit)
-				}
-			case "NickName":
-				if value, ok := v.(string); ok {
-					return g.SearchByNickName(value, limit)
-				}
-			case "RemarkName":
-				if value, ok := v.(string); ok {
-					return g.SearchByRemarkName(value, limit)
-				}
+		var passCount int
+		for _, condFunc := range condFuncList {
+			if condFunc(member) {
+				passCount++
 			}
 		}
-	}
-	if limit <= 0 {
-		limit = g.Count()
-	}
-	for _, group := range g {
-		if g.Count() == limit {
-			break
-		}
-		value := reflect.ValueOf(group).Elem()
-		var matchCount int
-		for k, v := range cond {
-			if field := value.FieldByName(k); field.IsValid() {
-				if field.Interface() != v {
-					break
-				}
-				matchCount++
-			}
-		}
-		if matchCount == len(cond) {
-			found = true
-			results = append(results, group)
+		if passCount == len(condFuncList) {
+			results = append(results, member)
 		}
 	}
 	return

@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"reflect"
 )
 
 type User struct {
@@ -161,8 +160,8 @@ func (s *Self) FileHelper() (*Friend, error) {
 	if err != nil {
 		return nil, err
 	}
-	users, found := members.SearchByUserName("filehelper", 1)
-	if !found {
+	users := members.SearchByUserName(1, "filehelper")
+	if users == nil {
 		return nil, noSuchUserFoundError
 	}
 	s.fileHelper = &Friend{users.First()}
@@ -311,99 +310,40 @@ func (m Members) SetOwner(s *Self) {
 	}
 }
 
-func (m Members) SearchByUserName(username string, limit int) (results Members, found bool) {
+func (m Members) SearchByUserName(limit int, username string) (results Members) {
+	return m.Search(limit, func(user *User) bool { return user.UserName == username })
+}
+
+func (m Members) SearchByNickName(limit int, nickName string) (results Members) {
+	return m.Search(limit, func(user *User) bool { return user.NickName == nickName })
+}
+
+func (m Members) SearchByRemarkName(limit int, remarkName string) (results Members) {
+	return m.Search(limit, func(user *User) bool { return user.RemarkName == remarkName })
+}
+
+func (m Members) Search(limit int, condFuncList ...func(user *User) bool) (results Members) {
+	if condFuncList == nil {
+		return m
+	}
 	if limit <= 0 {
-		limit = len(m)
+		limit = m.Count()
 	}
 	for _, member := range m {
 		if results.Count() == limit {
 			break
 		}
-		if member.UserName == username {
-			found = true
-			results = append(results, member)
-		}
-	}
-	return
-}
-
-func (m Members) SearchByNickName(nickName string, limit int) (results Members, found bool) {
-	if limit <= 0 {
-		limit = len(m)
-	}
-	for _, member := range m {
-		if results.Count() == limit {
-			break
-		}
-		if member.NickName == nickName {
-			found = true
-			results = append(results, member)
-		}
-	}
-	return
-}
-
-func (m Members) SearchByRemarkName(remarkName string, limit int) (results Members, found bool) {
-	if limit <= 0 {
-		limit = len(m)
-	}
-	for _, member := range m {
-		if results.Count() == limit {
-			break
-		}
-		if member.RemarkName == remarkName {
-			found = true
-			results = append(results, member)
-		}
-	}
-	return
-}
-
-func (m Members) Search(cond Cond, limit int) (results Members, found bool) {
-
-	if len(cond) == 1 {
-		for k, v := range cond {
-			switch k {
-			case "UserName":
-				if value, ok := v.(string); ok {
-					return m.SearchByUserName(value, limit)
-				}
-			case "NickName":
-				if value, ok := v.(string); ok {
-					return m.SearchByNickName(value, limit)
-				}
-			case "RemarkName":
-				if value, ok := v.(string); ok {
-					return m.SearchByUserName(value, limit)
-				}
+		var passCount int
+		for _, condFunc := range condFuncList {
+			if condFunc(member) {
+				passCount++
+			} else {
+				break
 			}
 		}
-	}
-
-	if limit <= 0 {
-		limit = len(m)
-	}
-
-	for _, member := range m {
-		if results.Count() == limit {
-			break
-		}
-		value := reflect.ValueOf(member).Elem()
-		var matchCount int
-		for k, v := range cond {
-			if field := value.FieldByName(k); field.IsValid() {
-				if field.Interface() != v {
-					break
-				}
-				matchCount++
-			}
-		}
-		if matchCount == len(cond) {
-			found = true
+		if passCount == len(condFuncList) {
 			results = append(results, member)
 		}
 	}
 	return
 }
-
-type Cond map[string]interface{}

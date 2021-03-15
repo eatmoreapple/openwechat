@@ -61,8 +61,8 @@ func (m *Message) Sender() (*User, error) {
 	if m.FromUserName == m.Bot.self.User.UserName {
 		return m.Bot.self.User, nil
 	}
-	user, found := members.SearchByUserName(m.FromUserName, 1)
-	if !found {
+	user := members.SearchByUserName(1, m.FromUserName)
+	if user == nil {
 		return nil, noSuchUserFoundError
 	}
 	return user.First().Detail()
@@ -81,8 +81,8 @@ func (m *Message) SenderInGroup() (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-	users, found := group.MemberList.SearchByUserName(m.senderInGroupUserName, 1)
-	if !found {
+	users := group.MemberList.SearchByUserName(1, m.senderInGroupUserName)
+	if users == nil {
 		return nil, noSuchUserFoundError
 	}
 	return users.First(), nil
@@ -93,15 +93,15 @@ func (m *Message) Receiver() (*User, error) {
 		if sender, err := m.Sender(); err != nil {
 			return nil, err
 		} else {
-			users, found := sender.MemberList.SearchByUserName(m.ToUserName, 1)
-			if !found {
+			users := sender.MemberList.SearchByUserName(1, m.ToUserName)
+			if users == nil {
 				return nil, noSuchUserFoundError
 			}
 			return users.First(), nil
 		}
 	} else {
-		users, found := m.Bot.self.MemberList.SearchByUserName(m.ToUserName, 1)
-		if !found {
+		users := m.Bot.self.MemberList.SearchByUserName(1, m.ToUserName)
+		if users == nil {
 			return nil, noSuchUserFoundError
 		}
 		return users.First(), nil

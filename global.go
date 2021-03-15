@@ -60,3 +60,11 @@ const (
 var (
 	noSuchUserFoundError = errors.New("no such user found")
 )
+
+const ALL = 0
+
+// sex
+const (
+	MALE   = 1
+	FEMALE = 2
+)
