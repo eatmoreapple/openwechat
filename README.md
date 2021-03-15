@@ -138,6 +138,36 @@ bot.Block()
 
 
 
+#### 搜索好友
+
+```go
+friends, err := self.Friends()
+if err != nil {
+    fmt.Println(err)
+    return
+}
+results, exist := friends.Search(openwechat.Cond{"RemarkName": "多吃点苹果"})  // 返回所有符合条件的好友
+results.SendText("test...")
+```
+
+
+
+#### 搜索群组
+
+```go
+groups, err := self.Groups()
+if err != nil {
+    fmt.Println(err)
+    return
+}
+results, exist := groups.Search(openwechat.Cond{"NickName": "myGroup"})  // 返回所有符合条件的群组
+results.SendText("test...")
+```
+
+
+
+
+
 更多功能请在代码中探索。。。
 
 // todo: add more support 
