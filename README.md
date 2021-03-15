@@ -146,8 +146,8 @@ if err != nil {
     fmt.Println(err)
     return
 }
-results, exist := friends.Search(openwechat.Cond{"RemarkName": "多吃点苹果"})  // 返回所有符合条件的好友
-results.SendText("test...")
+results := friends.Search(1, func(friend *Friend) bool { return friend.User.RemarkName == "阿青" }, func(friend *Friend) bool { return friend.Sex == 2 }) // 查找数量为1符合条件的好友
+fmt.Println(results)
 ```
 
 
@@ -160,8 +160,8 @@ if err != nil {
     fmt.Println(err)
     return
 }
-results, exist := groups.Search(openwechat.Cond{"NickName": "myGroup"})  // 返回所有符合条件的群组
-results.SendText("test...")
+results := group.Search(1, func(group *Group) bool { return group.NickName == "厉害了" }) 
+fmt.Println(results)
 ```
 
 
