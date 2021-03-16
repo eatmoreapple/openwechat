@@ -101,7 +101,7 @@ func (u *User) Detail() (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-	user := newMembers[0]
+	user := newMembers.First()
 	user.Self = u.Self
 	return user, nil
 }

@@ -102,7 +102,7 @@ type UserDetailItem struct {
 type UserDetailItemList []UserDetailItem
 
 func NewUserDetailItemList(members Members) UserDetailItemList {
-	list := make(UserDetailItemList, 0)
+	var list UserDetailItemList
 	for _, member := range members {
 		item := UserDetailItem{UserName: member.UserName, EncryChatRoomId: member.EncryChatRoomId}
 		list = append(list, item)
@@ -141,7 +141,7 @@ func (s *SyncCheckResponse) Error() string {
 	case "1203":
 		return "login env error"
 	case "1205":
-		return "op too often"
+		return "opt too often"
 	default:
 		return fmt.Sprintf("sync check response error code %s", s.RetCode)
 	}

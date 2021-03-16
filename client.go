@@ -121,7 +121,7 @@ func (c *Client) SyncCheck(info LoginInfo, response WebInitResponse) (*http.Resp
 	params.Add("uin", strconv.Itoa(info.WxUin))
 	params.Add("deviceid", GetRandomDeviceId())
 	params.Add("_", strconv.FormatInt(time.Now().Unix(), 10))
-	syncKeyStringSlice := make([]string, 0)
+	var syncKeyStringSlice []string
 	// 将SyncKey里面的元素按照特定的格式拼接起来
 	for _, item := range response.SyncKey.List {
 		i := fmt.Sprintf("%d_%d", item.Key, item.Val)
