@@ -48,7 +48,7 @@ func main() {
 	bot := openwechat.DefaultBot()
     
     // 注册消息处理函数
-	bot.RegisterMessageHandler(messageHandler)
+	bot.MessageHandler = messageHandler
     // 设置默认的登录回调
     // 可以设置通过该uuid获取到登录的二维码
 	bot.UUIDCallback = openwechat.PrintlnQrcodeUrl
