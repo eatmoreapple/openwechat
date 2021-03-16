@@ -6,15 +6,15 @@ import (
 )
 
 type Bot struct {
-	Caller               *Caller
-	self                 *Self
-	storage              WechatStorage
-	ScanCallBack         func(body []byte)
-	LoginCallBack        func(body []byte)
-	UUIDCallback         func(uuid string)
-	messageHandlerGroups *MessageHandlerGroup
-	err                  error
-	exit                 chan bool
+	Caller         *Caller
+	self           *Self
+	storage        WechatStorage
+	ScanCallBack   func(body []byte)
+	LoginCallBack  func(body []byte)
+	UUIDCallback   func(uuid string)
+	MessageHandler func(msg *Message)
+	err            error
+	exit           chan bool
 }
 
 // 判断当前用户是否正常在线
@@ -175,26 +175,17 @@ func (b *Bot) getMessage() error {
 		// 根据不同的消息类型来进行处理，方便后续统一调用
 		message.init(b)
 		// 调用自定义的处理方法
-		b.messageHandlerGroups.ProcessMessage(message)
+		if handler := b.MessageHandler; handler != nil {
+			handler(message)
+		}
 	}
 	return nil
 }
 
 func (b *Bot) prepare() {
 	if b.storage == nil {
-		panic("WechatStorage can not be nil")
+		b.storage = NewSimpleWechatStorage()
 	}
-	if b.messageHandlerGroups == nil {
-		panic("message can not be nil")
-	}
-}
-
-// 注册消息处理的函数
-func (b *Bot) RegisterMessageHandler(handler MessageHandler) {
-	if b.messageHandlerGroups == nil {
-		b.messageHandlerGroups = &MessageHandlerGroup{}
-	}
-	b.messageHandlerGroups.RegisterHandler(handler)
 }
 
 // 当消息同步发生了错误或者用户主动在手机上退出，该方法会立即返回，否则会一直阻塞
