@@ -70,12 +70,15 @@ func (b *Bot) Login() error {
 }
 
 func (b *Bot) Logout() error {
-	info := b.storage.GetLoginInfo()
-	if err := b.Caller.Logout(info); err != nil {
-		return err
+	if b.Alive() {
+		info := b.storage.GetLoginInfo()
+		if err := b.Caller.Logout(info); err != nil {
+			return err
+		}
+		b.stopAsyncCALL(errors.New("logout"))
+		return nil
 	}
-	b.stopAsyncCALL(errors.New("logout"))
-	return nil
+	return errors.New("user not login")
 }
 
 // 登录逻辑
