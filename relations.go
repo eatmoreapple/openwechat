@@ -13,28 +13,34 @@ func (f Friend) String() string {
 	return fmt.Sprintf("<Friend:%s>", f.NickName)
 }
 
+// 重命名当前好友
 func (f *Friend) RemarkName(name string) error {
 	return f.remakeName(name)
 }
 
+// 发送自定义消息
 func (f *Friend) SendMsg(msg *SendMessage) error {
 	return f.sendMsg(msg)
 }
 
+// 发送文本消息
 func (f *Friend) SendText(content string) error {
 	return f.sendText(content)
 }
 
+// 发送图片消息
 func (f *Friend) SendImage(file *os.File) error {
 	return f.sendImage(file)
 }
 
 type Friends []*Friend
 
+// 获取好友的数量
 func (f Friends) Count() int {
 	return len(f)
 }
 
+// 获取第一个好友
 func (f Friends) First() *Friend {
 	if f.Count() > 0 {
 		return f[0]
@@ -42,6 +48,7 @@ func (f Friends) First() *Friend {
 	return nil
 }
 
+// 获取最后一个好友
 func (f Friends) Last() *Friend {
 	if f.Count() > 0 {
 		return f[f.Count()-1]
@@ -49,18 +56,22 @@ func (f Friends) Last() *Friend {
 	return nil
 }
 
+// 根据用户名查找好友
 func (f Friends) SearchByUserName(limit int, username string) (results Friends) {
 	return f.Search(limit, func(friend *Friend) bool { return friend.User.UserName == username })
 }
 
+// 根据昵称查找好友
 func (f Friends) SearchByNickName(limit int, nickName string) (results Friends) {
 	return f.Search(limit, func(friend *Friend) bool { return friend.User.NickName == nickName })
 }
 
+// 根据备注查找好友
 func (f Friends) SearchByRemarkName(limit int, remarkName string) (results Friends) {
 	return f.Search(limit, func(friend *Friend) bool { return friend.User.RemarkName == remarkName })
 }
 
+// 根据自定义条件查找好友
 func (f Friends) Search(limit int, condFuncList ...func(friend *Friend) bool) (results Friends) {
 	if condFuncList == nil {
 		return f
@@ -85,6 +96,7 @@ func (f Friends) Search(limit int, condFuncList ...func(friend *Friend) bool) (r
 	return
 }
 
+// 向slice的好友依次发送消息
 func (f Friends) SendMsg(msg *SendMessage) error {
 	for _, friend := range f {
 		if err := friend.SendMsg(msg); err != nil {
@@ -94,6 +106,7 @@ func (f Friends) SendMsg(msg *SendMessage) error {
 	return nil
 }
 
+// 向slice的好友依次发送文本消息
 func (f Friends) SendText(text string) error {
 	for _, friend := range f {
 		if err := friend.SendText(text); err != nil {

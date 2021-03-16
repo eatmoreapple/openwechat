@@ -88,6 +88,7 @@ func (m *Message) SenderInGroup() (*User, error) {
 	return users.First(), nil
 }
 
+// 获取消息的接收者
 func (m *Message) Receiver() (*User, error) {
 	if m.IsSendByGroup() {
 		if sender, err := m.Sender(); err != nil {
@@ -187,10 +188,12 @@ func (m *Message) IsNotify() bool {
 	return m.MsgType == 51 && m.StatusNotifyCode != 0
 }
 
+// 判断消息是否为文件类型的消息
 func (m *Message) HasFile() bool {
 	return m.IsPicture() || m.IsVoice() || m.IsVideo() || m.IsMedia()
 }
 
+// 获取文件消息的文件
 func (m *Message) GetFile() (*http.Response, error) {
 	if !m.HasFile() {
 		return nil, errors.New("invalid message type")
@@ -210,7 +213,8 @@ func (m *Message) GetFile() (*http.Response, error) {
 	return nil, errors.New("unsupported type")
 }
 
-// 用在多个messageHandler之间传递信息
+// 往消息上下文中设置值
+// goroutine safe
 func (m *Message) Set(key string, value interface{}) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -220,6 +224,8 @@ func (m *Message) Set(key string, value interface{}) {
 	m.item[key] = value
 }
 
+// 从消息上下文中获取值
+// goroutine safe
 func (m *Message) Get(key string) (value interface{}, exist bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -227,6 +233,7 @@ func (m *Message) Get(key string) (value interface{}, exist bool) {
 	return
 }
 
+// 消息初始化,根据不同的消息作出不同的处理
 func (m *Message) init(bot *Bot) {
 	m.Bot = bot
 	if m.IsSendByGroup() {

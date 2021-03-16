@@ -350,6 +350,7 @@ func (c *Client) WebWxVerifyUser(storage WechatStorage, info RecommendInfo, veri
 	return c.Do(req)
 }
 
+// 获取图片消息的图片响应
 func (c *Client) WebWxGetMsgImg(msg *Message, info LoginInfo) (*http.Response, error) {
 	path, _ := url.Parse(webWxGetMsgImgUrl)
 	params := url.Values{}
@@ -360,6 +361,7 @@ func (c *Client) WebWxGetMsgImg(msg *Message, info LoginInfo) (*http.Response, e
 	return c.Get(path.String())
 }
 
+// 获取语音消息的语音响应
 func (c *Client) WebWxGetVoice(msg *Message, info LoginInfo) (*http.Response, error) {
 	path, _ := url.Parse(webWxGetVoiceUrl)
 	params := url.Values{}
@@ -369,6 +371,7 @@ func (c *Client) WebWxGetVoice(msg *Message, info LoginInfo) (*http.Response, er
 	return c.Get(path.String())
 }
 
+// 获取视频消息的视频响应
 func (c *Client) WebWxGetVideo(msg *Message, info LoginInfo) (*http.Response, error) {
 	path, _ := url.Parse(webWxGetVideoUrl)
 	params := url.Values{}
@@ -378,6 +381,7 @@ func (c *Client) WebWxGetVideo(msg *Message, info LoginInfo) (*http.Response, er
 	return c.Get(path.String())
 }
 
+// 获取文件消息的文件响应
 func (c *Client) WebWxGetMedia(msg *Message, info LoginInfo) (*http.Response, error) {
 	path, _ := url.Parse(webWxGetMediaUrl)
 	params := url.Values{}
@@ -391,6 +395,7 @@ func (c *Client) WebWxGetMedia(msg *Message, info LoginInfo) (*http.Response, er
 	return c.Get(path.String())
 }
 
+// 用户退出
 func (c *Client) Logout(info LoginInfo) (*http.Response, error) {
 	path, _ := url.Parse(webWxLogoutUrl)
 	params := url.Values{}
