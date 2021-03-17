@@ -88,7 +88,7 @@ func (u *User) sendImage(file *os.File) error {
 	return u.Self.Bot.Caller.WebWxSendImageMsg(file, request, info, u.Self.UserName, u.UserName)
 }
 
-func (u *User) remakeName(remarkName string) error {
+func (u *User) setRemarkName(remarkName string) error {
 	request := u.Self.Bot.storage.GetBaseRequest()
 	return u.Self.Bot.Caller.WebWxOplog(request, remarkName, u.UserName)
 }

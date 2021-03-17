@@ -14,8 +14,8 @@ func (f Friend) String() string {
 }
 
 // 重命名当前好友
-func (f *Friend) RemarkName(name string) error {
-	return f.remakeName(name)
+func (f *Friend) SetRemarkName(name string) error {
+	return f.setRemarkName(name)
 }
 
 // 发送自定义消息

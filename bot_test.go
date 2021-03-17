@@ -24,7 +24,7 @@ func TestDefaultBot(t *testing.T) {
 	group, _ := self.Groups()
 	friends, _ := self.Friends()
 	fmt.Println(group.Search(1, func(group *Group) bool { return group.NickName == "厉害了" }))
-	results := friends.Search(1, func(friend *Friend) bool { return friend.User.RemarkName == "阿青" }, func(friend *Friend) bool { return friend.Sex == 2 })
+	results := friends.Search(1, func(friend *Friend) bool { return friend.RemarkName == "阿青" }, func(friend *Friend) bool { return friend.Sex == 2 })
 	fmt.Println(results)
 	fmt.Println(bot.Block())
 }
