@@ -1,3 +1,3 @@
-module github.com/Ivy1996-encode/openwechat
+module github.com/eatMoreApple/openwechat
 
 go 1.15
