@@ -16,7 +16,7 @@
 `go get`
 
 ```shell
-go get github.com/Ivy1996-encode/openwechat
+go get github.com/eatMoreApple/openwechat
 ```
 
 
@@ -24,7 +24,7 @@ go get github.com/Ivy1996-encode/openwechat
 `go mod`
 
 ```shell
-require github.com/Ivy1996-encode/openwechat
+require github.com/eatMoreApple/openwechat
 ```
 
 
@@ -38,7 +38,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/Ivy1996-encode/openwechat"
+	"github.com/eatMoreApple/openwechat"
 )
 
 func main() {
