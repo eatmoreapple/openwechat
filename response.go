@@ -1,9 +1,9 @@
 package openwechat
 
 import (
+	"bytes"
 	"encoding/json"
 	"encoding/xml"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -46,5 +46,9 @@ func (r *ReturnResponse) ReadAll() ([]byte, error) {
 	if r.Err() != nil {
 		return nil, r.Err()
 	}
-	return ioutil.ReadAll(r.Body)
+	buffer := bytes.Buffer{}
+	if _, err := buffer.ReadFrom(r.Body); err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
 }

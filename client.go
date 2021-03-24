@@ -5,7 +5,6 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/http/cookiejar"
@@ -224,10 +223,11 @@ func (c *Client) WebWxUploadMedia(file *os.File, request BaseRequest, info Login
 	if err != nil {
 		return nil, err
 	}
-	data, err := ioutil.ReadAll(file)
-	if err != nil {
+	buffer := bytes.Buffer{}
+	if _, err := buffer.ReadFrom(file); err != nil {
 		return nil, err
 	}
+	data := buffer.Bytes()
 	fileMd5 := fmt.Sprintf("%x", md5.Sum(data))
 	cookies := c.Jar.Cookies(path)
 	uploadMediaRequest := map[string]interface{}{

@@ -1,8 +1,8 @@
 package openwechat
 
 import (
+	"bytes"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 )
@@ -62,11 +62,11 @@ func (u *User) SaveAvatar(filename string) error {
 		return err
 	}
 	defer resp.Body.Close()
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
+	buffer := bytes.Buffer{}
+	if _, err := buffer.ReadFrom(resp.Body); err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filename, data, os.ModePerm)
+	return os.WriteFile(filename, buffer.Bytes(), os.ModePerm)
 }
 
 func (u *User) sendMsg(msg *SendMessage) error {
