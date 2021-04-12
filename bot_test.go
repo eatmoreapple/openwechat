@@ -19,6 +19,7 @@ func TestDefaultBot(t *testing.T) {
 		return
 	}
 	self, _ := bot.GetCurrentUser()
+	self.SaveAvatar("2.png")
 	fileHelper, _ := self.FileHelper()
 	fileHelper.SendText("6666")
 	group, _ := self.Groups()

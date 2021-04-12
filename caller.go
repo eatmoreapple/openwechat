@@ -84,7 +84,7 @@ func (c *Caller) GetLoginInfo(body []byte) (*LoginInfo, error) {
 }
 
 // 获取初始化信息
-func (c *Caller) WebInit(request BaseRequest) (*WebInitResponse, error) {
+func (c *Caller) WebInit(request *BaseRequest) (*WebInitResponse, error) {
 	resp := NewReturnResponse(c.Client.WebInit(request))
 	if resp.Err() != nil {
 		return nil, resp.Err()
@@ -98,7 +98,7 @@ func (c *Caller) WebInit(request BaseRequest) (*WebInitResponse, error) {
 }
 
 // 通知手机已登录
-func (c *Caller) WebWxStatusNotify(request BaseRequest, response WebInitResponse, info LoginInfo) error {
+func (c *Caller) WebWxStatusNotify(request *BaseRequest, response *WebInitResponse, info *LoginInfo) error {
 	resp := NewReturnResponse(c.Client.WebWxStatusNotify(request, response, info))
 	if resp.Err() != nil {
 		return resp.Err()
@@ -115,7 +115,7 @@ func (c *Caller) WebWxStatusNotify(request BaseRequest, response WebInitResponse
 }
 
 // 异步获取是否有新的消息
-func (c *Caller) SyncCheck(info LoginInfo, response WebInitResponse) (*SyncCheckResponse, error) {
+func (c *Caller) SyncCheck(info *LoginInfo, response *WebInitResponse) (*SyncCheckResponse, error) {
 	resp := NewReturnResponse(c.Client.SyncCheck(info, response))
 	if resp.Err() != nil {
 		return nil, resp.Err()
@@ -135,7 +135,7 @@ func (c *Caller) SyncCheck(info LoginInfo, response WebInitResponse) (*SyncCheck
 }
 
 // 获取所有的联系人
-func (c *Caller) WebWxGetContact(info LoginInfo) (Members, error) {
+func (c *Caller) WebWxGetContact(info *LoginInfo) (Members, error) {
 	resp := NewReturnResponse(c.Client.WebWxGetContact(info))
 	if resp.Err() != nil {
 		return nil, resp.Err()
@@ -153,7 +153,7 @@ func (c *Caller) WebWxGetContact(info LoginInfo) (Members, error) {
 
 // 获取联系人的详情
 // 注: Members参数的长度不要大于50
-func (c *Caller) WebWxBatchGetContact(members Members, request BaseRequest) (Members, error) {
+func (c *Caller) WebWxBatchGetContact(members Members, request *BaseRequest) (Members, error) {
 	resp := NewReturnResponse(c.Client.WebWxBatchGetContact(members, request))
 	if resp.Err() != nil {
 		return nil, resp.Err()
@@ -170,7 +170,7 @@ func (c *Caller) WebWxBatchGetContact(members Members, request BaseRequest) (Mem
 }
 
 // 获取新的消息接口
-func (c *Caller) WebWxSync(request BaseRequest, response WebInitResponse, info LoginInfo) (*WebWxSyncResponse, error) {
+func (c *Caller) WebWxSync(request *BaseRequest, response *WebInitResponse, info *LoginInfo) (*WebWxSyncResponse, error) {
 	resp := NewReturnResponse(c.Client.WebWxSync(request, response, info))
 	if resp.Err() != nil {
 		return nil, resp.Err()
@@ -184,19 +184,19 @@ func (c *Caller) WebWxSync(request BaseRequest, response WebInitResponse, info L
 }
 
 // 发送消息接口
-func (c *Caller) WebWxSendMsg(msg *SendMessage, info LoginInfo, request BaseRequest) error {
+func (c *Caller) WebWxSendMsg(msg *SendMessage, info *LoginInfo, request *BaseRequest) error {
 	resp := NewReturnResponse(c.Client.WebWxSendMsg(msg, info, request))
 	return parseBaseResponseError(resp)
 }
 
 // 修改用户备注接口
-func (c *Caller) WebWxOplog(request BaseRequest, remarkName, toUserName string) error {
+func (c *Caller) WebWxOplog(request *BaseRequest, remarkName, toUserName string) error {
 	resp := NewReturnResponse(c.Client.WebWxOplog(request, remarkName, toUserName))
 	return parseBaseResponseError(resp)
 }
 
 // 发送图片消息接口
-func (c *Caller) WebWxSendImageMsg(file *os.File, request BaseRequest, info LoginInfo, fromUserName, toUserName string) error {
+func (c *Caller) WebWxSendImageMsg(file *os.File, request *BaseRequest, info *LoginInfo, fromUserName, toUserName string) error {
 	// 首先尝试上传图片
 	resp := NewReturnResponse(c.Client.WebWxUploadMedia(file, request, info, fromUserName, toUserName, "image/jpeg", "pic"))
 	// 无错误上传成功之后获取请求结果，判断结果是否正常
@@ -222,7 +222,7 @@ func (c *Caller) WebWxSendImageMsg(file *os.File, request BaseRequest, info Logi
 }
 
 // 用户退出
-func (c *Caller) Logout(info LoginInfo) error {
+func (c *Caller) Logout(info *LoginInfo) error {
 	resp := NewReturnResponse(c.Client.Logout(info))
 	return parseBaseResponseError(resp)
 }

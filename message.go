@@ -127,8 +127,8 @@ func (m *Message) IsSendByGroup() bool {
 // 回复消息
 func (m *Message) Reply(msgType int, content, mediaId string) error {
 	msg := NewSendMessage(msgType, content, m.Bot.self.User.UserName, m.FromUserName, mediaId)
-	info := m.Bot.storage.GetLoginInfo()
-	request := m.Bot.storage.GetBaseRequest()
+	info := m.Bot.storage.LoginInfo
+	request := m.Bot.storage.Request
 	return m.Bot.Caller.WebWxSendMsg(msg, info, request)
 }
 
@@ -139,8 +139,8 @@ func (m *Message) ReplyText(content string) error {
 
 // 回复图片消息
 func (m *Message) ReplyImage(file *os.File) error {
-	info := m.Bot.storage.GetLoginInfo()
-	request := m.Bot.storage.GetBaseRequest()
+	info := m.Bot.storage.LoginInfo
+	request := m.Bot.storage.Request
 	return m.Bot.Caller.WebWxSendImageMsg(file, request, info, m.Bot.self.UserName, m.FromUserName)
 }
 
@@ -199,16 +199,16 @@ func (m *Message) GetFile() (*http.Response, error) {
 		return nil, errors.New("invalid message type")
 	}
 	if m.IsPicture() {
-		return m.Bot.Caller.Client.WebWxGetMsgImg(m, m.Bot.storage.GetLoginInfo())
+		return m.Bot.Caller.Client.WebWxGetMsgImg(m, m.Bot.storage.LoginInfo)
 	}
 	if m.IsVoice() {
-		return m.Bot.Caller.Client.WebWxGetVoice(m, m.Bot.storage.GetLoginInfo())
+		return m.Bot.Caller.Client.WebWxGetVoice(m, m.Bot.storage.LoginInfo)
 	}
 	if m.IsVideo() {
-		return m.Bot.Caller.Client.WebWxGetVideo(m, m.Bot.storage.GetLoginInfo())
+		return m.Bot.Caller.Client.WebWxGetVideo(m, m.Bot.storage.LoginInfo)
 	}
 	if m.IsMedia() {
-		return m.Bot.Caller.Client.WebWxGetMedia(m, m.Bot.storage.GetLoginInfo())
+		return m.Bot.Caller.Client.WebWxGetMedia(m, m.Bot.storage.LoginInfo)
 	}
 	return nil, errors.New("unsupported type")
 }
