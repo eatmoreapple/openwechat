@@ -17,7 +17,7 @@ type Bot struct {
     exit           chan bool
 }
 
-// 判断当前用户是否正常在线
+// 判断当前用户是否正常在线MessageHandler
 func (b *Bot) Alive() bool {
     if b.self == nil {
         return false

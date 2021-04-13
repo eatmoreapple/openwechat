@@ -47,3 +47,34 @@ func TestUser_GetAvatarResponse(t *testing.T) {
 	}
 	friend[0].SaveAvatar(friend[0].NickName + ".png")
 }
+
+func getDefaultLoginBot() *Bot {
+	bot := DefaultBot()
+	bot.UUIDCallback = PrintlnQrcodeUrl
+	return bot
+}
+
+func TestSendFile(t *testing.T) {
+	bot := getDefaultLoginBot()
+	bot.MessageHandler = func(msg *Message) {
+		user, err := msg.Sender()
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		fmt.Println(msg.Content)
+		fmt.Println(user.NickName)
+	}
+	if err := bot.Login(); err != nil {
+		t.Error(err)
+		return
+	}
+	self, err := bot.GetCurrentUser()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fileHelper, _ := self.FileHelper()
+	fileHelper.sendText("666")
+	bot.Block()
+}
