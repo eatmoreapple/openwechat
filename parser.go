@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -19,12 +20,13 @@ func ToBuffer(v interface{}) (*bytes.Buffer, error) {
 
 func GetRandomDeviceId() string {
 	rand.Seed(time.Now().Unix())
-	str := ""
+	var builder strings.Builder
+	builder.WriteString("e")
 	for i := 0; i < 15; i++ {
 		r := rand.Intn(9)
-		str += strconv.Itoa(r)
+		builder.WriteString(strconv.Itoa(r))
 	}
-	return "e" + str
+	return builder.String()
 }
 
 func getWebWxDataTicket(cookies []*http.Cookie) string {
