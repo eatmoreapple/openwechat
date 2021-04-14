@@ -1,7 +1,6 @@
 package openwechat
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 )
@@ -10,7 +9,7 @@ var (
 	emojiRegexp = regexp.MustCompile(`<span class="emoji emoji(.*?)"></span>`)
 )
 
-var emojiDict = map[string]string{
+var EmojiDict = map[string]string{
 	"U+00A9": "©", "U+00AE": "®", "U+1F004": "🀄", "U+1F0CF": "🃏", "U+1F170": "🅰", "U+1F171": "🅱", "U+1F17E": "🅾",
 	"U+1F17F": "🅿", "U+1F18E": "🆎", "U+1F191": "🆑", "U+1F192": "🆒", "U+1F193": "🆓", "U+1F194": "🆔", "U+1F195": "🆕",
 	"U+1F196": "🆖", "U+1F197": "🆗", "U+1F198": "🆘", "U+1F199": "🆙", "U+1F19A": "🆚", "U+1F201": "🈁", "U+1F202": "🈂",
@@ -112,13 +111,12 @@ var emojiDict = map[string]string{
 	"U+2935": "⤵", "U+2B05": "⬅", "U+2B06": "⬆", "U+2B07": "⬇", "U+2B1B": "⬛", "U+2B1C": "⬜", "U+2B50": "⭐",
 	"U+2B55": "⭕", "U+3030": "〰", "U+303D": "〽", "U+3297": "㊗", "U+3299": "㊙"}
 
-func formatEmoji(text string) string {
+func FormatEmoji(text string) string {
 	if result := emojiRegexp.FindAllStringSubmatch(text, -1); len(result) != 0 {
 		for _, item := range result {
 			value := item[0]
 			key := "U+" + strings.ToUpper(item[1])
-			fmt.Println(key)
-			text = strings.ReplaceAll(text, value, emojiDict[key])
+			text = strings.ReplaceAll(text, value, EmojiDict[key])
 		}
 	}
 	return text
