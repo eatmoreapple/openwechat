@@ -53,10 +53,10 @@ func (c *Caller) CheckLogin(uuid string) (*CheckLoginResponse, error) {
 		return nil, err
 	}
 	// 正则匹配检测的code
-	// 具体code参考
+	// 具体code参考global.go
 	results := statusCodeRegexp.FindSubmatch(data)
 	if len(results) != 2 {
-		return nil, nil
+		return nil, errors.New("error status code match")
 	}
 	code := string(results[1])
 	return &CheckLoginResponse{Code: code, Raw: data}, nil
