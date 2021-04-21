@@ -70,9 +70,12 @@ func (c *Client) CheckLogin(uuid string) (*http.Response, error) {
 	return c.Get(path.String())
 }
 
-// 请求获取LoginInfo
+// GetLoginInfo 请求获取LoginInfo
 func (c *Client) GetLoginInfo(path string) (*http.Response, error) {
-	return c.Get(path)
+	req, _ := http.NewRequest(http.MethodGet, path, nil)
+	req.Header.Add("client-version", uosPatchClientVersion)
+	req.Header.Add("extspam", uosPatchExtspam)
+	return c.Do(req)
 }
 
 // 请求获取初始化信息
@@ -305,7 +308,7 @@ func (c *Client) WebWxSendAppMsg(msg *SendMessage, request *BaseRequest) (*http.
 }
 
 // 用户重命名接口
-func (c *Client) WebWxOplog(request *BaseRequest, remarkName, userName string, ) (*http.Response, error) {
+func (c *Client) WebWxOplog(request *BaseRequest, remarkName, userName string) (*http.Response, error) {
 	path, _ := url.Parse(webWxOplogUrl)
 	params := url.Values{}
 	params.Add("lang", "zh_CN")
