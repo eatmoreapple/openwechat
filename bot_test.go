@@ -2,10 +2,18 @@ package openwechat
 
 import "testing"
 
-func defaultBot() *Bot {
-	bot := DefaultBot()
+func defaultBot(modes ...mode) *Bot {
+	bot := DefaultBot(modes...)
 	bot.UUIDCallback = PrintlnQrcodeUrl
 	return bot
+}
+
+func getSelf(modes ...mode) (*Self, error) {
+	bot := defaultBot(modes...)
+	if err := bot.Login(); err != nil {
+		return nil, err
+	}
+	return bot.GetCurrentUser()
 }
 
 func TestBotLogin(t *testing.T) {
@@ -20,4 +28,18 @@ func TestBotLogin(t *testing.T) {
 		return
 	}
 	t.Log(self.NickName)
+}
+
+func TestFriend(t *testing.T) {
+	self, err := getSelf()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	friends, err := self.Friends()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(friends)
 }

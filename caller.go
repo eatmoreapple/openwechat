@@ -17,8 +17,8 @@ func NewCaller(client *Client) *Caller {
 }
 
 // Default Constructor for Caller
-func DefaultCaller() *Caller {
-	return NewCaller(DefaultClient())
+func DefaultCaller(urlManager UrlManager) *Caller {
+	return NewCaller(DefaultClient(urlManager))
 }
 
 // 获取登录的uuid

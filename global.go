@@ -13,30 +13,54 @@ var (
 )
 
 const (
-	appId = "wx782c26e4c19acffb"
+	appId      = "wx782c26e4c19acffb"
+	jsLoginUrl = "https://login.wx.qq.com/jslogin"
+	qrcodeUrl  = "https://login.weixin.qq.com/qrcode/"
+	loginUrl   = "https://login.wx.qq.com/cgi-bin/mmwebwx-bin/login"
 
-	baseUrl                 = "https://wx.qq.com"
-	jsLoginUrl              = "https://login.wx.qq.com/jslogin"
-	webWxNewLoginPage       = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxnewloginpage?mod=desktop"
-	qrcodeUrl               = "https://login.weixin.qq.com/qrcode/"
-	loginUrl                = "https://login.wx.qq.com/cgi-bin/mmwebwx-bin/login"
-	webWxInitUrl            = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxinit"
-	webWxStatusNotifyUrl    = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxstatusnotify"
-	webWxSyncUrl            = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsync"
-	webWxSendMsgUrl         = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsendmsg"
-	webWxGetContactUrl      = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetcontact"
-	webWxSendMsgImgUrl      = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsendmsgimg"
-	webWxSendAppMsgUrl      = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsendappmsg"
-	webWxBatchGetContactUrl = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxbatchgetcontact"
-	webWxOplogUrl           = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxoplog"
-	webWxVerifyUserUrl      = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxverifyuser"
-	syncCheckUrl            = "https://webpush.wx.qq.com/cgi-bin/mmwebwx-bin/synccheck"
-	webWxUpLoadMediaUrl     = "https://file.wx.qq.com/cgi-bin/mmwebwx-bin/webwxuploadmedia"
-	webWxGetMsgImgUrl       = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetmsgimg"
-	webWxGetVoiceUrl        = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetvoice"
-	webWxGetVideoUrl        = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetvideo"
-	webWxLogoutUrl          = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxlogout"
-	webWxGetMediaUrl        = "https://file.wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetmedia"
+	// Normal urls
+
+	baseNormalUrl                 = "https://wx2.qq.com"
+	webWxNewLoginPageNormalUrl    = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxnewloginpage"
+	webWxInitNormalUrl            = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxinit"
+	webWxStatusNotifyNormalUrl    = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxstatusnotify"
+	webWxSyncNormalUrl            = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxsync"
+	webWxSendMsgNormalUrl         = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxsendmsg"
+	webWxGetContactNormalUrl      = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxgetcontact"
+	webWxSendMsgImgNormalUrl      = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxsendmsgimg"
+	webWxSendAppMsgNormalUrl      = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxsendappmsg"
+	webWxBatchGetContactNormalUrl = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxbatchgetcontact"
+	webWxOplogNormalUrl           = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxoplog"
+	webWxVerifyUserNormalUrl      = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxverifyuser"
+	syncCheckNormalUrl            = "https://webpush.wx2.qq.com/cgi-bin/mmwebwx-bin/synccheck"
+	webWxUpLoadMediaNormalUrl     = "https://file.wx2.qq.com/cgi-bin/mmwebwx-bin/webwxuploadmedia"
+	webWxGetMsgImgNormalUrl       = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxgetmsgimg"
+	webWxGetVoiceNormalUrl        = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxgetvoice"
+	webWxGetVideoNormalUrl        = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxgetvideo"
+	webWxLogoutNormalUrl          = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxlogout"
+	webWxGetMediaNormalUrl        = "https://file.wx2.qq.com/cgi-bin/mmwebwx-bin/webwxgetmedia"
+
+	// Desktop urls
+
+	baseDesktopUrl                 = "https://wx.qq.com"
+	webWxNewLoginPageDesktopUrl    = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxnewloginpage?mod=desktop"
+	webWxInitDesktopUrl            = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxinit"
+	webWxStatusNotifyDesktopUrl    = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxstatusnotify"
+	webWxSyncDesktopUrl            = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsync"
+	webWxSendMsgDesktopUrl         = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsendmsg"
+	webWxGetContactDesktopUrl      = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetcontact"
+	webWxSendMsgImgDesktopUrl      = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsendmsgimg"
+	webWxSendAppMsgDesktopUrl      = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsendappmsg"
+	webWxBatchGetContactDesktopUrl = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxbatchgetcontact"
+	webWxOplogDesktopUrl           = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxoplog"
+	webWxVerifyUserDesktopUrl      = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxverifyuser"
+	syncCheckDesktopUrl            = "https://webpush.wx.qq.com/cgi-bin/mmwebwx-bin/synccheck"
+	webWxUpLoadMediaDesktopUrl     = "https://file.wx.qq.com/cgi-bin/mmwebwx-bin/webwxuploadmedia"
+	webWxGetMsgImgDesktopUrl       = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetmsgimg"
+	webWxGetVoiceDesktopUrl        = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetvoice"
+	webWxGetVideoDesktopUrl        = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetvideo"
+	webWxLogoutDesktopUrl          = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxlogout"
+	webWxGetMediaDesktopUrl        = "https://file.wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetmedia"
 
 	jsonContentType       = "application/json; charset=utf-8"
 	uosPatchClientVersion = "2.0.0"
@@ -69,11 +93,4 @@ const ALL = 0
 const (
 	MALE   = 1
 	FEMALE = 2
-)
-
-type mode string
-
-const (
-	normal mode = "normal"
-	desk   mode = "desk"
 )
