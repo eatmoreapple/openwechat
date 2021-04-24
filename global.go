@@ -70,3 +70,10 @@ const (
 	MALE   = 1
 	FEMALE = 2
 )
+
+type mode string
+
+const (
+	normal mode = "normal"
+	desk   mode = "desk"
+)
