@@ -1,6 +1,8 @@
 package openwechat
 
-import "testing"
+import (
+	"testing"
+)
 
 func defaultBot(modes ...mode) *Bot {
 	bot := DefaultBot(modes...)
@@ -42,4 +44,18 @@ func TestFriend(t *testing.T) {
 		return
 	}
 	t.Log(friends)
+}
+
+func TestMps(t *testing.T) {
+	self, err := getSelf()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	mps, err := self.Mps()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(mps)
 }

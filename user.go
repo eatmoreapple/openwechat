@@ -119,6 +119,7 @@ type Self struct {
 	members    Members
 	friends    Friends
 	groups     Groups
+	mps        Mps
 }
 
 // 获取所有的好友、群组、公众号信息
@@ -194,6 +195,16 @@ func (s *Self) Groups(update ...bool) (Groups, error) {
 	return s.groups, nil
 }
 
+// 获取所有的公众号
+func (s *Self) Mps(update ...bool) (Mps, error) {
+	if s.mps == nil {
+		if err := s.updateMps(update...); err != nil {
+			return nil, err
+		}
+	}
+	return s.mps, nil
+}
+
 // 更新好友处理
 func (s *Self) updateFriends(update ...bool) error {
 	var isUpdate bool
@@ -236,6 +247,27 @@ func (s *Self) updateGroups(update ...bool) error {
 		}
 	}
 	s.groups = groups
+	return nil
+}
+
+func (s *Self) updateMps(update ...bool) error {
+	var isUpdate bool
+	if len(update) > 0 {
+		isUpdate = update[len(update)-1]
+	}
+	if isUpdate || s.members == nil {
+		if err := s.updateMembers(); err != nil {
+			return err
+		}
+	}
+	var mps Mps
+	for _, member := range s.members {
+		if isMP(*member) {
+			mp := &Mp{member}
+			mps = append(mps, mp)
+		}
+	}
+	s.mps = mps
 	return nil
 }
 

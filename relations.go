@@ -207,3 +207,57 @@ func isFriend(user User) bool {
 func isGroup(user User) bool {
 	return strings.HasPrefix(user.UserName, "@@") && user.VerifyFlag == 0
 }
+
+func isMP(user User) bool {
+	return user.VerifyFlag == 8 || user.VerifyFlag == 24 || user.VerifyFlag == 136
+}
+
+type Mp struct{ *User }
+
+func (m Mp) String() string {
+	return fmt.Sprintf("<Mp:%s>", m.NickName)
+}
+
+type Mps []*Mp
+
+func (m Mps) Count() int {
+	return len(m)
+}
+
+func (m Mps) First() *Mp {
+	if m.Count() > 0 {
+		return m[0]
+	}
+	return nil
+}
+
+func (m Mps) Last() *Mp {
+	if m.Count() > 0 {
+		return m[m.Count()-1]
+	}
+	return nil
+}
+
+func (m Mps) Search(limit int, condFuncList ...func(group *Mp) bool) (results Mps) {
+	if condFuncList == nil {
+		return m
+	}
+	if limit <= 0 {
+		limit = m.Count()
+	}
+	for _, member := range m {
+		if results.Count() == limit {
+			break
+		}
+		var passCount int
+		for _, condFunc := range condFuncList {
+			if condFunc(member) {
+				passCount++
+			}
+		}
+		if passCount == len(condFuncList) {
+			results = append(results, member)
+		}
+	}
+	return
+}
