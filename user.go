@@ -177,7 +177,7 @@ func (s *Self) FileHelper() (*Friend, error) {
 // 获取所有的好友
 func (s *Self) Friends(update ...bool) (Friends, error) {
 	if s.friends == nil {
-		if err := s.updateFriends(true); err != nil {
+		if err := s.updateFriends(update...); err != nil {
 			return nil, err
 		}
 	}
