@@ -1,6 +1,7 @@
 package openwechat
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -46,6 +47,29 @@ func TestFriend(t *testing.T) {
 	t.Log(friends)
 }
 
+func TestGroup(t *testing.T) {
+	self, err := getSelf()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	group, err := self.Groups()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(group)
+	g := group.SearchByNickName(1, "GoFrame实战1群")
+	if g.First() != nil {
+		members, err := g.First().Members()
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		fmt.Println(members.Count())
+	}
+}
+
 func TestMps(t *testing.T) {
 	self, err := getSelf()
 	if err != nil {
@@ -77,11 +101,37 @@ func TestAddFriendIntoChatRoom(t *testing.T) {
 		return
 	}
 	searchGroups := groups.SearchByNickName(1, "厉害了")
-	if searchGroups != nil {
-		g := searchGroups.First()
+	if g := searchGroups.First(); g != nil {
 		addFriends := friends.SearchByRemarkName(1, "1")
 		if err := g.AddFriendsIn(addFriends...); err != nil {
 			t.Error(err)
+		}
+	}
+}
+
+func TestRemoveFriendIntoChatRoom(t *testing.T) {
+	self, err := getSelf()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	groups, err := self.Groups()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	friends, err := self.Friends()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	searchGroups := groups.SearchByNickName(1, "厉害了")
+	if g := searchGroups.First(); g != nil {
+		addFriends := friends.SearchByRemarkName(1, "大爷")
+		if f := addFriends.First(); f != nil {
+			if err := g.RemoveMembers(Members{f.User}); err != nil {
+				t.Error(err)
+			}
 		}
 	}
 }

@@ -1,6 +1,7 @@
 package openwechat
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -146,7 +147,54 @@ func (g *Group) Members() (Members, error) {
 
 // 拉好友入群
 func (g *Group) AddFriendsIn(friends ...*Friend) error {
-	return g.Self.Bot.Caller.AddFriendIntoChatRoom(g.Self.Bot.storage.Request, g, friends...)
+	if len(friends) == 0 {
+		return nil
+	}
+	groupMembers, err := g.Members()
+	if err != nil {
+		return err
+	}
+	for _, friend := range friends {
+		for _, member := range groupMembers {
+			if member.UserName == friend.UserName {
+				return fmt.Errorf("user %s has alreay in this group", friend.String())
+			}
+		}
+	}
+	req := g.Self.Bot.storage.Request
+	info := g.Self.Bot.storage.LoginInfo
+	return g.Self.Bot.Caller.AddFriendIntoChatRoom(req, info, g, friends...)
+}
+
+// 从群聊中移除用户
+// Deprecated
+// 无论是网页版，还是程序上都不起作用
+func (g *Group) RemoveMembers(members Members) error {
+	if len(members) == 0 {
+		return nil
+	}
+	if g.IsOwner == 0 {
+		return errors.New("group owner required")
+	}
+	groupMembers, err := g.Members()
+	if err != nil {
+		return err
+	}
+	// 判断用户是否在群聊中
+	var count int
+	for _, member := range members {
+		for _, gm := range groupMembers {
+			if gm.UserName == member.UserName {
+				count++
+			}
+		}
+	}
+	if count != len(members) {
+		return errors.New("invalid members")
+	}
+	req := g.Self.Bot.storage.Request
+	info := g.Self.Bot.storage.LoginInfo
+	return g.Self.Bot.Caller.RemoveFriendFromChatRoom(req, info, g, members...)
 }
 
 type Groups []*Group

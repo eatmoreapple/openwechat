@@ -228,11 +228,20 @@ func (c *Caller) Logout(info *LoginInfo) error {
 }
 
 // 拉好友入群
-func (c *Caller) AddFriendIntoChatRoom(req *BaseRequest, group *Group, friends ...*Friend) error {
+func (c *Caller) AddFriendIntoChatRoom(req *BaseRequest, info *LoginInfo, group *Group, friends ...*Friend) error {
 	if len(friends) == 0 {
 		return errors.New("no friends found")
 	}
-	resp := NewReturnResponse(c.Client.AddMemberIntoChatRoom(req, group, friends...))
+	resp := NewReturnResponse(c.Client.AddMemberIntoChatRoom(req, info, group, friends...))
+	return parseBaseResponseError(resp)
+}
+
+// 从群聊中移除用户
+func (c *Caller) RemoveFriendFromChatRoom(req *BaseRequest, info *LoginInfo, group *Group, users ...*User) error {
+	if len(users) == 0 {
+		return errors.New("no users found")
+	}
+	resp := NewReturnResponse(c.Client.RemoveMemberFromChatRoom(req, info, group, users...))
 	return parseBaseResponseError(resp)
 }
 

@@ -413,10 +413,12 @@ func (c *Client) Logout(info *LoginInfo) (*http.Response, error) {
 }
 
 // 添加用户进群聊
-func (c *Client) AddMemberIntoChatRoom(req *BaseRequest, group *Group, friends ...*Friend) (*http.Response, error) {
+func (c *Client) AddMemberIntoChatRoom(req *BaseRequest, info *LoginInfo, group *Group, friends ...*Friend) (*http.Response, error) {
 	path, _ := url.Parse(c.webWxUpdateChatRoomUrl)
 	params := url.Values{}
 	params.Add("fun", "addmember")
+	params.Add("pass_ticket", info.PassTicket)
+	params.Add("lang", "zh_CN")
 	path.RawQuery = params.Encode()
 	addMemberList := make([]string, 0)
 	for _, friend := range friends {
@@ -426,6 +428,26 @@ func (c *Client) AddMemberIntoChatRoom(req *BaseRequest, group *Group, friends .
 		"ChatRoomName":  group.UserName,
 		"BaseRequest":   req,
 		"AddMemberList": strings.Join(addMemberList, ","),
+	}
+	buffer, _ := ToBuffer(content)
+	return c.Post(path.String(), jsonContentType, buffer)
+}
+
+// 从群聊中移除用户
+func (c *Client) RemoveMemberFromChatRoom(req *BaseRequest, info *LoginInfo, group *Group, friends ...*User) (*http.Response, error) {
+	path, _ := url.Parse(c.webWxUpdateChatRoomUrl)
+	params := url.Values{}
+	params.Add("fun", "delmember")
+	params.Add("lang", "zh_CN")
+	params.Add("pass_ticket", info.PassTicket)
+	delMemberList := make([]string, 0)
+	for _, friend := range friends {
+		delMemberList = append(delMemberList, friend.UserName)
+	}
+	content := map[string]interface{}{
+		"ChatRoomName":  group.UserName,
+		"BaseRequest":   req,
+		"DelMemberList": strings.Join(delMemberList, ","),
 	}
 	buffer, _ := ToBuffer(content)
 	return c.Post(path.String(), jsonContentType, buffer)
