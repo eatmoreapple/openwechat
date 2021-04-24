@@ -411,3 +411,22 @@ func (c *Client) Logout(info *LoginInfo) (*http.Response, error) {
 	path.RawQuery = params.Encode()
 	return c.Get(path.String())
 }
+
+// 添加用户进群聊
+func (c *Client) AddMemberIntoChatRoom(req *BaseRequest, group *Group, friends ...*Friend) (*http.Response, error) {
+	path, _ := url.Parse(c.webWxUpdateChatRoomUrl)
+	params := url.Values{}
+	params.Add("fun", "addmember")
+	path.RawQuery = params.Encode()
+	addMemberList := make([]string, 0)
+	for _, friend := range friends {
+		addMemberList = append(addMemberList, friend.UserName)
+	}
+	content := map[string]interface{}{
+		"ChatRoomName":  group.UserName,
+		"BaseRequest":   req,
+		"AddMemberList": strings.Join(addMemberList, ","),
+	}
+	buffer, _ := ToBuffer(content)
+	return c.Post(path.String(), jsonContentType, buffer)
+}

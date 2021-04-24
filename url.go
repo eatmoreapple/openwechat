@@ -21,6 +21,7 @@ type UrlManager struct {
 	webWxGetVideoUrl        string
 	webWxLogoutUrl          string
 	webWxGetMediaUrl        string
+	webWxUpdateChatRoomUrl  string
 }
 
 var (
@@ -45,6 +46,7 @@ var (
 		webWxGetVideoUrl:        webWxGetVideoDesktopUrl,
 		webWxLogoutUrl:          webWxLogoutDesktopUrl,
 		webWxGetMediaUrl:        webWxGetMediaDesktopUrl,
+		webWxUpdateChatRoomUrl:  webWxUpdateChatRoomDesktopUrl,
 	}
 
 	// 网页版
@@ -68,6 +70,7 @@ var (
 		webWxGetVideoUrl:        webWxGetVideoNormalUrl,
 		webWxLogoutUrl:          webWxLogoutNormalUrl,
 		webWxGetMediaUrl:        webWxGetMediaNormalUrl,
+		webWxUpdateChatRoomUrl:  webWxUpdateChatRoomNormalUrl,
 	}
 )
 

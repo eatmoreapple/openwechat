@@ -144,6 +144,11 @@ func (g *Group) Members() (Members, error) {
 	return group.MemberList, nil
 }
 
+// 拉好友入群
+func (g *Group) AddFriendsIn(friends ...*Friend) error {
+	return g.Self.Bot.Caller.AddFriendIntoChatRoom(g.Self.Bot.storage.Request, g, friends...)
+}
+
 type Groups []*Group
 
 func (g Groups) Count() int {

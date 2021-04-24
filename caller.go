@@ -227,6 +227,15 @@ func (c *Caller) Logout(info *LoginInfo) error {
 	return parseBaseResponseError(resp)
 }
 
+// 拉好友入群
+func (c *Caller) AddFriendIntoChatRoom(req *BaseRequest, group *Group, friends ...*Friend) error {
+	if len(friends) == 0 {
+		return errors.New("no friends found")
+	}
+	resp := NewReturnResponse(c.Client.AddMemberIntoChatRoom(req, group, friends...))
+	return parseBaseResponseError(resp)
+}
+
 // 处理响应返回的结果是否正常
 func parseBaseResponseError(resp *ReturnResponse) error {
 	if resp.Err() != nil {

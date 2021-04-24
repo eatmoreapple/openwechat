@@ -39,6 +39,7 @@ const (
 	webWxGetVideoNormalUrl        = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxgetvideo"
 	webWxLogoutNormalUrl          = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxlogout"
 	webWxGetMediaNormalUrl        = "https://file.wx2.qq.com/cgi-bin/mmwebwx-bin/webwxgetmedia"
+	webWxUpdateChatRoomNormalUrl  = "https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxupdatechatroom"
 
 	// Desktop urls
 
@@ -61,6 +62,7 @@ const (
 	webWxGetVideoDesktopUrl        = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetvideo"
 	webWxLogoutDesktopUrl          = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxlogout"
 	webWxGetMediaDesktopUrl        = "https://file.wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetmedia"
+	webWxUpdateChatRoomDesktopUrl  = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxupdatechatroom"
 
 	jsonContentType       = "application/json; charset=utf-8"
 	uosPatchClientVersion = "2.0.0"

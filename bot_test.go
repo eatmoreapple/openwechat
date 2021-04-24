@@ -59,3 +59,29 @@ func TestMps(t *testing.T) {
 	}
 	t.Log(mps)
 }
+
+func TestAddFriendIntoChatRoom(t *testing.T) {
+	self, err := getSelf(Desktop)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	groups, err := self.Groups()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	friends, err := self.Friends()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	searchGroups := groups.SearchByNickName(1, "厉害了")
+	if searchGroups != nil {
+		g := searchGroups.First()
+		addFriends := friends.SearchByRemarkName(1, "1")
+		if err := g.AddFriendsIn(addFriends...); err != nil {
+			t.Error(err)
+		}
+	}
+}
