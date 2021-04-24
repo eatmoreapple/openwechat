@@ -9,10 +9,6 @@ golang版本大于等于1.11
 
 
 
-**目前可以突破微信网页版限制登录，但是存在个别可以在网页版登录，但不能使用主分支登录的用户可以尝试使用`slave`分支进行登录**
-
-
-
 ### 安装
 
 `go get`
@@ -22,12 +18,6 @@ go get github.com/eatMoreApple/openwechat
 ```
 
 
-
-`go mod`
-
-```shell
-require github.com/eatMoreApple/openwechat
-```
 
 
 
@@ -62,6 +52,16 @@ func main() {
     // 阻塞主程序,直到用户退出或发生异常
 	bot.Block()
 }
+```
+
+
+
+#### 突破网页版登录限制
+
+**网页版登陆不上的可以尝试使用该模式登陆**
+
+```go
+bot := openwechat.DefaultBot(openwechat.Desktop)
 ```
 
 
