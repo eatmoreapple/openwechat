@@ -37,11 +37,12 @@ func TestMessage(t *testing.T) {
 	bot := defaultBot()
 	bot.MessageHandler = func(msg *Message) {
 		if msg.IsMedia() {
-			fmt.Println(msg.Content)
+			t.Log(msg.Content)
+			fmt.Println()
 		}
 		if msg.IsCard() {
 			c, _ := msg.Card()
-			fmt.Println(c.Alias)
+			t.Log(c.Alias)
 		}
 	}
 	if err := bot.Login(); err != nil {
@@ -77,14 +78,14 @@ func TestGroup(t *testing.T) {
 		return
 	}
 	t.Log(group)
-	g := group.SearchByNickName(1, "GoFrame实战1群")
+	g := group.SearchByNickName(1, "杭州Gopher群组")
 	if g.First() != nil {
 		members, err := g.First().Members()
 		if err != nil {
 			t.Error(err)
 			return
 		}
-		fmt.Println(members.Count())
+		t.Log(members.Count())
 	}
 }
 
@@ -152,4 +153,18 @@ func TestRemoveFriendIntoChatRoom(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestLogout(t *testing.T) {
+	bot := defaultBot()
+	bot.MessageHandler = func(msg *Message) {
+		if msg.Content == "logout" {
+			msg.Bot.Logout()
+		}
+	}
+	if err := bot.Login(); err != nil {
+		t.Error(err)
+		return
+	}
+	bot.Block()
 }
