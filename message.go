@@ -260,7 +260,7 @@ func (m *Message) init(bot *Bot) {
 //	if !m.IsFriendAdd() {
 //		return fmt.Errorf("the excepted message type is 37, but got %d", m.MsgType)
 //	}
-//	m.ClientManager.Client.WebWxVerifyUser(m.ClientManager.storage, m.RecommendInfo, "")
+//	return m.Bot.Caller.Client.WebWxVerifyUser(m.Bot.storage, m.RecommendInfo, "")
 //}
 
 // 发送消息的结构体
@@ -313,4 +313,14 @@ type RecommendInfo struct {
 	Ticket     string
 	UserName   string
 	VerifyFlag int
+}
+
+type Article struct {
+}
+
+func xmlFormString(text string) string {
+	lt := strings.ReplaceAll(text, "&lt;", "<")
+	gt := strings.ReplaceAll(lt, "&gt;", ">")
+	br := strings.ReplaceAll(gt, "<br/>", "\n")
+	return strings.ReplaceAll(br, "&amp;amp;", "&")
 }

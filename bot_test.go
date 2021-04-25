@@ -33,6 +33,20 @@ func TestBotLogin(t *testing.T) {
 	t.Log(self.NickName)
 }
 
+func TestMessage(t *testing.T) {
+	bot := defaultBot()
+	bot.MessageHandler = func(msg *Message) {
+		if msg.IsMedia() {
+			fmt.Println(msg.Content)
+		}
+	}
+	if err := bot.Login(); err != nil {
+		t.Error(err)
+		return
+	}
+	bot.Block()
+}
+
 func TestFriend(t *testing.T) {
 	self, err := getSelf()
 	if err != nil {
