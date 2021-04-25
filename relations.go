@@ -34,6 +34,16 @@ func (f *Friend) SendImage(file *os.File) error {
 	return f.sendImage(file)
 }
 
+// 拉该好友入群
+func (f *Friend) AddIntoGroup(groups ...*Group) error {
+	for _, group := range groups {
+		if err := group.AddFriendsIn(f); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 type Friends []*Friend
 
 // 获取好友的数量
