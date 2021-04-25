@@ -3,6 +3,10 @@
 
 
 
+[文档](doc.md)
+
+
+
 **使用前提**
 
 golang版本大于等于1.11
@@ -56,9 +60,9 @@ func main() {
 
 
 
-#### 突破网页版登录限制
+#### 突破网页版登录限制 
 
-**网页版登陆不上的可以尝试使用该模式登陆**
+网页版登陆不上的可以尝试使用该模式登陆
 
 ```go
 bot := openwechat.DefaultBot(openwechat.Desktop)
@@ -115,7 +119,7 @@ if err != nil {
 }
 if friends.Count() > 0 {
     // 发送给第一个好友
-    friends[0].SendText("你好")
+    friends.First().SendText("你好")
 }
 ```
 
@@ -133,7 +137,7 @@ if friends.Count() > 0 {
     // 发送给第一个好友
     img, _ := os.Open("test.png")
     defer img.Close()
-    friends[0].SendImage(img)
+    friends.First().SendImage(img)
 }
 bot.Block()
 ```
