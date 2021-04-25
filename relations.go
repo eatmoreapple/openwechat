@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 type Friend struct{ *User }
@@ -108,8 +109,11 @@ func (f Friends) Search(limit int, condFuncList ...func(friend *Friend) bool) (r
 }
 
 // 向slice的好友依次发送消息
-func (f Friends) SendMsg(msg *SendMessage) error {
+func (f Friends) SendMsg(msg *SendMessage, delay ...time.Duration) error {
 	for _, friend := range f {
+		if len(delay) != 0 {
+			time.Sleep(delay[0])
+		}
 		if err := friend.SendMsg(msg); err != nil {
 			return err
 		}
@@ -118,9 +122,24 @@ func (f Friends) SendMsg(msg *SendMessage) error {
 }
 
 // 向slice的好友依次发送文本消息
-func (f Friends) SendText(text string) error {
+func (f Friends) SendText(text string, delay ...time.Duration) error {
 	for _, friend := range f {
+		if len(delay) != 0 {
+			time.Sleep(delay[0])
+		}
 		if err := friend.SendText(text); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (f Friends) SendImage(file *os.File, delay ...time.Duration) error {
+	for _, friend := range f {
+		if len(delay) != 0 {
+			time.Sleep(delay[0])
+		}
+		if err := friend.SendImage(file); err != nil {
 			return err
 		}
 	}
@@ -223,6 +242,42 @@ func (g Groups) First() *Group {
 func (g Groups) Last() *Group {
 	if g.Count() > 0 {
 		return g[g.Count()-1]
+	}
+	return nil
+}
+
+func (g Groups) SendMsg(msg *SendMessage, delay ...time.Duration) error {
+	for _, group := range g {
+		if len(delay) != 0 {
+			time.Sleep(delay[0])
+		}
+		if err := group.SendMsg(msg); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (g Groups) SendText(text string, delay ...time.Duration) error {
+	for _, group := range g {
+		if len(delay) != 0 {
+			time.Sleep(delay[0])
+		}
+		if err := group.SendText(text); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (g Groups) SendImage(file *os.File, delay ...time.Duration) error {
+	for _, group := range g {
+		if len(delay) != 0 {
+			time.Sleep(delay[0])
+		}
+		if err := group.SendImage(file); err != nil {
+			return err
+		}
 	}
 	return nil
 }
