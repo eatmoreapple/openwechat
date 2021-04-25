@@ -2,6 +2,7 @@ package openwechat
 
 import (
 	"context"
+	"encoding/xml"
 	"errors"
 	"net/http"
 	"os"
@@ -213,6 +214,17 @@ func (m *Message) GetFile() (*http.Response, error) {
 	return nil, errors.New("unsupported type")
 }
 
+// 获取card类型
+func (m *Message) Card() (*Card, error) {
+	if !m.IsCard() {
+		return nil, errors.New("card message required")
+	}
+	var card Card
+	content := XmlFormString(m.Content)
+	err := xml.Unmarshal([]byte(content), &card)
+	return &card, err
+}
+
 // 往消息上下文中设置值
 // goroutine safe
 func (m *Message) Set(key string, value interface{}) {
@@ -315,12 +327,26 @@ type RecommendInfo struct {
 	VerifyFlag int
 }
 
-type Article struct {
-}
-
-func xmlFormString(text string) string {
-	lt := strings.ReplaceAll(text, "&lt;", "<")
-	gt := strings.ReplaceAll(lt, "&gt;", ">")
-	br := strings.ReplaceAll(gt, "<br/>", "\n")
-	return strings.ReplaceAll(br, "&amp;amp;", "&")
+// 名片消息内容
+type Card struct {
+	XMLName                 xml.Name `xml:"msg"`
+	BigHeadImgUrl           string   `xml:"bigheadimgurl,attr"`
+	SmallHeadImgUrl         string   `xml:"smallheadimgurl,attr"`
+	UserName                string   `xml:"username,attr"`
+	NickName                string   `xml:"nickname,attr"`
+	ShortPy                 string   `xml:"shortpy,attr"`
+	Alias                   string   `xml:"alias,attr"` // Note: 这个是名片用户的微信号
+	ImageStatus             int      `xml:"imagestatus,attr"`
+	Scene                   int      `xml:"scene,attr"`
+	Province                string   `xml:"province,attr"`
+	City                    string   `xml:"city,attr"`
+	Sign                    string   `xml:"sign,attr"`
+	Sex                     int      `xml:"sex,attr"`
+	Certflag                int      `xml:"certflag,attr"`
+	Certinfo                string   `xml:"certinfo,attr"`
+	BrandIconUrl            string   `xml:"brandIconUrl,attr"`
+	BrandHomeUr             string   `xml:"brandHomeUr,attr"`
+	BrandSubscriptConfigUrl string   `xml:"brandSubscriptConfigUrl,attr"`
+	BrandFlags              string   `xml:"brandFlags,attr"`
+	RegionCode              string   `xml:"regionCode,attr"`
 }

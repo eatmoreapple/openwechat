@@ -37,3 +37,10 @@ func getWebWxDataTicket(cookies []*http.Cookie) string {
 	}
 	return ""
 }
+
+func XmlFormString(text string) string {
+	lt := strings.ReplaceAll(text, "&lt;", "<")
+	gt := strings.ReplaceAll(lt, "&gt;", ">")
+	br := strings.ReplaceAll(gt, "<br/>", "\n")
+	return strings.ReplaceAll(br, "&amp;amp;", "&")
+}

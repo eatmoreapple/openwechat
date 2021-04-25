@@ -39,6 +39,10 @@ func TestMessage(t *testing.T) {
 		if msg.IsMedia() {
 			fmt.Println(msg.Content)
 		}
+		if msg.IsCard() {
+			c, _ := msg.Card()
+			fmt.Println(c.Alias)
+		}
 	}
 	if err := bot.Login(); err != nil {
 		t.Error(err)
