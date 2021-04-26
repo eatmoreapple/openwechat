@@ -144,6 +144,14 @@ bot.Block()
 
 
 
+#### 发送Emoji表情
+
+```go
+friend.SendText(openwechat.Emoji.Dagger)  
+```
+
+
+
 #### 搜索好友
 
 ```go

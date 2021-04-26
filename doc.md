@@ -342,7 +342,32 @@ go get github.com/eatMoreApple/openwechat
   func (m *Message) Get(key string) (value interface{}, exist bool)
   ```
 
+
+
+
+### Emoji
+
+可支持发送emoji表情，所有的`emoji`表情维护在`openwechat.Emoji`这个匿名结构体里面
+
+```go
+friend.SendText(openwechat.Emoji.Hungry)
+```
+
+
+
+昵称格式化
+
+* `FormatEmoji`：该方法可以格式化带有`emoji`表情的用户昵称
+
+  ```go
+  func FormatEmoji(text string) string
   
+  // 多吃点苹果<span class="emoji emoji1f34f"></span>  => 多吃点苹果🍏
+  ```
+
+  
+
+
 
 
 
