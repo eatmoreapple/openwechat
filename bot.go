@@ -7,15 +7,18 @@ import (
 )
 
 type Bot struct {
-    ScanCallBack   func(body []byte)
-    LoginCallBack  func(body []byte)
-    UUIDCallback   func(uuid string)
-    MessageHandler func(msg *Message)
-    err            error
-    exit           chan bool
-    Caller         *Caller
-    self           *Self
-    storage        *Storage
+    ScanCallBack     func(body []byte)
+    LoginCallBack    func(body []byte)
+    UUIDCallback     func(uuid string)
+    MessageHandler   func(msg *Message)
+    isHot            bool
+    err              error
+    exit             chan bool
+    Caller           *Caller
+    self             *Self
+    storage          *Storage
+    hotReloadStorage HotReloadStorage
+    mode             mode
 }
 
 // 判断当前用户是否正常在线
@@ -37,6 +40,20 @@ func (b *Bot) GetCurrentUser() (*Self, error) {
         return nil, errors.New("user not login")
     }
     return b.self, nil
+}
+
+func (b *Bot) HotLogin(storage HotReloadStorage) error {
+    b.isHot = true
+    b.hotReloadStorage = storage
+    if err := storage.Load(); err != nil {
+        return b.Login()
+    }
+    cookies := storage.GetCookie()
+    path := b.Caller.Client.getBaseUrl()
+    b.Caller.Client.Jar.SetCookies(path, cookies)
+    b.storage.LoginInfo = storage.GetLoginInfo()
+    b.storage.Request = storage.GetBaseRequest()
+    return b.webInit()
 }
 
 // 用户登录
@@ -105,8 +122,22 @@ func (b *Bot) login(data []byte) error {
 
     // 将BaseRequest存到storage里面方便后续调用
     b.storage.Request = request
+
+    if b.isHot {
+        cookies := b.Caller.Client.getCookies()
+        if err := b.hotReloadStorage.Dump(cookies, request, info); err != nil {
+            return err
+        }
+    }
+
+    return b.webInit()
+}
+
+func (b *Bot) webInit() error {
+    req := b.storage.Request
+    info := b.storage.LoginInfo
     // 获取初始化的用户信息和一些必要的参数
-    resp, err := b.Caller.WebInit(request)
+    resp, err := b.Caller.WebInit(req)
     if err != nil {
         return err
     }
@@ -116,7 +147,7 @@ func (b *Bot) login(data []byte) error {
     b.storage.Response = resp
 
     // 通知手机客户端已经登录
-    if err = b.Caller.WebWxStatusNotify(request, resp, info); err != nil {
+    if err = b.Caller.WebWxStatusNotify(req, resp, info); err != nil {
         return err
     }
     // 开启协程，轮训获取是否有新的消息返回
@@ -206,12 +237,6 @@ func DefaultBot(modes ...mode) *Bot {
     }
     urlManager := GetUrlManagerByMode(m)
     return NewBot(DefaultCaller(urlManager))
-}
-
-type Storage struct {
-    LoginInfo *LoginInfo
-    Request   *BaseRequest
-    Response  *WebInitResponse
 }
 
 func GetQrcodeUrl(uuid string) string {

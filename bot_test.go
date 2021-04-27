@@ -220,3 +220,18 @@ func TestAgreeFriendsAdd(t *testing.T) {
     }
     bot.Block()
 }
+
+func TestHotLogin(t *testing.T) {
+    bot := defaultBot()
+    s := NewFileHotReloadStorage("2.json")
+    if err := bot.HotLogin(s); err != nil {
+        t.Error(err)
+        return
+    }
+    self, err := bot.GetCurrentUser()
+    if err != nil {
+        t.Error(err)
+        return
+    }
+    t.Log(self.NickName)
+}
