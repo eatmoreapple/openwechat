@@ -3,6 +3,7 @@ package openwechat
 import (
     "fmt"
     "testing"
+    "time"
 )
 
 func defaultBot(modes ...mode) *Bot {
@@ -189,6 +190,7 @@ func TestSendMessage(t *testing.T) {
         t.Error(err)
         return
     }
+    time.Sleep(time.Second)
     if err = self.SendTextToFriend(helper, "send test message twice ! received?"); err != nil {
         t.Error(err)
         return
