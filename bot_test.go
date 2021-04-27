@@ -196,3 +196,20 @@ func TestSendMessage(t *testing.T) {
         return
     }
 }
+
+func TestAgreeFriendsAdd(t *testing.T) {
+    bot := defaultBot()
+    bot.MessageHandler = func(msg *Message) {
+        if msg.IsFriendAdd() {
+            if err := msg.Agree(); err != nil {
+                t.Error(err)
+            }
+            bot.Logout()
+        }
+    }
+    if err := bot.Login(); err != nil {
+        t.Error(err)
+        return
+    }
+    bot.Block()
+}

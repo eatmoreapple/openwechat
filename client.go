@@ -340,7 +340,7 @@ func (c *Client) WebWxVerifyUser(storage *Storage, info RecommendInfo, verifyCon
 	content := map[string]interface{}{
 		"BaseRequest":    storage.Request,
 		"Opcode":         3,
-		"SceneList":      []int{33},
+		"SceneList":      [1]int{33},
 		"SceneListCount": 1,
 		"VerifyContent":  verifyContent,
 		"VerifyUserList": []interface{}{map[string]string{
