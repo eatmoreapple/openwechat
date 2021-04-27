@@ -1,7 +1,6 @@
 package openwechat
 
 import (
-    "fmt"
     "testing"
     "time"
 )
@@ -37,13 +36,21 @@ func TestBotLogin(t *testing.T) {
 func TestMessage(t *testing.T) {
     bot := defaultBot()
     bot.MessageHandler = func(msg *Message) {
+        t.Log(msg.MsgType)
+        t.Log(msg.Content)
         if msg.IsMedia() {
             t.Log(msg.Content)
-            fmt.Println()
+            t.Log(msg.FileName)
         }
         if msg.IsCard() {
             c, _ := msg.Card()
             t.Log(c.Alias)
+        }
+        if msg.IsSystem() {
+            t.Log(msg.Content)
+        }
+        if msg.IsRecalled() {
+            t.Log(msg.Content)
         }
     }
     if err := bot.Login(); err != nil {

@@ -178,6 +178,7 @@ func (m *Message) IsMedia() bool {
     return m.MsgType == 49
 }
 
+// 判断是否撤回
 func (m *Message) IsRecalled() bool {
     return m.MsgType == 10002
 }
@@ -188,6 +189,25 @@ func (m *Message) IsSystem() bool {
 
 func (m *Message) IsNotify() bool {
     return m.MsgType == 51 && m.StatusNotifyCode != 0
+}
+
+// 判断当前的消息是不是微信转账
+func (m *Message) IsTransferAccounts() bool {
+    return m.IsMedia() && m.FileName == "微信转账"
+}
+
+// 判断当前是否发出红包
+func (m *Message) IsSendRedPacket() bool {
+    return m.IsSystem() && m.Content == "发出红包，请在手机上查看"
+}
+
+// 判断当前是否收到红包
+func (m *Message) IsReceiveRedPacket() bool {
+    return m.IsSystem() && m.Content == "收到红包，请在手机上查看"
+}
+
+func (m *Message) IsSysNotice() bool {
+    return m.MsgType == 9999
 }
 
 // 判断消息是否为文件类型的消息
@@ -227,14 +247,25 @@ func (m *Message) Card() (*Card, error) {
 }
 
 // 获取FriendAddMessageContent内容
-func (m *Message) FriendAddMessageContent() (*FriendAddMessageContent, error) {
+func (m *Message) FriendAddMessageContent() (*FriendAddMessage, error) {
     if !m.IsFriendAdd() {
         return nil, errors.New("friend add message required")
     }
-    var f FriendAddMessageContent
+    var f FriendAddMessage
     content := XmlFormString(m.Content)
     err := xml.Unmarshal([]byte(content), &f)
     return &f, err
+}
+
+// 获取撤回消息的内容
+func (m *Message) RevokeMsg() (*RevokeMsg, error) {
+    if !m.IsRecalled() {
+        return nil, errors.New("recalled message required")
+    }
+    var r RevokeMsg
+    content := XmlFormString(m.Content)
+    err := xml.Unmarshal([]byte(content), &r)
+    return &r, err
 }
 
 // 同意好友的请求
@@ -370,7 +401,7 @@ type Card struct {
 }
 
 // 好友添加消息信息内容
-type FriendAddMessageContent struct {
+type FriendAddMessage struct {
     XMLName           xml.Name `xml:"msg"`
     Shortpy           int      `xml:"shortpy,attr"`
     ImageStatus       int      `xml:"imagestatus,attr"`
@@ -410,4 +441,16 @@ type FriendAddMessageContent struct {
         Count int   `xml:"count,attr"`
         Ver   int64 `xml:"ver,attr"`
     } `xml:"brandlist"`
+}
+
+// 撤回消息Content
+type RevokeMsg struct {
+    SysMsg    xml.Name `xml:"sysmsg"`
+    Type      string   `xml:"type,attr"`
+    RevokeMsg struct {
+        OldMsgId   int64  `xml:"oldmsgid"`
+        MsgId      int64  `xml:"msgid"`
+        Session    string `xml:"session"`
+        ReplaceMsg string `xml:"replacemsg"`
+    } `xml:"revokemsg"`
 }
