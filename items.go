@@ -17,6 +17,14 @@ type LoginInfo struct {
     PassTicket  string `xml:"pass_ticket"`
 }
 
+func (l LoginInfo) Ok() bool {
+    return l.Ret == 0
+}
+
+func (l LoginInfo) Error() string {
+    return l.Message
+}
+
 // 初始的请求信息
 // 几乎所有的请求都要携带该参数
 type BaseRequest struct {

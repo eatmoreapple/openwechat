@@ -80,6 +80,9 @@ func (c *Caller) GetLoginInfo(body []byte) (*LoginInfo, error) {
     if err := resp.ScanXML(&loginInfo); err != nil {
         return nil, err
     }
+    if !loginInfo.Ok() {
+        return nil, loginInfo
+    }
     return &loginInfo, nil
 }
 

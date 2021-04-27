@@ -210,6 +210,11 @@ func (m *Message) IsSysNotice() bool {
     return m.MsgType == 9999
 }
 
+// 判断是否为操作通知消息
+func (m *Message) StatusNotify() bool {
+    return m.MsgType == 51
+}
+
 // 判断消息是否为文件类型的消息
 func (m *Message) HasFile() bool {
     return m.IsPicture() || m.IsVoice() || m.IsVideo() || m.IsMedia()

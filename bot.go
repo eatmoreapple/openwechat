@@ -3,6 +3,7 @@ package openwechat
 import (
     "errors"
     "fmt"
+    "log"
 )
 
 type Bot struct {
@@ -91,7 +92,6 @@ func (b *Bot) login(data []byte) error {
     if err != nil {
         return err
     }
-
     // 将LoginInfo存到storage里面
     b.storage.LoginInfo = info
 
@@ -158,6 +158,7 @@ func (b *Bot) stopAsyncCALL(err error) {
     b.exit <- true
     b.err = err
     b.self = nil
+    log.Printf("exit with : %s", err.Error())
 }
 
 // 获取新的消息
