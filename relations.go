@@ -104,10 +104,9 @@ func (f Friends) Search(limit int, condFuncList ...func(friend *Friend) bool) (r
 
 // 向slice的好友依次发送消息
 func (f Friends) SendMsg(msg *SendMessage, delay ...time.Duration) error {
+    total := getTotalDuration(delay...)
     for _, friend := range f {
-        if len(delay) != 0 {
-            time.Sleep(delay[0])
-        }
+        time.Sleep(total)
         if err := friend.SendMsg(msg); err != nil {
             return err
         }
@@ -117,10 +116,9 @@ func (f Friends) SendMsg(msg *SendMessage, delay ...time.Duration) error {
 
 // 向slice的好友依次发送文本消息
 func (f Friends) SendText(text string, delay ...time.Duration) error {
+    total := getTotalDuration(delay...)
     for _, friend := range f {
-        if len(delay) != 0 {
-            time.Sleep(delay[0])
-        }
+        time.Sleep(total)
         if err := friend.SendText(text); err != nil {
             return err
         }
@@ -130,10 +128,9 @@ func (f Friends) SendText(text string, delay ...time.Duration) error {
 
 // 向slice的好友依次发送图片消息
 func (f Friends) SendImage(file *os.File, delay ...time.Duration) error {
+    total := getTotalDuration(delay...)
     for _, friend := range f {
-        if len(delay) != 0 {
-            time.Sleep(delay[0])
-        }
+        time.Sleep(total)
         if err := friend.SendImage(file); err != nil {
             return err
         }
@@ -209,10 +206,7 @@ func (g Groups) Last() *Group {
 
 // 向群组依次发送消息, 支持发送延迟
 func (g Groups) SendMsg(msg *SendMessage, delay ...time.Duration) error {
-    var total time.Duration
-    for _, d := range delay {
-        total += d
-    }
+    total := getTotalDuration(delay...)
     for _, group := range g {
         time.Sleep(total)
         if err := group.SendMsg(msg); err != nil {
@@ -224,10 +218,7 @@ func (g Groups) SendMsg(msg *SendMessage, delay ...time.Duration) error {
 
 // 向群组依次发送文本消息, 支持发送延迟
 func (g Groups) SendText(text string, delay ...time.Duration) error {
-    var total time.Duration
-    for _, d := range delay {
-        total += d
-    }
+    total := getTotalDuration(delay...)
     for _, group := range g {
         time.Sleep(total)
         if err := group.SendText(text); err != nil {
@@ -239,10 +230,7 @@ func (g Groups) SendText(text string, delay ...time.Duration) error {
 
 // 向群组依次发送图片消息, 支持发送延迟
 func (g Groups) SendImage(file *os.File, delay ...time.Duration) error {
-    var total time.Duration
-    for _, d := range delay {
-        total += d
-    }
+    total := getTotalDuration(delay...)
     for _, group := range g {
         time.Sleep(total)
         if err := group.SendImage(file); err != nil {
