@@ -13,44 +13,43 @@ import (
 )
 
 type Message struct {
+	IsAt    bool
 	AppInfo struct {
-		AppID string
 		Type  int
+		AppID string
 	}
-	AppMsgType           int
-	Content              string
-	CreateTime           int64
-	EncryFileName        string
-	FileName             string
-	FileSize             string
-	ForwardFlag          int
-	FromUserName         string
-	HasProductId         int
-	ImgHeight            int
-	ImgStatus            int
-	ImgWidth             int
-	MediaId              string
-	MsgId                string
-	MsgType              int
-	NewMsgId             int64
-	OriContent           string
-	PlayLength           int64
-	RecommendInfo        RecommendInfo
-	Status               int
-	StatusNotifyCode     int
-	StatusNotifyUserName string
-	SubMsgType           int
-	Ticket               string
-	ToUserName           string
-	Url                  string
-	VoiceLength          int
-
-	IsAt                  bool
-	Bot                   *Bot
+	AppMsgType            int
+	HasProductId          int
+	ImgHeight             int
+	ImgStatus             int
+	ImgWidth              int
+	ForwardFlag           int
+	MsgType               int
+	Status                int
+	StatusNotifyCode      int
+	SubMsgType            int
+	VoiceLength           int
+	CreateTime            int64
+	NewMsgId              int64
+	PlayLength            int64
+	MediaId               string
+	MsgId                 string
+	EncryFileName         string
+	FileName              string
+	FileSize              string
+	Content               string
+	FromUserName          string
+	OriContent            string
+	StatusNotifyUserName  string
+	Ticket                string
+	ToUserName            string
+	Url                   string
 	senderInGroupUserName string
+	RecommendInfo         RecommendInfo
+	Bot                   *Bot
 	mu                    sync.RWMutex
-	item                  map[string]interface{}
 	Context               context.Context
+	item                  map[string]interface{}
 }
 
 // 获取消息的发送者
