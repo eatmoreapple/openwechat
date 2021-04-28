@@ -1,4 +1,6 @@
 # openwechat
+[![Go Doc](https://pkg.go.dev/badge/github.com/eatMoreApple/openwechat)](https://godoc.org/github.com/eatMoreApple/openwechat)
+
 > golang版个人微信号API, 类似开发公众号一样，开发个人微信号
 
 
