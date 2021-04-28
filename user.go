@@ -176,7 +176,7 @@ func (s *Self) FileHelper() (*Friend, error) {
     }
     users := members.SearchByUserName(1, "filehelper")
     if users == nil {
-        return nil, noSuchUserFoundError
+        return NewFriendHelper(s), nil
     }
     s.fileHelper = &Friend{users.First()}
     return s.fileHelper, nil
@@ -523,4 +523,12 @@ func (m Members) Search(limit int, condFuncList ...func(user *User) bool) (resul
         }
     }
     return
+}
+
+// 这里为了兼容Desktop版本找不到文件传输助手的问题
+// 文件传输助手的微信身份标识符永远是filehelper
+// 这种形式的对象可能缺少一些其他属性
+// 但是不影响发送信息的功能
+func NewFriendHelper(self *Self) *Friend {
+    return &Friend{&User{UserName: "filehelper", Self: self}}
 }

@@ -115,6 +115,7 @@ func (b *Bot) Login() error {
     }
 }
 
+// 用户退出
 func (b *Bot) Logout() error {
     if b.Alive() {
         info := b.storage.LoginInfo

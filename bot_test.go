@@ -236,3 +236,22 @@ func TestHotLogin(t *testing.T) {
     }
     t.Log(self.NickName)
 }
+
+func TestFriendHelper(t *testing.T) {
+    bot := defaultBot(Desktop)
+    if err := bot.Login(); err != nil {
+        t.Error(err)
+        return
+    }
+    self, err := bot.GetCurrentUser()
+    if err != nil {
+        t.Error(err)
+        return
+    }
+    fh, err := self.FileHelper()
+    if err != nil {
+        t.Error(err)
+        return
+    }
+    fh.SendText("test message")
+}
