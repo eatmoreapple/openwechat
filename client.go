@@ -12,6 +12,7 @@ import (
     "os"
     "strconv"
     "strings"
+    "sync"
     "time"
 )
 
@@ -21,6 +22,8 @@ import (
 type Client struct {
     *http.Client
     UrlManager
+    mu      sync.Mutex
+    cookies map[string][]*http.Cookie
 }
 
 func NewClient(client *http.Client, urlManager UrlManager) *Client {
@@ -40,14 +43,26 @@ func DefaultClient(urlManager UrlManager) *Client {
     return NewClient(client, urlManager)
 }
 
-func (c *Client) getBaseUrl() *url.URL {
-    path, _ := url.Parse(c.UrlManager.baseUrl)
-    return path
+// 抽象Do方法,将所有的有效的cookie存入Client.cookies
+// 方便热登陆时获取
+func (c *Client) Do(req *http.Request) (*http.Response, error) {
+    resp, err := c.Client.Do(req)
+    if err != nil {
+        return resp, err
+    }
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    cookies := resp.Cookies()
+    if c.cookies == nil {
+        c.cookies = make(map[string][]*http.Cookie)
+    }
+    c.cookies[resp.Request.URL.String()] = cookies
+    return resp, err
 }
 
-func (c *Client) getCookies() []*http.Cookie {
-    path := c.getBaseUrl()
-    return c.Jar.Cookies(path)
+// 获取当前client的所有的有效的client
+func (c *Client) GetCookieMap() map[string][]*http.Cookie {
+    return c.cookies
 }
 
 // 获取登录的uuid
@@ -60,7 +75,8 @@ func (c *Client) GetLoginUUID() (*http.Response, error) {
     params.Add("lang", "zh_CN")
     params.Add("_", strconv.FormatInt(time.Now().Unix(), 10))
     path.RawQuery = params.Encode()
-    return c.Get(path.String())
+    req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
+    return c.Do(req)
 }
 
 // 获取登录的二维吗
@@ -80,7 +96,8 @@ func (c *Client) CheckLogin(uuid string) (*http.Response, error) {
     params.Add("uuid", uuid)
     params.Add("tip", "0")
     path.RawQuery = params.Encode()
-    return c.Get(path.String())
+    req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
+    return c.Do(req)
 }
 
 // GetLoginInfo 请求获取LoginInfo
@@ -102,7 +119,9 @@ func (c *Client) WebInit(request *BaseRequest) (*http.Response, error) {
     if err != nil {
         return nil, err
     }
-    return c.Post(path.String(), jsonContentType, body)
+    req, _ := http.NewRequest(http.MethodPost, path.String(), body)
+    req.Header.Add("Content-Type", jsonContentType)
+    return c.Do(req)
 }
 
 // 通知手机已登录
@@ -157,7 +176,8 @@ func (c *Client) WebWxGetContact(info *LoginInfo) (*http.Response, error) {
     params.Add("skey", info.SKey)
     params.Add("req", "0")
     path.RawQuery = params.Encode()
-    return c.Get(path.String())
+    req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
+    return c.Do(req)
 }
 
 // 获取联系人详情
@@ -226,7 +246,8 @@ func (c *Client) WebWxSendMsg(msg *SendMessage, info *LoginInfo, request *BaseRe
 // 获取用户的头像
 func (c *Client) WebWxGetHeadImg(headImageUrl string) (*http.Response, error) {
     path := c.baseUrl + headImageUrl
-    return c.Get(path)
+    req, _ := http.NewRequest(http.MethodGet, path, nil)
+    return c.Do(req)
 }
 
 // 上传文件
@@ -291,7 +312,9 @@ func (c *Client) WebWxUploadMedia(file *os.File, request *BaseRequest, info *Log
     if err = writer.Close(); err != nil {
         return nil, err
     }
-    return c.Post(path.String(), ct, body)
+    req, _ := http.NewRequest(http.MethodPost, path.String(), body)
+    req.Header.Set("Content-Type", ct)
+    return c.Do(req)
 }
 
 // 发送图片
@@ -374,7 +397,8 @@ func (c *Client) WebWxGetMsgImg(msg *Message, info *LoginInfo) (*http.Response, 
     params.Add("skey", info.SKey)
     params.Add("type", "slave")
     path.RawQuery = params.Encode()
-    return c.Get(path.String())
+    req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
+    return c.Do(req)
 }
 
 // 获取语音消息的语音响应
@@ -384,7 +408,8 @@ func (c *Client) WebWxGetVoice(msg *Message, info *LoginInfo) (*http.Response, e
     params.Add("msgid", msg.MsgId)
     params.Add("skey", info.SKey)
     path.RawQuery = params.Encode()
-    return c.Get(path.String())
+    req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
+    return c.Do(req)
 }
 
 // 获取视频消息的视频响应
@@ -394,7 +419,8 @@ func (c *Client) WebWxGetVideo(msg *Message, info *LoginInfo) (*http.Response, e
     params.Add("msgid", msg.MsgId)
     params.Add("skey", info.SKey)
     path.RawQuery = params.Encode()
-    return c.Get(path.String())
+    req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
+    return c.Do(req)
 }
 
 // 获取文件消息的文件响应
@@ -408,7 +434,8 @@ func (c *Client) WebWxGetMedia(msg *Message, info *LoginInfo) (*http.Response, e
     params.Add("pass_ticket", info.PassTicket)
     params.Add("webwx_data_ticket", getWebWxDataTicket(c.Jar.Cookies(path)))
     path.RawQuery = params.Encode()
-    return c.Get(path.String())
+    req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
+    return c.Do(req)
 }
 
 // 用户退出
@@ -419,7 +446,8 @@ func (c *Client) Logout(info *LoginInfo) (*http.Response, error) {
     params.Add("type", "1")
     params.Add("skey", info.SKey)
     path.RawQuery = params.Encode()
-    return c.Get(path.String())
+    req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
+    return c.Do(req)
 }
 
 // 添加用户进群聊
@@ -440,7 +468,9 @@ func (c *Client) AddMemberIntoChatRoom(req *BaseRequest, info *LoginInfo, group 
         "AddMemberList": strings.Join(addMemberList, ","),
     }
     buffer, _ := ToBuffer(content)
-    return c.Post(path.String(), jsonContentType, buffer)
+    requ, _ := http.NewRequest(http.MethodPost, path.String(), buffer)
+    requ.Header.Set("Content-Type", jsonContentType)
+    return c.Do(requ)
 }
 
 // 从群聊中移除用户
@@ -460,5 +490,7 @@ func (c *Client) RemoveMemberFromChatRoom(req *BaseRequest, info *LoginInfo, gro
         "DelMemberList": strings.Join(delMemberList, ","),
     }
     buffer, _ := ToBuffer(content)
-    return c.Post(path.String(), jsonContentType, buffer)
+    requ, _ := http.NewRequest(http.MethodPost, path.String(), buffer)
+    requ.Header.Set("Content-Type", jsonContentType)
+    return c.Do(requ)
 }

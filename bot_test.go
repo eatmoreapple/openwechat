@@ -222,8 +222,9 @@ func TestAgreeFriendsAdd(t *testing.T) {
 }
 
 func TestHotLogin(t *testing.T) {
+    filename := "test.json"
     bot := defaultBot()
-    s := NewFileHotReloadStorage("2.json")
+    s := NewJsonFileHotReloadStorage(filename)
     if err := bot.HotLogin(s); err != nil {
         t.Error(err)
         return

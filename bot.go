@@ -4,6 +4,7 @@ import (
     "errors"
     "fmt"
     "log"
+    "net/url"
 )
 
 type Bot struct {
@@ -18,7 +19,6 @@ type Bot struct {
     self             *Self
     storage          *Storage
     hotReloadStorage HotReloadStorage
-    mode             mode
 }
 
 // 判断当前用户是否正常在线
@@ -49,8 +49,13 @@ func (b *Bot) HotLogin(storage HotReloadStorage) error {
         return b.Login()
     }
     cookies := storage.GetCookie()
-    path := b.Caller.Client.getBaseUrl()
-    b.Caller.Client.Jar.SetCookies(path, cookies)
+    for u, ck := range cookies {
+        path, err := url.Parse(u)
+        if err != nil {
+            return err
+        }
+        b.Caller.Client.Jar.SetCookies(path, ck)
+    }
     b.storage.LoginInfo = storage.GetLoginInfo()
     b.storage.Request = storage.GetBaseRequest()
     return b.webInit()
@@ -123,8 +128,9 @@ func (b *Bot) login(data []byte) error {
     // 将BaseRequest存到storage里面方便后续调用
     b.storage.Request = request
 
+    // 如果是热登陆,则将当前的重要信息写入hotReloadStorage
     if b.isHot {
-        cookies := b.Caller.Client.getCookies()
+        cookies := b.Caller.Client.GetCookieMap()
         if err := b.hotReloadStorage.Dump(cookies, request, info); err != nil {
             return err
         }

@@ -7,31 +7,33 @@ import (
     "os"
 )
 
+// 身份信息, 维持整个登陆的Session会话
 type Storage struct {
     LoginInfo *LoginInfo
     Request   *BaseRequest
     Response  *WebInitResponse
 }
 
+// 热登陆存储接口
 type HotReloadStorage interface {
-    GetCookie() []*http.Cookie
-    GetBaseRequest() *BaseRequest
-    GetLoginInfo() *LoginInfo
-    Dump(cookies []*http.Cookie, req *BaseRequest, info *LoginInfo) error
-    Load() error
+    GetCookie() map[string][]*http.Cookie                                            // 获取client.cookie
+    GetBaseRequest() *BaseRequest                                                    // 获取BaseRequest
+    GetLoginInfo() *LoginInfo                                                        // 获取LoginInfo
+    Dump(cookies map[string][]*http.Cookie, req *BaseRequest, info *LoginInfo) error // 实现该方法, 将必要信息进行序列化
+    Load() error                                                                     // 实现该方法, 将存储媒介的内容反序列化
 }
 
-type FileHotReloadStorage struct {
-    Cookie   []*http.Cookie
+// 实现HotReloadStorage接口
+// 默认以json文件的形式存储
+type JsonFileHotReloadStorage struct {
+    Cookie   map[string][]*http.Cookie
     Req      *BaseRequest
     Info     *LoginInfo
     filename string
 }
 
-func (f *FileHotReloadStorage) Dump(cookies []*http.Cookie, req *BaseRequest, info *LoginInfo) error {
-    f.Cookie = cookies
-    f.Req = req
-    f.Info = info
+// 将信息写入json文件
+func (f *JsonFileHotReloadStorage) Dump(cookies map[string][]*http.Cookie, req *BaseRequest, info *LoginInfo) error {
     var (
         file *os.File
         err  error
@@ -55,6 +57,10 @@ func (f *FileHotReloadStorage) Dump(cookies []*http.Cookie, req *BaseRequest, in
     }
     defer file.Close()
 
+    f.Cookie = cookies
+    f.Req = req
+    f.Info = info
+
     data, err := json.Marshal(f)
     if err != nil {
         return err
@@ -63,7 +69,8 @@ func (f *FileHotReloadStorage) Dump(cookies []*http.Cookie, req *BaseRequest, in
     return err
 }
 
-func (f *FileHotReloadStorage) Load() error {
+// 从文件中读取信息
+func (f *JsonFileHotReloadStorage) Load() error {
     file, err := os.Open(f.filename)
     if err != nil {
         return err
@@ -76,18 +83,18 @@ func (f *FileHotReloadStorage) Load() error {
     return json.Unmarshal(buffer.Bytes(), f)
 }
 
-func (f FileHotReloadStorage) GetCookie() []*http.Cookie {
+func (f *JsonFileHotReloadStorage) GetCookie() map[string][]*http.Cookie {
     return f.Cookie
 }
 
-func (f FileHotReloadStorage) GetBaseRequest() *BaseRequest {
+func (f *JsonFileHotReloadStorage) GetBaseRequest() *BaseRequest {
     return f.Req
 }
 
-func (f FileHotReloadStorage) GetLoginInfo() *LoginInfo {
+func (f *JsonFileHotReloadStorage) GetLoginInfo() *LoginInfo {
     return f.Info
 }
 
-func NewFileHotReloadStorage(filename string) *FileHotReloadStorage {
-    return &FileHotReloadStorage{filename: filename}
+func NewJsonFileHotReloadStorage(filename string) *JsonFileHotReloadStorage {
+    return &JsonFileHotReloadStorage{filename: filename}
 }
