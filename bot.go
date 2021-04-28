@@ -2,7 +2,6 @@ package openwechat
 
 import (
     "errors"
-    "fmt"
     "log"
     "net/url"
 )
@@ -42,13 +41,37 @@ func (b *Bot) GetCurrentUser() (*Self, error) {
     return b.self, nil
 }
 
-func (b *Bot) HotLogin(storage HotReloadStorage) error {
+func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
     b.isHot = true
     b.hotReloadStorage = storage
-    if err := storage.Load(); err != nil {
+
+    var err error
+
+    // 如果load出错了,就执行正常登陆逻辑
+    // 第一次没有数据load都会出错的
+    if err = storage.Load(); err != nil {
         return b.Login()
     }
-    cookies := storage.GetCookie()
+
+    if err = b.hotLoginInit(); err != nil {
+        return err
+    }
+
+    // 如果webInit出错,则说明可能身份信息已经失效
+    // 如果retry为True的话,则进行正常登陆
+    if err = b.webInit(); err != nil {
+        if len(retry) > 0 {
+            if retry[0] {
+                return b.Login()
+            }
+        }
+    }
+    return err
+}
+
+// 热登陆初始化
+func (b *Bot) hotLoginInit() error {
+    cookies := b.hotReloadStorage.GetCookie()
     for u, ck := range cookies {
         path, err := url.Parse(u)
         if err != nil {
@@ -56,9 +79,9 @@ func (b *Bot) HotLogin(storage HotReloadStorage) error {
         }
         b.Caller.Client.Jar.SetCookies(path, ck)
     }
-    b.storage.LoginInfo = storage.GetLoginInfo()
-    b.storage.Request = storage.GetBaseRequest()
-    return b.webInit()
+    b.storage.LoginInfo = b.hotReloadStorage.GetLoginInfo()
+    b.storage.Request = b.hotReloadStorage.GetBaseRequest()
+    return nil
 }
 
 // 用户登录
@@ -78,7 +101,7 @@ func (b *Bot) Login() error {
         }
         switch resp.Code {
         case statusSuccess:
-            return b.login(resp.Raw)
+            return b.handleLogin(resp.Raw)
         case statusScanned:
             if b.ScanCallBack != nil {
                 b.ScanCallBack(resp.Raw)
@@ -104,7 +127,7 @@ func (b *Bot) Logout() error {
 }
 
 // 登录逻辑
-func (b *Bot) login(data []byte) error {
+func (b *Bot) handleLogin(data []byte) error {
     // 判断是否有登录回调，如果有执行它
     if b.LoginCallBack != nil {
         b.LoginCallBack(data)
@@ -171,19 +194,18 @@ func (b *Bot) asyncCall() error {
         resp *SyncCheckResponse
     )
     for b.Alive() {
-        info := b.storage.LoginInfo
-        response := b.storage.Response
-        resp, err = b.Caller.SyncCheck(info, response)
+        // 长轮训检查是否有消息返回
+        resp, err = b.Caller.SyncCheck(b.storage.LoginInfo, b.storage.Response)
         if err != nil {
             return err
         }
         // 如果不是正常的状态码返回，发生了错误，直接退出
         if !resp.Success() {
-            return fmt.Errorf("unknow code got %s", resp.RetCode)
+            return resp
         }
         // 如果Selector不为0，则获取消息
         if !resp.NorMal() {
-            if err = b.getMessage(); err != nil {
+            if err = b.getNewWechatMessage(); err != nil {
                 return err
             }
         }
@@ -199,7 +221,7 @@ func (b *Bot) stopAsyncCALL(err error) {
 }
 
 // 获取新的消息
-func (b *Bot) getMessage() error {
+func (b *Bot) getNewWechatMessage() error {
     resp, err := b.Caller.WebWxSync(b.storage.Request, b.storage.Response, b.storage.LoginInfo)
     if err != nil {
         return err
@@ -228,6 +250,11 @@ func (b *Bot) Block() error {
     }
     close(b.exit)
     return nil
+}
+
+// 获取当前Bot崩溃的原因
+func (b *Bot) CrashReason() error {
+    return b.err
 }
 
 func NewBot(caller *Caller) *Bot {

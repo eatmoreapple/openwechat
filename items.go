@@ -1,6 +1,9 @@
 package openwechat
 
-import "fmt"
+import (
+    "errors"
+    "fmt"
+)
 
 /*
 一些网络返回信息的封装
@@ -43,25 +46,32 @@ func (b BaseResponse) Ok() bool {
 }
 
 func (b BaseResponse) Error() string {
-    switch b.Ret {
+    if err := getResponseErrorWithRetCode(b.Ret); err != nil {
+        return err.Error()
+    }
+    return ""
+}
+
+func getResponseErrorWithRetCode(code int) error {
+    switch code {
     case 0:
-        return ""
+        return nil
     case 1:
-        return "param error"
+        return errors.New("param error")
     case -14:
-        return "ticket error"
+        return errors.New("ticket error")
     case 1100:
-        return "not login warn"
+        return errors.New("not login warn")
     case 1101:
-        return "not login check"
+        return errors.New("not login check")
     case 1102:
-        return "cookie invalid error"
+        return errors.New("cookie invalid error")
     case 1203:
-        return "login env error"
+        return errors.New("login env error")
     case 1205:
-        return "opt too often"
+        return errors.New("opt too often")
     default:
-        return fmt.Sprintf("base response ret code %d", b.Ret)
+        return fmt.Errorf("base response ret code %d", code)
     }
 }
 
