@@ -3,7 +3,6 @@ package openwechat
 import (
     "fmt"
     "os"
-    "strings"
     "time"
 )
 
@@ -336,17 +335,4 @@ func (m Mps) Search(limit int, condFuncList ...func(group *Mp) bool) (results Mp
     return
 }
 
-// 判断是否为好友
-func isFriend(user User) bool {
-    return !isGroup(user) && strings.HasPrefix(user.UserName, "@") && user.VerifyFlag == 0
-}
 
-// 判断是否为群组
-func isGroup(user User) bool {
-    return strings.HasPrefix(user.UserName, "@@") && user.VerifyFlag == 0
-}
-
-// 判断是否为公众号
-func isMP(user User) bool {
-    return user.VerifyFlag == 8 || user.VerifyFlag == 24 || user.VerifyFlag == 136
-}

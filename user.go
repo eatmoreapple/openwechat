@@ -6,6 +6,7 @@ import (
     "fmt"
     "net/http"
     "os"
+    "strings"
 )
 
 type User struct {
@@ -118,6 +119,21 @@ func (u *User) Detail() (*User, error) {
     return user, nil
 }
 
+// 判断是否为好友
+func (u *User) IsFriend() bool {
+    return !u.IsGroup() && strings.HasPrefix(u.UserName, "@") && u.VerifyFlag == 0
+}
+
+// 判断是否为群组
+func (u *User) IsGroup() bool {
+    return strings.HasPrefix(u.UserName, "@@") && u.VerifyFlag == 0
+}
+
+// 判断是否为公众号
+func (u *User) IsMP() bool {
+    return u.VerifyFlag == 8 || u.VerifyFlag == 24 || u.VerifyFlag == 136
+}
+
 // 自己,当前登录用户对象
 type Self struct {
     *User
@@ -214,70 +230,28 @@ func (s *Self) Mps(update ...bool) (Mps, error) {
 
 // 更新好友处理
 func (s *Self) updateFriends(update ...bool) error {
-    var isUpdate bool
-    if len(update) > 0 {
-        isUpdate = update[len(update)-1]
+    if _, err := s.Members(update...); err != nil {
+        return err
     }
-    if isUpdate || s.members == nil {
-        if err := s.updateMembers(); err != nil {
-            return err
-        }
-    }
-    var friends Friends
-    for _, member := range s.members {
-        if isFriend(*member) {
-            friend := &Friend{member}
-            friend.Self = s
-            friends = append(friends, friend)
-        }
-    }
-    s.friends = friends
+    s.friends = s.members.Friends()
     return nil
 }
 
 // 更新群组处理
 func (s *Self) updateGroups(update ...bool) error {
-    var isUpdate bool
-    if len(update) > 0 {
-        isUpdate = update[len(update)-1]
+    if _, err := s.Members(update...); err != nil {
+        return err
     }
-    if isUpdate || s.members == nil {
-        if err := s.updateMembers(); err != nil {
-            return err
-        }
-    }
-    var groups Groups
-    for _, member := range s.members {
-        if isGroup(*member) {
-            group := &Group{member}
-            group.Self = s
-            groups = append(groups, group)
-        }
-    }
-    s.groups = groups
+    s.groups = s.members.Groups()
     return nil
 }
 
 // 更新公众号处理
 func (s *Self) updateMps(update ...bool) error {
-    var isUpdate bool
-    if len(update) > 0 {
-        isUpdate = update[len(update)-1]
+    if _, err := s.Members(update...); err != nil {
+        return err
     }
-    if isUpdate || s.members == nil {
-        if err := s.updateMembers(); err != nil {
-            return err
-        }
-    }
-    var mps Mps
-    for _, member := range s.members {
-        if isMP(*member) {
-            mp := &Mp{member}
-            mp.Self = s
-            mps = append(mps, mp)
-        }
-    }
-    s.mps = mps
+    s.mps = s.members.MPs()
     return nil
 }
 
@@ -525,6 +499,39 @@ func (m Members) Search(limit int, condFuncList ...func(user *User) bool) (resul
         }
     }
     return
+}
+
+func (m Members) Friends() Friends {
+    friends := make(Friends, 0)
+    for _, mb := range m {
+        if mb.IsFriend() {
+            friend := &Friend{mb}
+            friends = append(friends, friend)
+        }
+    }
+    return friends
+}
+
+func (m Members) Groups() Groups {
+    groups := make(Groups, 0)
+    for _, mb := range m {
+        if mb.IsGroup() {
+            group := &Group{mb}
+            groups = append(groups, group)
+        }
+    }
+    return groups
+}
+
+func (m Members) MPs() Mps {
+    mps := make(Mps, 0)
+    for _, mb := range m {
+        if mb.IsMP() {
+            mp := &Mp{mb}
+            mps = append(mps, mp)
+        }
+    }
+    return mps
 }
 
 // 这里为了兼容Desktop版本找不到文件传输助手的问题
