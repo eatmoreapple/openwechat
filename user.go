@@ -250,6 +250,7 @@ func (s *Self) updateGroups(update ...bool) error {
     for _, member := range s.members {
         if isGroup(*member) {
             group := &Group{member}
+            group.Self = s
             groups = append(groups, group)
         }
     }
@@ -272,6 +273,7 @@ func (s *Self) updateMps(update ...bool) error {
     for _, member := range s.members {
         if isMP(*member) {
             mp := &Mp{member}
+            mp.Self = s
             mps = append(mps, mp)
         }
     }
