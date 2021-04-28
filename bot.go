@@ -7,17 +7,18 @@ import (
 )
 
 type Bot struct {
-    ScanCallBack     func(body []byte)
-    LoginCallBack    func(body []byte)
-    UUIDCallback     func(uuid string)
-    MessageHandler   func(msg *Message)
-    isHot            bool
-    err              error
-    exit             chan bool
-    Caller           *Caller
-    self             *Self
-    storage          *Storage
-    hotReloadStorage HotReloadStorage
+    ScanCallBack           func(body []byte)  // 扫码回调,可获取扫码用户的头像
+    LoginCallBack          func(body []byte)  // 登陆回调
+    UUIDCallback           func(uuid string)  // 获取UUID的回调函数
+    MessageHandler         func(msg *Message) // 获取消息成功的handle
+    GetMessageErrorHandler func(err error)    // 获取消息发生错误的handle
+    isHot                  bool
+    err                    error
+    exit                   chan bool
+    Caller                 *Caller
+    self                   *Self
+    storage                *Storage
+    hotReloadStorage       HotReloadStorage
 }
 
 // 判断当前用户是否正常在线
@@ -181,7 +182,12 @@ func (b *Bot) webInit() error {
     }
     // 开启协程，轮训获取是否有新的消息返回
     go func() {
-        b.stopAsyncCALL(b.asyncCall())
+        if b.GetMessageErrorHandler == nil {
+            b.GetMessageErrorHandler = b.stopAsyncCALL
+        }
+        if err := b.asyncCall(); err != nil {
+            b.GetMessageErrorHandler(err)
+        }
     }()
     return nil
 }
@@ -213,6 +219,7 @@ func (b *Bot) asyncCall() error {
     return err
 }
 
+// 当获取消息发生错误时, 默认的错误处理行为
 func (b *Bot) stopAsyncCALL(err error) {
     b.exit <- true
     b.err = err
@@ -255,6 +262,16 @@ func (b *Bot) Block() error {
 // 获取当前Bot崩溃的原因
 func (b *Bot) CrashReason() error {
     return b.err
+}
+
+// setter for Bot.MessageHandler
+func (b *Bot) MessageOnSuccess(h func(msg *Message)) {
+    b.MessageHandler = h
+}
+
+// setter for Bot.GetMessageErrorHandler
+func (b *Bot) MessageOnError(h func(err error)) {
+    b.GetMessageErrorHandler = h
 }
 
 func NewBot(caller *Caller) *Bot {
