@@ -78,34 +78,6 @@ func (u *User) SaveAvatar(filename string) error {
     return err
 }
 
-// Deprecated
-func (u *User) sendMsg(msg *SendMessage) error {
-    msg.FromUserName = u.Self.UserName
-    msg.ToUserName = u.UserName
-    info := u.Self.Bot.storage.LoginInfo
-    request := u.Self.Bot.storage.Request
-    return u.Self.Bot.Caller.WebWxSendMsg(msg, info, request)
-}
-
-// Deprecated
-func (u *User) sendText(content string) error {
-    msg := NewTextSendMessage(content, u.Self.UserName, u.UserName)
-    return u.sendMsg(msg)
-}
-
-// Deprecated
-func (u *User) sendImage(file *os.File) error {
-    request := u.Self.Bot.storage.Request
-    info := u.Self.Bot.storage.LoginInfo
-    return u.Self.Bot.Caller.WebWxSendImageMsg(file, request, info, u.Self.UserName, u.UserName)
-}
-
-// Deprecated
-func (u *User) setRemarkName(remarkName string) error {
-    request := u.Self.Bot.storage.Request
-    return u.Self.Bot.Caller.WebWxOplog(request, remarkName, u.UserName)
-}
-
 // 获取用户的详情
 func (u *User) Detail() (*User, error) {
     members := Members{u}
@@ -155,12 +127,7 @@ func (s *Self) Members(update ...bool) (Members, error) {
         return s.members, nil
     }
     // 判断是否需要更新,如果传入的参数不为nil,则取最后一个
-    var isUpdate bool
-    if len(update) > 0 {
-        isUpdate = update[len(update)-1]
-    }
-    // 如果需要更新，则直接更新缓存
-    if isUpdate {
+    if len(update) > 0 && update[0] {
         if err := s.updateMembers(); err != nil {
             return nil, err
         }
@@ -200,59 +167,35 @@ func (s *Self) FileHelper() (*Friend, error) {
 
 // 获取所有的好友
 func (s *Self) Friends(update ...bool) (Friends, error) {
-    if s.friends == nil {
-        if err := s.updateFriends(update...); err != nil {
+    if s.friends == nil || (len(update) > 0 && update[0]) {
+        if _, err := s.Members(true); err != nil {
             return nil, err
         }
+        s.friends = s.members.Friends()
     }
     return s.friends, nil
 }
 
 // 获取所有的群组
 func (s *Self) Groups(update ...bool) (Groups, error) {
-    if s.groups == nil {
-        if err := s.updateGroups(update...); err != nil {
+    if s.groups == nil || (len(update) > 0 && update[0]) {
+        if _, err := s.Members(true); err != nil {
             return nil, err
         }
+        s.groups = s.members.Groups()
     }
     return s.groups, nil
 }
 
 // 获取所有的公众号
 func (s *Self) Mps(update ...bool) (Mps, error) {
-    if s.mps == nil {
-        if err := s.updateMps(update...); err != nil {
+    if s.mps == nil || (len(update) > 0 && update[0]) {
+        if _, err := s.Members(true); err != nil {
             return nil, err
         }
+        s.mps = s.members.MPs()
     }
     return s.mps, nil
-}
-
-// 更新好友处理
-func (s *Self) updateFriends(update ...bool) error {
-    if _, err := s.Members(update...); err != nil {
-        return err
-    }
-    s.friends = s.members.Friends()
-    return nil
-}
-
-// 更新群组处理
-func (s *Self) updateGroups(update ...bool) error {
-    if _, err := s.Members(update...); err != nil {
-        return err
-    }
-    s.groups = s.members.Groups()
-    return nil
-}
-
-// 更新公众号处理
-func (s *Self) updateMps(update ...bool) error {
-    if _, err := s.Members(update...); err != nil {
-        return err
-    }
-    s.mps = s.members.MPs()
-    return nil
 }
 
 // 更新所有的联系人信息
@@ -301,7 +244,7 @@ func (s *Self) UpdateMembersDetail() error {
         }
         newMembers = append(newMembers, nMembers...)
     }
-    if len(newMembers) != 0 {
+    if len(newMembers) > 0 {
         newMembers.SetOwner(s)
         s.members = newMembers
     }
