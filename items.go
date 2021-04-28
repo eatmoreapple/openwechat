@@ -196,3 +196,9 @@ type CheckLoginResponse struct {
     Code string
     Raw  []byte
 }
+
+type MessageResponse struct {
+    BaseResponse BaseResponse
+    LocalID      string
+    MsgID        string
+}

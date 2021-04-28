@@ -187,9 +187,11 @@ func (c *Caller) WebWxSync(request *BaseRequest, response *WebInitResponse, info
 }
 
 // 发送消息接口
-func (c *Caller) WebWxSendMsg(msg *SendMessage, info *LoginInfo, request *BaseRequest) error {
+func (c *Caller) WebWxSendMsg(msg *SendMessage, info *LoginInfo, request *BaseRequest) (*SentMessage, error) {
     resp := NewReturnResponse(c.Client.WebWxSendMsg(msg, info, request))
-    return parseBaseResponseError(resp)
+    sendSuccessMsg := &SentMessage{SendMessage: msg}
+    err := parseMessageResponseError(resp, sendSuccessMsg)
+    return sendSuccessMsg, err
 }
 
 // 修改用户备注接口
@@ -199,12 +201,12 @@ func (c *Caller) WebWxOplog(request *BaseRequest, remarkName, toUserName string)
 }
 
 // 发送图片消息接口
-func (c *Caller) WebWxSendImageMsg(file *os.File, request *BaseRequest, info *LoginInfo, fromUserName, toUserName string) error {
+func (c *Caller) WebWxSendImageMsg(file *os.File, request *BaseRequest, info *LoginInfo, fromUserName, toUserName string) (*SentMessage, error) {
     // 首先尝试上传图片
     resp := NewReturnResponse(c.Client.WebWxUploadMedia(file, request, info, fromUserName, toUserName, "image/jpeg", "pic"))
     // 无错误上传成功之后获取请求结果，判断结果是否正常
     if resp.Err() != nil {
-        return resp.Err()
+        return nil, resp.Err()
     }
     defer resp.Body.Close()
     var item struct {
@@ -212,16 +214,19 @@ func (c *Caller) WebWxSendImageMsg(file *os.File, request *BaseRequest, info *Lo
         MediaId      string
     }
     if err := resp.ScanJSON(&item); err != nil {
-        return err
+        return nil, err
     }
     if !item.BaseResponse.Ok() {
-        return item.BaseResponse
+        return nil, item.BaseResponse
     }
     // 构造新的图片类型的信息
     msg := NewMediaSendMessage(ImageMessage, fromUserName, toUserName, item.MediaId)
     // 发送图片信息
     resp = NewReturnResponse(c.Client.WebWxSendMsgImg(msg, request, info))
-    return parseBaseResponseError(resp)
+
+    sendSuccessMsg := &SentMessage{SendMessage: msg}
+    err := parseMessageResponseError(resp, sendSuccessMsg)
+    return sendSuccessMsg, err
 }
 
 // 用户退出
@@ -254,6 +259,12 @@ func (c *Caller) WebWxVerifyUser(storage *Storage, info RecommendInfo, verifyCon
     return parseBaseResponseError(resp)
 }
 
+// 撤回消息操作
+func (c *Caller) WebWxRevokeMsg(msg *SentMessage, request *BaseRequest) error {
+    resp := NewReturnResponse(c.Client.WebWxRevokeMsg(msg, request))
+    return parseBaseResponseError(resp)
+}
+
 // 处理响应返回的结果是否正常
 func parseBaseResponseError(resp *ReturnResponse) error {
     if resp.Err() != nil {
@@ -267,5 +278,26 @@ func parseBaseResponseError(resp *ReturnResponse) error {
     if !item.BaseResponse.Ok() {
         return item.BaseResponse
     }
+    return nil
+}
+
+func parseMessageResponseError(resp *ReturnResponse, msg *SentMessage) error {
+    if resp.Err() != nil {
+        return resp.Err()
+    }
+
+    defer resp.Body.Close()
+
+    var messageResp MessageResponse
+
+    if err := resp.ScanJSON(&messageResp); err != nil {
+        return err
+    }
+
+    if !messageResp.BaseResponse.Ok() {
+        return messageResp.BaseResponse
+    }
+    //// 发送成功之后将msgId赋值给SendMessage
+    msg.MsgId = messageResp.MsgID
     return nil
 }

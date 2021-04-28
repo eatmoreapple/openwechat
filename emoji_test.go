@@ -17,5 +17,5 @@ func TestSendEmoji(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	_ = f.SendText(Emoji.Dagger)
+	_ , _= f.SendText(Emoji.Dagger)
 }

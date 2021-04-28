@@ -494,3 +494,17 @@ func (c *Client) RemoveMemberFromChatRoom(req *BaseRequest, info *LoginInfo, gro
     requ.Header.Set("Content-Type", jsonContentType)
     return c.Do(requ)
 }
+
+// 撤回消息
+func (c *Client) WebWxRevokeMsg(msg *SentMessage, request *BaseRequest) (*http.Response, error) {
+    content := map[string]interface{}{
+        "BaseRequest": request,
+        "ClientMsgId": msg.ClientMsgId,
+        "SvrMsgId":    msg.MsgId,
+        "ToUserName":  msg.ToUserName,
+    }
+    buffer, _ := ToBuffer(content)
+    req, _ := http.NewRequest(http.MethodPost, c.webWxRevokeMsg, buffer)
+    req.Header.Set("Content-Type", jsonContentType)
+    return c.Do(req)
+}

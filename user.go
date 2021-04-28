@@ -205,74 +205,36 @@ func (s *Self) UpdateMembersDetail() error {
     if err != nil {
         return err
     }
-    // 获取他们的数量
-    count := members.Count()
-    // 一次更新50个,分情况讨论
-
-    // 获取总的需要更新的次数
-    var times int
-    if count < 50 {
-        times = 1
-    } else {
-        times = count / 50
-    }
-    var newMembers Members
-    request := s.Bot.storage.Request
-    var pMembers Members
-    // 分情况依次更新
-    for i := 1; i <= times; i++ {
-        if times == 1 {
-            pMembers = members
-        } else {
-            pMembers = members[(i-1)*50 : i*50]
-        }
-        nMembers, err := s.Bot.Caller.WebWxBatchGetContact(pMembers, request)
-        if err != nil {
-            return err
-        }
-        newMembers = append(newMembers, nMembers...)
-    }
-    // 最后判断是否全部更新完毕
-    total := times * 50
-    if total < count {
-        // 将全部剩余的更新完毕
-        left := count - total
-        pMembers = members[total : total+left]
-        nMembers, err := s.Bot.Caller.WebWxBatchGetContact(pMembers, request)
-        if err != nil {
-            return err
-        }
-        newMembers = append(newMembers, nMembers...)
-    }
-    if len(newMembers) > 0 {
-        newMembers.SetOwner(s)
-        s.members = newMembers
-    }
-    return nil
+    return members.detail(s)
 }
 
 // 抽象发送消息接口
-func (s *Self) sendMessageToUser(user *User, msg *SendMessage) error {
+func (s *Self) sendMessageToUser(user *User, msg *SendMessage) (*SentMessage, error) {
     msg.FromUserName = s.UserName
     msg.ToUserName = user.UserName
     info := s.Bot.storage.LoginInfo
     request := s.Bot.storage.Request
-    return s.Bot.Caller.WebWxSendMsg(msg, info, request)
+    successSendMessage, err := s.Bot.Caller.WebWxSendMsg(msg, info, request)
+    if err != nil {
+        return nil, err
+    }
+    successSendMessage.Self = s
+    return successSendMessage, nil
 }
 
 // 发送消息给好友
-func (s *Self) SendMessageToFriend(friend *Friend, msg *SendMessage) error {
+func (s *Self) SendMessageToFriend(friend *Friend, msg *SendMessage) (*SentMessage, error) {
     return s.sendMessageToUser(friend.User, msg)
 }
 
 // 发送文本消息给好友
-func (s *Self) SendTextToFriend(friend *Friend, text string) error {
+func (s *Self) SendTextToFriend(friend *Friend, text string) (*SentMessage, error) {
     msg := NewTextSendMessage(text, s.UserName, friend.UserName)
     return s.SendMessageToFriend(friend, msg)
 }
 
 // 发送图片消息给好友
-func (s *Self) SendImageToFriend(friend *Friend, file *os.File) error {
+func (s *Self) SendImageToFriend(friend *Friend, file *os.File) (*SentMessage, error) {
     req := s.Bot.storage.Request
     info := s.Bot.storage.LoginInfo
     return s.Bot.Caller.WebWxSendImageMsg(file, req, info, s.UserName, friend.UserName)
@@ -351,21 +313,26 @@ func (s *Self) AddFriendIntoManyGroups(friend *Friend, groups ...*Group) error {
 }
 
 // 发送消息给群组
-func (s *Self) SendMessageToGroup(group *Group, msg *SendMessage) error {
+func (s *Self) SendMessageToGroup(group *Group, msg *SendMessage) (*SentMessage, error) {
     return s.sendMessageToUser(group.User, msg)
 }
 
 // 发送文本消息给群组
-func (s *Self) SendTextToGroup(group *Group, text string) error {
+func (s *Self) SendTextToGroup(group *Group, text string) (*SentMessage, error) {
     msg := NewTextSendMessage(text, s.UserName, group.UserName)
     return s.SendMessageToGroup(group, msg)
 }
 
 // 发送图片消息给群组
-func (s *Self) SendImageToGroup(group *Group, file *os.File) error {
+func (s *Self) SendImageToGroup(group *Group, file *os.File) (*SentMessage, error) {
     req := s.Bot.storage.Request
     info := s.Bot.storage.LoginInfo
     return s.Bot.Caller.WebWxSendImageMsg(file, req, info, s.UserName, group.UserName)
+}
+
+// 撤回消息
+func (s *Self) RevokeMessage(msg *SentMessage) error {
+    return s.Bot.Caller.WebWxRevokeMsg(msg, s.Bot.storage.Request)
 }
 
 // 抽象的用户组
@@ -475,6 +442,55 @@ func (m Members) MPs() Mps {
         }
     }
     return mps
+}
+
+func (m Members) detail(self *Self) error {
+    // 获取他们的数量
+    members := m
+
+    count := members.Count()
+    // 一次更新50个,分情况讨论
+
+    // 获取总的需要更新的次数
+    var times int
+    if count < 50 {
+        times = 1
+    } else {
+        times = count / 50
+    }
+    var newMembers Members
+    request := self.Bot.storage.Request
+    var pMembers Members
+    // 分情况依次更新
+    for i := 1; i <= times; i++ {
+        if times == 1 {
+            pMembers = members
+        } else {
+            pMembers = members[(i-1)*50 : i*50]
+        }
+        nMembers, err := self.Bot.Caller.WebWxBatchGetContact(pMembers, request)
+        if err != nil {
+            return err
+        }
+        newMembers = append(newMembers, nMembers...)
+    }
+    // 最后判断是否全部更新完毕
+    total := times * 50
+    if total < count {
+        // 将全部剩余的更新完毕
+        left := count - total
+        pMembers = members[total : total+left]
+        nMembers, err := self.Bot.Caller.WebWxBatchGetContact(pMembers, request)
+        if err != nil {
+            return err
+        }
+        newMembers = append(newMembers, nMembers...)
+    }
+    if len(newMembers) > 0 {
+        newMembers.SetOwner(self)
+        self.members = newMembers
+    }
+    return nil
 }
 
 // 这里为了兼容Desktop版本找不到文件传输助手的问题

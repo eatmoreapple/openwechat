@@ -127,7 +127,7 @@ func (m *Message) IsSendByGroup() bool {
 }
 
 // 回复消息
-func (m *Message) Reply(msgType int, content, mediaId string) error {
+func (m *Message) Reply(msgType int, content, mediaId string) (*SentMessage, error) {
     msg := NewSendMessage(msgType, content, m.Bot.self.User.UserName, m.FromUserName, mediaId)
     info := m.Bot.storage.LoginInfo
     request := m.Bot.storage.Request
@@ -135,12 +135,12 @@ func (m *Message) Reply(msgType int, content, mediaId string) error {
 }
 
 // 回复文本消息
-func (m *Message) ReplyText(content string) error {
+func (m *Message) ReplyText(content string) (*SentMessage, error) {
     return m.Reply(TextMessage, content, "")
 }
 
 // 回复图片消息
-func (m *Message) ReplyImage(file *os.File) error {
+func (m *Message) ReplyImage(file *os.File) (*SentMessage, error) {
     info := m.Bot.storage.LoginInfo
     request := m.Bot.storage.Request
     return m.Bot.Caller.WebWxSendImageMsg(file, request, info, m.Bot.self.UserName, m.FromUserName)
@@ -341,7 +341,7 @@ type SendMessage struct {
 
 // SendMessage的构造方法
 func NewSendMessage(msgType int, content, fromUserName, toUserName, mediaId string) *SendMessage {
-    id := strconv.FormatInt(time.Now().Unix()*1e4, 10)
+    id := strconv.FormatInt(time.Now().UnixNano()/1e2, 10)
     return &SendMessage{
         Type:         msgType,
         Content:      content,
@@ -458,4 +458,16 @@ type RevokeMsg struct {
         Session    string `xml:"session"`
         ReplaceMsg string `xml:"replacemsg"`
     } `xml:"revokemsg"`
+}
+
+// 已发送的信息
+type SentMessage struct {
+    *SendMessage
+    Self  *Self
+    MsgId string
+}
+
+// 撤回该消息
+func (s *SentMessage) Revoke() error {
+    return s.Self.RevokeMessage(s)
 }

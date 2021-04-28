@@ -193,12 +193,12 @@ func TestSendMessage(t *testing.T) {
         t.Error(err)
         return
     }
-    if err = helper.SendText("test message! received ?"); err != nil {
+    if _, err = helper.SendText("test message! received ?"); err != nil {
         t.Error(err)
         return
     }
     time.Sleep(time.Second)
-    if err = self.SendTextToFriend(helper, "send test message twice ! received?"); err != nil {
+    if _, err = self.SendTextToFriend(helper, "send test message twice ! received?"); err != nil {
         t.Error(err)
         return
     }
@@ -253,5 +253,38 @@ func TestFriendHelper(t *testing.T) {
         t.Error(err)
         return
     }
-    fh.SendText("test message")
+    msg, err := fh.SendText("test message")
+    if err != nil {
+        t.Error(err)
+        return
+    }
+    t.Log(msg.MsgId)
+}
+
+func TestRevokeMessage(t *testing.T) {
+    bot := defaultBot(Desktop)
+    if err := bot.Login(); err != nil {
+        t.Error(err)
+        return
+    }
+    self, err := bot.GetCurrentUser()
+    if err != nil {
+        t.Error(err)
+        return
+    }
+    friends, err := self.Friends()
+    if err != nil {
+        t.Error(err)
+        return
+    }
+    fs := friends.SearchByRemarkName(1, "1")
+    ms, err := fs.First().SendText("test")
+    if err != nil {
+        t.Error(err)
+        return
+    }
+    time.Sleep(time.Second)
+    if err := ms.Revoke(); err != nil {
+        t.Error(err)
+    }
 }

@@ -19,17 +19,17 @@ func (f *Friend) SetRemarkName(name string) error {
 }
 
 // 发送自定义消息
-func (f *Friend) SendMsg(msg *SendMessage) error {
+func (f *Friend) SendMsg(msg *SendMessage) (*SentMessage, error) {
     return f.Self.SendMessageToFriend(f, msg)
 }
 
 // 发送文本消息
-func (f *Friend) SendText(content string) error {
+func (f *Friend) SendText(content string) (*SentMessage, error) {
     return f.Self.SendTextToFriend(f, content)
 }
 
 // 发送图片消息
-func (f *Friend) SendImage(file *os.File) error {
+func (f *Friend) SendImage(file *os.File) (*SentMessage, error) {
     return f.Self.SendImageToFriend(f, file)
 }
 
@@ -106,7 +106,7 @@ func (f Friends) SendMsg(msg *SendMessage, delay ...time.Duration) error {
     total := getTotalDuration(delay...)
     for _, friend := range f {
         time.Sleep(total)
-        if err := friend.SendMsg(msg); err != nil {
+        if _, err := friend.SendMsg(msg); err != nil {
             return err
         }
     }
@@ -118,7 +118,7 @@ func (f Friends) SendText(text string, delay ...time.Duration) error {
     total := getTotalDuration(delay...)
     for _, friend := range f {
         time.Sleep(total)
-        if err := friend.SendText(text); err != nil {
+        if _, err := friend.SendText(text); err != nil {
             return err
         }
     }
@@ -130,7 +130,7 @@ func (f Friends) SendImage(file *os.File, delay ...time.Duration) error {
     total := getTotalDuration(delay...)
     for _, friend := range f {
         time.Sleep(total)
-        if err := friend.SendImage(file); err != nil {
+        if _, err := friend.SendImage(file); err != nil {
             return err
         }
     }
@@ -145,17 +145,17 @@ func (g Group) String() string {
 }
 
 // 发行消息给当前的群组
-func (g *Group) SendMsg(msg *SendMessage) error {
+func (g *Group) SendMsg(msg *SendMessage) (*SentMessage, error) {
     return g.Self.SendMessageToGroup(g, msg)
 }
 
 // 发行文本消息给当前的群组
-func (g *Group) SendText(content string) error {
+func (g *Group) SendText(content string) (*SentMessage, error) {
     return g.Self.SendTextToGroup(g, content)
 }
 
 // 发行图片消息给当前的群组
-func (g *Group) SendImage(file *os.File) error {
+func (g *Group) SendImage(file *os.File) (*SentMessage, error) {
     return g.Self.SendImageToGroup(g, file)
 }
 
@@ -208,7 +208,7 @@ func (g Groups) SendMsg(msg *SendMessage, delay ...time.Duration) error {
     total := getTotalDuration(delay...)
     for _, group := range g {
         time.Sleep(total)
-        if err := group.SendMsg(msg); err != nil {
+        if _, err := group.SendMsg(msg); err != nil {
             return err
         }
     }
@@ -220,7 +220,7 @@ func (g Groups) SendText(text string, delay ...time.Duration) error {
     total := getTotalDuration(delay...)
     for _, group := range g {
         time.Sleep(total)
-        if err := group.SendText(text); err != nil {
+        if _, err := group.SendText(text); err != nil {
             return err
         }
     }
@@ -232,7 +232,7 @@ func (g Groups) SendImage(file *os.File, delay ...time.Duration) error {
     total := getTotalDuration(delay...)
     for _, group := range g {
         time.Sleep(total)
-        if err := group.SendImage(file); err != nil {
+        if _, err := group.SendImage(file); err != nil {
             return err
         }
     }
@@ -334,5 +334,3 @@ func (m Mps) Search(limit int, condFuncList ...func(group *Mp) bool) (results Mp
     }
     return
 }
-
-
