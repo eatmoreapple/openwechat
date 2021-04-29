@@ -9,6 +9,7 @@ import (
     "strings"
 )
 
+// 抽象的用户结构,包含 好友 群组 公众号
 type User struct {
     Uin               int
     HideInputBarFlag  int
@@ -148,6 +149,7 @@ func (s *Self) updateMembers() error {
 }
 
 // 获取文件传输助手对象，封装成Friend返回
+//      fh, err := self.FileHelper() // or fh := openwechat.NewFriendHelper(self)
 func (s *Self) FileHelper() (*Friend, error) {
     // 如果缓存里有，直接返回，否则去联系人里面找
     if s.fileHelper != nil {
@@ -241,6 +243,7 @@ func (s *Self) SendImageToFriend(friend *Friend, file *os.File) (*SentMessage, e
 }
 
 // 设置好友备注
+//      self.SetRemarkNameToFriend(friend, "remark") // or friend.SetRemarkName("remark")
 func (s *Self) SetRemarkNameToFriend(friend *Friend, remarkName string) error {
     req := s.Bot.storage.Request
     return s.Bot.Caller.WebWxOplog(req, remarkName, friend.UserName)
@@ -331,6 +334,10 @@ func (s *Self) SendImageToGroup(group *Group, file *os.File) (*SentMessage, erro
 }
 
 // 撤回消息
+//      sentMessage, err := friend.SendText("message")
+//      if err == nil {
+//          self.RevokeMessage(sentMessage) // or sentMessage.Revoke()
+//      }
 func (s *Self) RevokeMessage(msg *SentMessage) error {
     return s.Bot.Caller.WebWxRevokeMsg(msg, s.Bot.storage.Request)
 }
