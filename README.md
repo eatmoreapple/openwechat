@@ -5,7 +5,7 @@
 
 
 
-[文档](doc.md)
+[文档](doc/doc.md)
 
 
 
