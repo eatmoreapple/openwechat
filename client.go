@@ -46,6 +46,7 @@ func DefaultClient(urlManager UrlManager) *Client {
 // 抽象Do方法,将所有的有效的cookie存入Client.cookies
 // 方便热登陆时获取
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
+    req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36")
     resp, err := c.Client.Do(req)
     if err != nil {
         return resp, err
@@ -251,7 +252,12 @@ func (c *Client) WebWxGetHeadImg(headImageUrl string) (*http.Response, error) {
 }
 
 // 上传文件
-func (c *Client) WebWxUploadMedia(file *os.File, request *BaseRequest, info *LoginInfo, forUserName, toUserName, contentType, mediaType string) (*http.Response, error) {
+func (c *Client) WebWxUploadMedia(file *os.File, request *BaseRequest, info *LoginInfo, forUserName, toUserName, mediaType string) (*http.Response, error) {
+    // 获取文件上传的类型
+    contentType, err := GetFileContentType(file)
+    if err != nil {
+        return nil, err
+    }
     path, _ := url.Parse(c.webWxUpLoadMediaUrl)
     params := url.Values{}
     params.Add("f", "json")
@@ -260,13 +266,21 @@ func (c *Client) WebWxUploadMedia(file *os.File, request *BaseRequest, info *Log
     if err != nil {
         return nil, err
     }
+    cookies := c.Jar.Cookies(path)
+    webWxDataTicket := getWebWxDataTicket(cookies)
+
+    // 文件复位
+    if _, err = file.Seek(0, 0); err != nil {
+        return nil, err
+    }
+
     buffer := bytes.Buffer{}
     if _, err := buffer.ReadFrom(file); err != nil {
         return nil, err
     }
     data := buffer.Bytes()
     fileMd5 := fmt.Sprintf("%x", md5.Sum(data))
-    cookies := c.Jar.Cookies(path)
+
     uploadMediaRequest := map[string]interface{}{
         "UploadType":    2,
         "BaseRequest":   request,
@@ -283,14 +297,15 @@ func (c *Client) WebWxUploadMedia(file *os.File, request *BaseRequest, info *Log
     if err != nil {
         return nil, err
     }
+
     content := map[string]interface{}{
         "id":                "WU_FILE_0",
         "name":              file.Name(),
         "type":              contentType,
-        "lastModifiedDate":  time.Now().Format(http.TimeFormat),
+        "lastModifiedDate":  sate.ModTime().Format(TimeFormat),
         "size":              sate.Size(),
         "mediatype":         mediaType,
-        "webwx_data_ticket": getWebWxDataTicket(cookies),
+        "webwx_data_ticket": webWxDataTicket,
         "pass_ticket":       info.PassTicket,
     }
     body, err := ToBuffer(content)
@@ -313,8 +328,129 @@ func (c *Client) WebWxUploadMedia(file *os.File, request *BaseRequest, info *Log
         return nil, err
     }
     req, _ := http.NewRequest(http.MethodPost, path.String(), body)
+
     req.Header.Set("Content-Type", ct)
     return c.Do(req)
+}
+
+func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, info *LoginInfo, forUserName, toUserName, mediaType string) (*http.Response, error) {
+    // 获取文件上传的类型
+    contentType, err := GetFileContentType(file)
+    if err != nil {
+        return nil, err
+    }
+    path, _ := url.Parse(c.webWxUpLoadMediaUrl)
+    params := url.Values{}
+    params.Add("f", "json")
+    path.RawQuery = params.Encode()
+    sate, err := file.Stat()
+    if err != nil {
+        return nil, err
+    }
+    cookies := c.Jar.Cookies(path)
+    webWxDataTicket := getWebWxDataTicket(cookies)
+
+    // 将文件的游标复原到原点
+    // 上面获取文件的类型的时候已经读取了512个字节
+    if _, err = file.Seek(0, 0); err != nil {
+        return nil, err
+    }
+
+    buffer := bytes.Buffer{}
+    if _, err := buffer.ReadFrom(file); err != nil {
+        return nil, err
+    }
+    data := buffer.Bytes()
+    fileMd5 := fmt.Sprintf("%x", md5.Sum(data))
+
+    uploadMediaRequest := map[string]interface{}{
+        "UploadType":    2,
+        "BaseRequest":   request,
+        "ClientMediaId": time.Now().Unix() * 1e4,
+        "TotalLen":      sate.Size(),
+        "StartPos":      0,
+        "DataLen":       sate.Size(),
+        "MediaType":     4,
+        "FromUserName":  forUserName,
+        "ToUserName":    toUserName,
+        "FileMd5":       fileMd5,
+    }
+    uploadMediaRequestByte, err := json.Marshal(uploadMediaRequest)
+    if err != nil {
+        return nil, err
+    }
+
+    chunks := sate.Size() / chunkSize
+    if chunks*chunkSize < sate.Size() {
+        chunks++
+    }
+
+    var resp *http.Response
+
+    for chunk := 0; int64(chunk) < chunks; chunk++ {
+        content := map[string]interface{}{
+            "id":                "WU_FILE_0",
+            "name":              file.Name(),
+            "type":              contentType,
+            "lastModifiedDate":  sate.ModTime().Format(TimeFormat),
+            "size":              sate.Size(),
+            "mediatype":         mediaType,
+            "webwx_data_ticket": webWxDataTicket,
+            "pass_ticket":       info.PassTicket,
+            "chunks":            chunks,
+            "chunk":             chunk,
+        }
+        body, err := ToBuffer(content)
+        if err != nil {
+            return nil, err
+        }
+        writer := multipart.NewWriter(body)
+        if err = writer.WriteField("uploadmediarequest", string(uploadMediaRequestByte)); err != nil {
+            return nil, err
+        }
+
+        var isLastTime bool
+        if int64(chunk)+1 == chunks {
+            isLastTime = true
+        }
+
+        if w, err := writer.CreateFormFile("filename", file.Name()); err != nil {
+            return nil, err
+        } else {
+            var chunkData []byte
+            // 判断是不是最后一次
+            if !isLastTime {
+                chunkData = data[int64(chunk)*chunkSize : (int64(chunk)+1)*chunkSize]
+            } else {
+                chunkData = data[int64(chunk)*chunkSize:]
+            }
+            if _, err = w.Write(chunkData); err != nil {
+                return nil, err
+            }
+        }
+        ct := writer.FormDataContentType()
+        if err = writer.Close(); err != nil {
+            return nil, err
+        }
+        req, _ := http.NewRequest(http.MethodPost, path.String(), body)
+        req.Header.Set("Content-Type", ct)
+        //req.Header.Add("Referer", c.baseUrl)
+        //req.Header.Add("Origin", c.baseUrl)
+        //// Host: file.wx2.qq.com
+        //req.Header.Add("Host", "file.wx2.qq.com")
+        // 发送数据
+        resp, err = c.Do(req)
+
+        // 如果不是最后一次, 解析有没有错误
+        if !isLastTime {
+            returnResp := NewReturnResponse(resp, err)
+            if err := parseBaseResponseError(returnResp); err != nil {
+                return nil, err
+            }
+        }
+    }
+
+    return resp, err
 }
 
 // 发送图片

@@ -2,6 +2,7 @@ package openwechat
 
 import (
     "errors"
+    "fmt"
     "os"
 )
 
@@ -203,21 +204,37 @@ func (c *Caller) WebWxOplog(request *BaseRequest, remarkName, toUserName string)
 // 发送图片消息接口
 func (c *Caller) WebWxSendImageMsg(file *os.File, request *BaseRequest, info *LoginInfo, fromUserName, toUserName string) (*SentMessage, error) {
     // 首先尝试上传图片
-    resp := NewReturnResponse(c.Client.WebWxUploadMedia(file, request, info, fromUserName, toUserName, "image/jpeg", "pic"))
+    sate, err := file.Stat()
+    if err != nil {
+        return nil, err
+    }
+
+    var resp *ReturnResponse
+    if sate.Size() <= chunkSize {
+        resp = NewReturnResponse(c.Client.WebWxUploadMedia(file, request, info, fromUserName, toUserName, "pic"))
+    } else {
+        resp = NewReturnResponse(c.Client.WebWxUploadMediaByChunk(file, request, info, fromUserName, toUserName, "pic"))
+    }
     // 无错误上传成功之后获取请求结果，判断结果是否正常
     if resp.Err() != nil {
         return nil, resp.Err()
     }
     defer resp.Body.Close()
+    data, _ := resp.ReadAll()
+    fmt.Println(string(data))
     var item struct {
         BaseResponse BaseResponse
         MediaId      string
     }
-    if err := resp.ScanJSON(&item); err != nil {
+
+    if err = resp.ScanJSON(&item); err != nil {
         return nil, err
     }
     if !item.BaseResponse.Ok() {
         return nil, item.BaseResponse
+    }
+    if len(item.MediaId) == 0 {
+        return nil, errors.New("upload failed")
     }
     // 构造新的图片类型的信息
     msg := NewMediaSendMessage(ImageMessage, fromUserName, toUserName, item.MediaId)
@@ -225,7 +242,7 @@ func (c *Caller) WebWxSendImageMsg(file *os.File, request *BaseRequest, info *Lo
     resp = NewReturnResponse(c.Client.WebWxSendMsgImg(msg, request, info))
 
     sendSuccessMsg := &SentMessage{SendMessage: msg}
-    err := parseMessageResponseError(resp, sendSuccessMsg)
+    err = parseMessageResponseError(resp, sendSuccessMsg)
     return sendSuccessMsg, err
 }
 

@@ -9,7 +9,7 @@ import (
     "strings"
 )
 
-// 抽象的用户结构,包含 好友 群组 公众号
+// 抽象的用户结构: 好友 群组 公众号
 type User struct {
     Uin               int
     HideInputBarFlag  int
@@ -451,6 +451,7 @@ func (m Members) MPs() Mps {
     return mps
 }
 
+// 获取当前Members的详情
 func (m Members) detail(self *Self) error {
     // 获取他们的数量
     members := m

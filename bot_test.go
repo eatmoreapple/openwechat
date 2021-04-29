@@ -1,6 +1,7 @@
 package openwechat
 
 import (
+    "os"
     "testing"
     "time"
 )
@@ -238,8 +239,8 @@ func TestHotLogin(t *testing.T) {
 }
 
 func TestFriendHelper(t *testing.T) {
-    bot := defaultBot(Desktop)
-    if err := bot.Login(); err != nil {
+    bot := defaultBot()
+    if err := bot.HotLogin(NewJsonFileHotReloadStorage("2.json"), true); err != nil {
         t.Error(err)
         return
     }
@@ -253,7 +254,11 @@ func TestFriendHelper(t *testing.T) {
         t.Error(err)
         return
     }
-    msg, err := fh.SendText("test message")
+    f, _ := os.Open("webwxgetmsgimg.jpeg")
+    //f, _ := os.Open("2.jpeg")
+    defer f.Close()
+    msg, err := fh.SendImage(f)
+    //msg, err := fh.SendText("hh")
     if err != nil {
         t.Error(err)
         return
@@ -263,7 +268,7 @@ func TestFriendHelper(t *testing.T) {
 
 func TestRevokeMessage(t *testing.T) {
     bot := defaultBot(Desktop)
-    if err := bot.Login(); err != nil {
+    if err := bot.HotLogin(NewJsonFileHotReloadStorage("2.json")); err != nil {
         t.Error(err)
         return
     }

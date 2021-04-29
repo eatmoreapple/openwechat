@@ -4,6 +4,7 @@ import (
     "bytes"
     "encoding/json"
     "math/rand"
+    "mime/multipart"
     "net/http"
     "strconv"
     "strings"
@@ -18,6 +19,7 @@ func ToBuffer(v interface{}) (*bytes.Buffer, error) {
     return bytes.NewBuffer(buf), nil
 }
 
+// 获取随机设备id
 func GetRandomDeviceId() string {
     rand.Seed(time.Now().Unix())
     var builder strings.Builder
@@ -38,6 +40,7 @@ func getWebWxDataTicket(cookies []*http.Cookie) string {
     return ""
 }
 
+// Form Xml 格式化
 func XmlFormString(text string) string {
     lt := strings.ReplaceAll(text, "&lt;", "<")
     gt := strings.ReplaceAll(lt, "&gt;", ">")
@@ -51,4 +54,13 @@ func getTotalDuration(delay ...time.Duration) time.Duration {
         total += d
     }
     return total
+}
+
+// 获取文件上传的类型
+func GetFileContentType(file multipart.File) (string, error) {
+    data := make([]byte, 512)
+    if _, err := file.Read(data); err != nil {
+        return "", err
+    }
+    return http.DetectContentType(data), nil
 }
