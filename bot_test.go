@@ -291,3 +291,29 @@ func TestRevokeMessage(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestSendFile(t *testing.T) {
+	bot := defaultBot(Desktop)
+	if err := bot.HotLogin(NewJsonFileHotReloadStorage("2.json"), true); err != nil {
+		t.Error(err)
+		return
+	}
+	self, err := bot.GetCurrentUser()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fh, err := self.FileHelper()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	f, _ := os.Open("Taylor+Swift+-+Red")
+	defer f.Close()
+	msg, err := self.SendFileToFriend(fh, f)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(msg.MsgId)
+}

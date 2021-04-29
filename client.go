@@ -251,104 +251,12 @@ func (c *Client) WebWxGetHeadImg(headImageUrl string) (*http.Response, error) {
 	return c.Do(req)
 }
 
-// 上传文件
-func (c *Client) WebWxUploadMedia(file *os.File, request *BaseRequest, info *LoginInfo, forUserName, toUserName, mediaType string) (*http.Response, error) {
-	// 获取文件上传的类型
-	contentType, err := GetFileContentType(file)
-	if err != nil {
-		return nil, err
-	}
-	path, _ := url.Parse(c.webWxUpLoadMediaUrl)
-	params := url.Values{}
-	params.Add("f", "json")
-	path.RawQuery = params.Encode()
-	sate, err := file.Stat()
-	if err != nil {
-		return nil, err
-	}
-	cookies := c.Jar.Cookies(path)
-	webWxDataTicket := getWebWxDataTicket(cookies)
-
-	// 文件复位
-	if _, err = file.Seek(0, 0); err != nil {
-		return nil, err
-	}
-
-	buffer := bytes.Buffer{}
-	if _, err := buffer.ReadFrom(file); err != nil {
-		return nil, err
-	}
-	data := buffer.Bytes()
-	fileMd5 := fmt.Sprintf("%x", md5.Sum(data))
-
-	uploadMediaRequest := map[string]interface{}{
-		"UploadType":    2,
-		"BaseRequest":   request,
-		"ClientMediaId": time.Now().Unix() * 1e4,
-		"TotalLen":      sate.Size(),
-		"StartPos":      0,
-		"DataLen":       sate.Size(),
-		"MediaType":     4,
-		"FromUserName":  forUserName,
-		"ToUserName":    toUserName,
-		"FileMd5":       fileMd5,
-	}
-	uploadMediaRequestByte, err := json.Marshal(uploadMediaRequest)
-	if err != nil {
-		return nil, err
-	}
-
-	content := map[string]interface{}{
-		"id":                "WU_FILE_0",
-		"name":              file.Name(),
-		"type":              contentType,
-		"lastModifiedDate":  sate.ModTime().Format(TimeFormat),
-		"size":              sate.Size(),
-		"mediatype":         mediaType,
-		"webwx_data_ticket": webWxDataTicket,
-		"pass_ticket":       info.PassTicket,
-	}
-	body, err := ToBuffer(content)
-	if err != nil {
-		return nil, err
-	}
-	writer := multipart.NewWriter(body)
-	if err = writer.WriteField("uploadmediarequest", string(uploadMediaRequestByte)); err != nil {
-		return nil, err
-	}
-	if w, err := writer.CreateFormFile("filename", file.Name()); err != nil {
-		return nil, err
-	} else {
-		if _, err = w.Write(data); err != nil {
-			return nil, err
-		}
-	}
-	ct := writer.FormDataContentType()
-	if err = writer.Close(); err != nil {
-		return nil, err
-	}
-	req, _ := http.NewRequest(http.MethodPost, path.String(), body)
-
-	req.Header.Set("Content-Type", ct)
-	return c.Do(req)
-}
-
 func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, info *LoginInfo, forUserName, toUserName, mediaType string) (*http.Response, error) {
 	// 获取文件上传的类型
 	contentType, err := GetFileContentType(file)
 	if err != nil {
 		return nil, err
 	}
-	path, _ := url.Parse(c.webWxUpLoadMediaUrl)
-	params := url.Values{}
-	params.Add("f", "json")
-	path.RawQuery = params.Encode()
-	sate, err := file.Stat()
-	if err != nil {
-		return nil, err
-	}
-	cookies := c.Jar.Cookies(path)
-	webWxDataTicket := getWebWxDataTicket(cookies)
 
 	// 将文件的游标复原到原点
 	// 上面获取文件的类型的时候已经读取了512个字节
@@ -363,6 +271,20 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 	data := buffer.Bytes()
 	fileMd5 := fmt.Sprintf("%x", md5.Sum(data))
 
+	sate, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	path, _ := url.Parse(c.webWxUpLoadMediaUrl)
+	params := url.Values{}
+	params.Add("f", "json")
+
+	path.RawQuery = params.Encode()
+
+	cookies := c.Jar.Cookies(path)
+	webWxDataTicket := getWebWxDataTicket(cookies)
+
 	uploadMediaRequest := map[string]interface{}{
 		"UploadType":    2,
 		"BaseRequest":   request,
@@ -375,18 +297,40 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 		"ToUserName":    toUserName,
 		"FileMd5":       fileMd5,
 	}
+
 	uploadMediaRequestByte, err := json.Marshal(uploadMediaRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	chunks := sate.Size() / chunkSize
-	if chunks*chunkSize < sate.Size() {
-		chunks++
+	var chunks int64
+
+	if sate.Size() > chunkSize {
+		chunks = sate.Size() / chunkSize
+		if chunks*chunkSize < sate.Size() {
+			chunks++
+		}
+	} else {
+		chunks = 1
 	}
 
 	var resp *http.Response
 
+	content := map[string]string{
+		"id":                "WU_FILE_0",
+		"name":              file.Name(),
+		"type":              contentType,
+		"lastModifiedDate":  sate.ModTime().Format(TimeFormat),
+		"size":              strconv.FormatInt(sate.Size(), 10),
+		"mediatype":         mediaType,
+		"webwx_data_ticket": webWxDataTicket,
+		"pass_ticket":       info.PassTicket,
+	}
+
+	if chunks > 1 {
+		content["chunks"] = strconv.FormatInt(chunks, 10)
+	}
+	// 分块上传
 	for chunk := 0; int64(chunk) < chunks; chunk++ {
 
 		var isLastTime bool
@@ -394,18 +338,10 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 			isLastTime = true
 		}
 
-		content := map[string]string{
-			"id":                "WU_FILE_0",
-			"name":              file.Name(),
-			"type":              contentType,
-			"lastModifiedDate":  sate.ModTime().Format(TimeFormat),
-			"size":              strconv.FormatInt(sate.Size(), 10),
-			"mediatype":         mediaType,
-			"webwx_data_ticket": webWxDataTicket,
-			"pass_ticket":       info.PassTicket,
-			"chunks":            strconv.FormatInt(chunks, 10),
-			"chunk":             strconv.Itoa(chunk),
+		if chunks > 1 {
+			content["chunk"] = strconv.Itoa(chunk)
 		}
+
 		var formBuffer bytes.Buffer
 
 		writer := multipart.NewWriter(&formBuffer)
@@ -450,7 +386,7 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 			}
 		}
 	}
-
+	// 将最后一次携带文件信息的response返回
 	return resp, err
 }
 
@@ -643,5 +579,23 @@ func (c *Client) WebWxRevokeMsg(msg *SentMessage, request *BaseRequest) (*http.R
 	buffer, _ := ToBuffer(content)
 	req, _ := http.NewRequest(http.MethodPost, c.webWxRevokeMsg, buffer)
 	req.Header.Set("Content-Type", jsonContentType)
+	return c.Do(req)
+}
+
+// 校验上传文件
+func (c *Client) webWxCheckUpload(stat os.FileInfo, request *BaseRequest, fileMd5, fromUserName, toUserName string) (*http.Response, error) {
+	path, _ := url.Parse(c.webWxCheckUploadUrl)
+	content := map[string]interface{}{
+		"BaseRequest":  request,
+		"FileMd5":      fileMd5,
+		"FileName":     stat.Name(),
+		"FileSize":     stat.Size(),
+		"FileType":     7,
+		"FromUserName": fromUserName,
+		"ToUserName":   toUserName,
+	}
+	body, _ := ToBuffer(content)
+	req, _ := http.NewRequest(http.MethodPost, path.String(), body)
+	req.Header.Add("Content-Type", jsonContentType)
 	return c.Do(req)
 }
