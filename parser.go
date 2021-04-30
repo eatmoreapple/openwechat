@@ -12,11 +12,12 @@ import (
 )
 
 func ToBuffer(v interface{}) (*bytes.Buffer, error) {
-	buf, err := json.Marshal(v)
-	if err != nil {
-		return nil, err
-	}
-	return bytes.NewBuffer(buf), nil
+	var buffer bytes.Buffer
+	encoder := json.NewEncoder(&buffer)
+	// 这里要设置进制html转义
+	encoder.SetEscapeHTML(false)
+	err := encoder.Encode(v)
+	return &buffer, err
 }
 
 // 获取随机设备id
@@ -67,8 +68,25 @@ func GetFileContentType(file multipart.File) (string, error) {
 
 func getFileExt(name string) string {
 	results := strings.Split(name, ".")
-	if len(results) == 0 {
+	if len(results) == 1 {
 		return "undefined"
 	}
 	return results[len(results)-1]
+}
+
+const (
+	pic   = "pic"
+	video = "video"
+	doc   = "doc"
+)
+
+// 微信匹配文件类型策略
+func getMessageType(filename string) string {
+	ext := getFileExt(filename)
+	if imageType[ext] {
+		return pic
+	} else if ext == videoType {
+		return video
+	}
+	return doc
 }

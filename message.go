@@ -336,7 +336,7 @@ type SendMessage struct {
 	ToUserName   string
 	LocalID      string
 	ClientMsgId  string
-	MediaId      string
+	MediaId      string `json:"MediaId,omitempty"`
 }
 
 // SendMessage的构造方法
@@ -472,18 +472,17 @@ func (s *SentMessage) Revoke() error {
 	return s.Self.RevokeMessage(s)
 }
 
-type FileAppMessage struct {
-	AppMsg    xml.Name `xml:"appmsg"`
-	Type      int      `xml:"type"`
-	AppId     string   `xml:"appid,attr"` // wxeb7ec651dd0aefa9
-	SdkVer    string   `xml:"sdkver,attr"`
-	Title     string   `xml:"title"`
-	Des       string   `xml:"des"`
-	Action    string   `xml:"action"`
-	Content   string   `xml:"content"`
-	Url       string   `xml:"url"`
-	LowUrl    string   `xml:"lowurl"`
-	ExtInfo   string   `xml:"extinfo"`
+type appmsg struct {
+	Type      int    `xml:"type"`
+	AppId     string `xml:"appid,attr"` // wxeb7ec651dd0aefa9
+	SdkVer    string `xml:"sdkver,attr"`
+	Title     string `xml:"title"`
+	Des       string `xml:"des"`
+	Action    string `xml:"action"`
+	Content   string `xml:"content"`
+	Url       string `xml:"url"`
+	LowUrl    string `xml:"lowurl"`
+	ExtInfo   string `xml:"extinfo"`
 	AppAttach struct {
 		TotalLen int64  `xml:"totallen"`
 		AttachId string `xml:"attachid"`
@@ -491,14 +490,15 @@ type FileAppMessage struct {
 	} `xml:"appattach"`
 }
 
-func (f FileAppMessage) XmlByte() ([]byte, error) {
+func (f appmsg) XmlByte() ([]byte, error) {
 	return xml.Marshal(f)
 }
 
-func NewFileAppMessage(stat os.FileInfo, attachId string) *FileAppMessage {
-	m := &FileAppMessage{AppId: "wxeb7ec651dd0aefa9", Title: stat.Name()}
+func NewFileAppMessage(stat os.FileInfo, attachId string) *appmsg {
+	m := &appmsg{AppId: "wxeb7ec651dd0aefa9", Title: stat.Name()}
 	m.AppAttach.AttachId = attachId
 	m.AppAttach.TotalLen = stat.Size()
+	m.Type = 6
 	m.AppAttach.FileExt = getFileExt(stat.Name())
 	return m
 }

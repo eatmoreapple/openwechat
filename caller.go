@@ -2,6 +2,7 @@ package openwechat
 
 import (
 	"errors"
+	"net/http"
 	"os"
 )
 
@@ -188,10 +189,8 @@ func (c *Caller) WebWxSync(request *BaseRequest, response *WebInitResponse, info
 
 // 发送消息接口
 func (c *Caller) WebWxSendMsg(msg *SendMessage, info *LoginInfo, request *BaseRequest) (*SentMessage, error) {
-	resp := NewReturnResponse(c.Client.WebWxSendMsg(msg, info, request))
-	sendSuccessMsg := &SentMessage{SendMessage: msg}
-	err := parseMessageResponseError(resp, sendSuccessMsg)
-	return sendSuccessMsg, err
+	resp, err := c.Client.WebWxSendMsg(msg, info, request)
+	return getSuccessSentMessage(msg, resp, err)
 }
 
 // 修改用户备注接口
@@ -200,9 +199,9 @@ func (c *Caller) WebWxOplog(request *BaseRequest, remarkName, toUserName string)
 	return parseBaseResponseError(resp)
 }
 
-func (c *Caller) UploadMedia(file *os.File, request *BaseRequest, info *LoginInfo, fromUserName, toUserName, mediaType string) (*UploadResponse, error) {
+func (c *Caller) UploadMedia(file *os.File, request *BaseRequest, info *LoginInfo, fromUserName, toUserName string) (*UploadResponse, error) {
 	// 首先尝试上传图片
-	resp := NewReturnResponse(c.Client.WebWxUploadMediaByChunk(file, request, info, fromUserName, toUserName, mediaType))
+	resp := NewReturnResponse(c.Client.WebWxUploadMediaByChunk(file, request, info, fromUserName, toUserName))
 	// 无错误上传成功之后获取请求结果，判断结果是否正常
 	if resp.Err() != nil {
 		return nil, resp.Err()
@@ -226,39 +225,37 @@ func (c *Caller) UploadMedia(file *os.File, request *BaseRequest, info *LoginInf
 // 发送图片消息接口
 func (c *Caller) WebWxSendImageMsg(file *os.File, request *BaseRequest, info *LoginInfo, fromUserName, toUserName string) (*SentMessage, error) {
 	// 首先尝试上传图片
-	resp, err := c.UploadMedia(file, request, info, fromUserName, toUserName, "pic")
+	resp, err := c.UploadMedia(file, request, info, fromUserName, toUserName)
 	if err != nil {
 		return nil, err
 	}
 	// 构造新的图片类型的信息
 	msg := NewMediaSendMessage(ImageMessage, fromUserName, toUserName, resp.MediaId)
 	// 发送图片信息
-	return c.WebWxSendAppMsg(msg, request, info)
+	resp1, err := c.Client.WebWxSendMsgImg(msg, request, info)
+	return getSuccessSentMessage(msg, resp1, err)
 }
 
 func (c *Caller) WebWxSendFile(file *os.File, req *BaseRequest, info *LoginInfo, fromUserName, toUserName string) (*SentMessage, error) {
-	resp, err := c.UploadMedia(file, req, info, fromUserName, toUserName, "doc")
+	resp, err := c.UploadMedia(file, req, info, fromUserName, toUserName)
 	if err != nil {
 		return nil, err
 	}
-	// 构造新的图片类型的信息
-	msg := NewMediaSendMessage(ImageMessage, fromUserName, toUserName, resp.MediaId)
+	// 构造新的文件类型的信息
 	stat, _ := file.Stat()
 	appMsg := NewFileAppMessage(stat, resp.MediaId)
 	content, err := appMsg.XmlByte()
 	if err != nil {
 		return nil, err
 	}
-	msg.Content = string(content)
-	return c.WebWxSendAppMsg(msg, req, info)
+	msg := NewSendMessage(AppMessage, string(content), fromUserName, toUserName, "")
+	return c.WebWxSendAppMsg(msg, req)
 }
 
 // 发送媒体消息
-func (c *Caller) WebWxSendAppMsg(msg *SendMessage, req *BaseRequest, info *LoginInfo) (*SentMessage, error) {
-	resp := NewReturnResponse(c.Client.WebWxSendMsgImg(msg, req, info))
-	sendSuccessMsg := &SentMessage{SendMessage: msg}
-	err := parseMessageResponseError(resp, sendSuccessMsg)
-	return sendSuccessMsg, err
+func (c *Caller) WebWxSendAppMsg(msg *SendMessage, req *BaseRequest) (*SentMessage, error) {
+	resp, err := c.Client.WebWxSendAppMsg(msg, req)
+	return getSuccessSentMessage(msg, resp, err)
 }
 
 // 用户退出
@@ -332,4 +329,11 @@ func parseMessageResponseError(resp *ReturnResponse, msg *SentMessage) error {
 	// 发送成功之后将msgId赋值给SendMessage
 	msg.MsgId = messageResp.MsgID
 	return nil
+}
+
+func getSuccessSentMessage(msg *SendMessage, resp *http.Response, err error) (*SentMessage, error) {
+	returnResp := NewReturnResponse(resp, err)
+	sendSuccessMsg := &SentMessage{SendMessage: msg}
+	err = parseMessageResponseError(returnResp, sendSuccessMsg)
+	return sendSuccessMsg, err
 }

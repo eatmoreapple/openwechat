@@ -230,6 +230,8 @@ func (c *Client) sendMessage(request *BaseRequest, url string, msg *SendMessage)
 	body, _ := ToBuffer(content)
 	req, _ := http.NewRequest(http.MethodPost, url, body)
 	req.Header.Add("Content-Type", jsonContentType)
+	fmt.Println(6666)
+	fmt.Println(body.String())
 	return c.Do(req)
 }
 
@@ -251,7 +253,7 @@ func (c *Client) WebWxGetHeadImg(headImageUrl string) (*http.Response, error) {
 	return c.Do(req)
 }
 
-func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, info *LoginInfo, forUserName, toUserName, mediaType string) (*http.Response, error) {
+func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, info *LoginInfo, forUserName, toUserName string) (*http.Response, error) {
 	// 获取文件上传的类型
 	contentType, err := GetFileContentType(file)
 	if err != nil {
@@ -275,6 +277,9 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 	if err != nil {
 		return nil, err
 	}
+
+	// 获取文件的类型
+	mediaType := getMessageType(sate.Name())
 
 	path, _ := url.Parse(c.webWxUpLoadMediaUrl)
 	params := url.Values{}
