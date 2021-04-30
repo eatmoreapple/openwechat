@@ -124,3 +124,5 @@ var imageType = map[string]bool{
 }
 
 var videoType = "mp4"
+
+const appMessageAppId = "wxeb7ec651dd0aefa9"

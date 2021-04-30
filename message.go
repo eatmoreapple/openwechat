@@ -495,7 +495,7 @@ func (f appmsg) XmlByte() ([]byte, error) {
 }
 
 func NewFileAppMessage(stat os.FileInfo, attachId string) *appmsg {
-	m := &appmsg{AppId: "wxeb7ec651dd0aefa9", Title: stat.Name()}
+	m := &appmsg{AppId: appMessageAppId, Title: stat.Name()}
 	m.AppAttach.AttachId = attachId
 	m.AppAttach.TotalLen = stat.Size()
 	m.Type = 6

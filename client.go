@@ -230,8 +230,6 @@ func (c *Client) sendMessage(request *BaseRequest, url string, msg *SendMessage)
 	body, _ := ToBuffer(content)
 	req, _ := http.NewRequest(http.MethodPost, url, body)
 	req.Header.Add("Content-Type", jsonContentType)
-	fmt.Println(6666)
-	fmt.Println(body.String())
 	return c.Do(req)
 }
 
