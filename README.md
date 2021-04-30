@@ -1,11 +1,18 @@
+
+
 # openwechat
+
 [![Go Doc](https://pkg.go.dev/badge/github.com/eatMoreApple/openwechat)](https://godoc.org/github.com/eatMoreApple/openwechat)
 
 > golang版个人微信号API, 类似开发公众号一样，开发个人微信号
 
 
 
-[文档](doc/doc.md)
+微信机器人，利用微信号完成一些功能的定制化开发
+
+
+
+**可突破网页版登录限制**	
 
 
 
@@ -25,11 +32,7 @@ go get github.com/eatMoreApple/openwechat
 
 
 
-
-
 ### 快速开始
-
-#### 登录微信
 
 ```go
 package main
@@ -40,153 +43,66 @@ import (
 )
 
 func main() {
-	messageHandler := func(msg *openwechat.Message) {
-		fmt.Println(msg)
-	}
 	bot := openwechat.DefaultBot()
-    
-    // 注册消息处理函数
-	bot.MessageHandler = messageHandler
-    // 设置默认的登录回调
-    // 可以设置通过该uuid获取到登录的二维码
+
+	// 注册消息处理函数
+	bot.MessageHandler = func(msg *openwechat.Message) {
+		if msg.IsText() {
+			fmt.Println("你收到了一条新的文本消息")
+		}
+	}
+	// 注册登陆二维码回调
 	bot.UUIDCallback = openwechat.PrintlnQrcodeUrl
-    // 登录
+
+	// 登陆
 	if err := bot.Login(); err != nil {
 		fmt.Println(err)
 		return
 	}
-    // 阻塞主程序,直到用户退出或发生异常
+
+	// 获取登陆的用户
+	self, err := bot.GetCurrentUser()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// 获取所有的好友
+	friends, err := self.Friends()
+	fmt.Println(friends, err)
+
+	// 获取所有的群组
+	groups, err := self.Groups()
+	fmt.Println(groups, err)
+
+	// 阻塞主goroutine, 知道发生异常或者用户主动退出
 	bot.Block()
 }
 ```
 
 
 
-#### 突破网页版登录限制 
+### 支持功能
 
-网页版登陆不上的可以尝试使用该模式登陆
-
-```go
-bot := openwechat.DefaultBot(openwechat.Desktop)
-```
-
-
-
-#### 回复消息
-
-```go
-messageHandler := func(msg *openwechat.Message) {
-		msg.ReplyText("hello")
-}
-```
+> ​	消息回复、给指定对象（好友、群组）发送文本、图片、文件、emoji表情等消息
+>
+> ​	热登陆（无需重复扫码登录）、自定义消息处理、文件下载、消息防撤回
+>
+> ​	获取对象信息、设置好友备注、拉好友进群等
 
 
 
-#### 获取消息的发送者
-
-```go
-messageHandler := func(msg *openwechat.Message) {
-		sender, err := msg.Sender()
-}
-```
+**更多功能请查看文档**
 
 
 
-#### 获取所有的好友
+### 文档
 
-```go
-// 登录之后调用
-self, err := bot.GetCurrentUser()
-if err != nil {
-    fmt.Println(err)
-    return
-}
-friends, err := self.Friends()
-```
+[点击查看](doc/doc.md)
 
+### 项目主页
 
-
-#### 发送消息给好友
-
-```go
-self, err := bot.GetCurrentUser()
-if err != nil {
-    fmt.Println(err)
-    return
-}
-friends, err := self.Friends()
-if err != nil {
-    fmt.Println(err)
-    return
-}
-if friends.Count() > 0 {
-    // 发送给第一个好友
-    friends.First().SendText("你好")
-}
-```
-
-
-
-#### 发送图片消息
-
-```go
-friends, err := self.Friends()
-if err != nil {
-    fmt.Println(err)
-    return
-}
-if friends.Count() > 0 {
-    // 发送给第一个好友
-    img, _ := os.Open("test.png")
-    defer img.Close()
-    friends.First().SendImage(img)
-}
-bot.Block()
-```
-
-
-
-#### 发送Emoji表情
-
-```go
-friend.SendText(openwechat.Emoji.Dagger)  
-```
-
-
-
-#### 搜索好友
-
-```go
-friends, err := self.Friends()
-if err != nil {
-    fmt.Println(err)
-    return
-}
-results := friends.Search(1, func(friend *Friend) bool { return friend.User.RemarkName == "阿青" }, func(friend *Friend) bool { return friend.Sex == 2 }) // 查找数量为1符合条件的好友
-fmt.Println(results)
-```
-
-
-
-#### 搜索群组
-
-```go
-groups, err := self.Groups()
-if err != nil {
-    fmt.Println(err)
-    return
-}
-results := group.Search(1, func(group *Group) bool { return group.NickName == "厉害了" }) 
-fmt.Println(results)
-```
-
-
-
-
-
-更多功能请在代码中探索。。。
-
-// todo: add more support 
+[https://github.com/eatMoreApple/openwechat](https://github.com/eatMoreApple/openwechat)
 
 
 

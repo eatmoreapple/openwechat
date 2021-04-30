@@ -1,6 +1,6 @@
 ## openwechat
 
-> ​	golang版个人微信号API, 类似开发公众号一样，开发个人微信号
+
 
 ### 安装
 
@@ -10,362 +10,420 @@ go get github.com/eatMoreApple/openwechat
 
 
 
-### Bot
+### 用户登陆
 
-* `DefaultBot`：`Bot`对象的默认的构造函数
+#### 创建Bot对象
 
-  ```go
-  func DefaultBot(modes ...mode) *Bot
-  ```
+登陆之前需要先创建`Bot`对象来登录
 
-  可通过设置`modes`参数来控制当前的登录行为
+```go
+bot := openwechat.DefaultBot()
 
-  * `Normal`：网页版，如果`modes`参数不传，则为该模式
+// 注册消息处理函数
+bot.MessageHandler = func(msg *openwechat.Message) {
+  if msg.IsText() {
+    fmt.Println("你收到了一条新的文本消息")
+  }
+}
+// 注册登陆二维码回调
+bot.UUIDCallback = openwechat.PrintlnQrcodeUrl
+```
 
-  * `Desktop`：桌面版，可突破网页版登录限制，网页版模式登录不了的可以尝试该模式
 
-    ```go
-    bot := openwechat.DefaultBot(openwechat.Desktop)
-    ```
 
-#### 属性
+#### 普通登陆
 
-* `Caller`：负责解析与微信服务器交互的响应
-* `ScanCallBack`：扫码之后的回调函数, 可以获得扫码用户的头像
-* `UUIDCallback`：发起登陆请求后获取uuid的回调函数, 可以通过uuid获取登陆二维码
-* `LoginCallBack`：用户确认登陆后的回调函数
-* `MessageHandler`：收到消息后的回调函数
+每次运行程序需要重新扫码登录
 
+```go
+bot.Login()
+```
 
 
-#### 方法
 
-* `Login`：发起登陆请求，该方法会一直阻塞，直到用户扫码或者二维码过期
+#### 热登陆
 
-  ```go
-  func (b *Bot) Login() error
-  ```
+单位时间内运行程序不需要重新扫码登录，直到用户主动退出导致凭证信息失效
 
-* `Logout`：用户退出
+```go
+storage := openwechat.NewJsonFileHotReloadStorage("storage.json")
+bot.HotLogin(storage)
+```
 
-  ```go
-  func (b *Bot) Logout() error
-  ```
 
-* `GetCurrentUser`：获取当前登录的用户（登录后调用）
 
-  ```go
-  func (b *Bot) GetCurrentUser() (*Self, error)
-  ```
+#### Desktop模式
 
-* `Alive`：判断当前登录的用户是否退出
+`Desktop`可突破部分用户的登录限制，如果普通登陆不上，可尝试使用该模式
 
-  ```go
-  func (b *Bot) Alive() bool
-  ```
+```go
+bot := openwechat.DefaultBot(openwechat.Desktop)
+```
 
-* `Block`：当消息同步发生了错误或者用户主动在手机上退出，该方法会立即返回，否则会一直阻塞
 
-  ```go
-  func (b *Bot) Block() error
-  ```
 
+### 消息处理
 
+可通过绑定在`Bot`上的消息回调函数来对消息进行定制化处理
 
-### Self
+```go
+bot := openwechat.DefaultBot(openwechat.Desktop)
 
-当前登录的用户对象，调用`Bot.GetCurrentUser()`获取
+messageHandle := func(msg *openwechat.Message) {
+  if msg.IsText() {
+    fmt.Println("你收到了一条新的文本消息")
+  }
+}
 
-#### 主要属性
+// 注册消息处理函数
+bot.MessageHandler = messageHandle
+```
 
-* `Bot`：对应`Bot`对象的指针
-* `UserName`：唯一身份标识符(重新登录后改变)
-* `NickName`：微信昵称
-* `RemarkName`：备注
-* `Signature`：签名
 
 
+#### 回复文本消息
 
-#### 主要方法
+```go
+msg.ReplyText("test message")
+```
 
-* `SaveAvatar`：下载头像
 
-  ```go
-  func (u *User) SaveAvatar(filename string) error
-  ```
 
-* `Members`：获取所有的聊天对象
+#### 回复图片消息
 
-  ```go
-  func (s *Self) Members(update ...bool) (Members, error)
-  ```
+```go
+file, _ := os.Open("test.png")
+defer file.Close()
+msg.ReplyImage(file)
+```
 
-* `FileHelper`：获取文件传输助手对象
 
-  ```go
-  func (s *Self) FileHelper() (*Friend, error)
-  ```
 
-* `Friends`：获取所有的好友对象
+#### 回复文件消息
 
-  ```go
-  func (s *Self) Friends(update ...bool) (Friends, error)
-  ```
+```go
+file, _ := os.Open("your file name")
+defer file.Close()
+msg.ReplyFile(file)
+```
 
-* `Groups`：获取所有的群组对象
 
-  ```go
-  func (s *Self) Groups(update ...bool) (Groups, error)
-  ```
 
-* `Mps`：获取所有的公众号对象
+#### 获取消息的发送者
 
-  ```go
-  func (s *Self) Mps(update ...bool) (Mps, error) 
-  ```
+```go
+sender, err := msg.Sender()
+```
 
-* `UpdateMembersDetail`：更新所有的联系人详情
 
-  ```go
-  func (s *Self) UpdateMembersDetail() error
-  ```
 
+#### 获取消息的接受者
 
+```go
+receiver, err := msg.SenderInGroup()
+```
 
-### Friend
 
-好友对象
 
-#### 主要属性
+#### 判断消息是否由好友发送
 
-* `Self`：当前绑定的登录的用户
+```go
+msg.IsSendByFriend() // bool
+```
 
-* `UserName`：唯一身份标识符(重新登录后改变)
-* `NickName`：微信昵称
-* `RemarkName`：备注
-* `Signature`：签名
 
 
+#### 判断消息是否由群组发送
 
-#### 主要方法
+```go
+msg.IsSendByGroup() // bool
+```
 
-* `SendMsg`：向其发送消息
 
-  ```go
-  func (f *Friend) SendMsg(msg *SendMessage) error
-  ```
 
-* `SendText`：向其发送文本消息
+#### 判断消息类型
 
-  ```go
-  func (f *Friend) SendText(content string) error
-  ```
+```go
+msg.IsText()             // 是否为文本消息
+msg.IsPicture()          // 是否为图片消息
+msg.IsVoice()            // 是否为语音消息
+msg.IsVideo()            // 是否为视频消息
+msg.IsCard()             // 是否为名片消息
+msg.IsFriendAdd()        // 是否为添加好友消息
+msg.IsRecalled()         // 是否为撤回消息
+msg.IsTransferAccounts() // 判断当前的消息是不是微信转账
+msg.IsSendRedPacket()    // 是否发出红包
+msg.IsReceiveRedPacket() // 判断当前是否收到红包
+```
 
-* `SendImage`：向其发送图片消息
 
-  ```go
-  func (f *Friend) SendImage(file *os.File) error
-  ```
 
-* `SetRemarkName`：对其设置备注
+#### 判断消息是否携带文件
 
-  ```go
-  func (f *Friend) SetRemarkName(name string) error
-  ```
+```go
+msg.HasFile() bool
+```
 
-* `SaveAvatar`：下载其头像
 
-  ```go
-  func (u *User) SaveAvatar(filename string) error
-  ```
-  
-* `AddIntoGroup`：将其拉入聊天的群组
 
-  ```go
-  func (f *Friend) AddIntoGroup(groups ...*Group) error
-  ```
+#### 获取消息中的文件
 
-  
+自行读取response处理
 
+```go
+resp, err := msg.GetFile() // *http.Response, error
+```
 
 
 
+#### Card消息
 
-### Group
+```go
+card, err := msg.Card()
+if err == nil {
+    fmt.Println(card.Alias)   // 获取名片消息中携带的微信号
+}
+```
 
-群组对象
 
-#### 主要属性
 
-* `Self`：当前绑定的登录的用户
+#### 同意好友请求
 
-* `UserName`：唯一身份标识符(重新登录后改变)
-* `NickName`：微信昵称
-* `RemarkName`：备注
-* `Signature`：签名
+该方法只在消息类型为`IsFriendAdd`为`true`的时候生效
 
+```go
+msg.Agree() 
 
+msg.Agree("我同意了你的好友请求")
+```
 
-#### 主要方法
 
-* `SendMsg`：向其发送消息
 
-  ```go
-  func (f *Group) SendMsg(msg *SendMessage) error
-  ```
+#### Set
 
-* `SendText`：向其发送文本消息
+从消息上下文中设置值（协成安全）
 
-  ```go
-  func (f *Group) SendText(content string) error
-  ```
+```go
+msg.Set("hello", "world")
+```
 
-* `SendImage`：向其发送图片消息
 
-  ```go
-  func (f *Group) SendImage(file *os.File) error
-  ```
 
-* `SetRemarkName`：对其设置备注
+#### Get
 
-  ```go
-  func (f *Group) SetRemarkName(name string) error
-  ```
+从消息上下文中获取值（协成安全）
 
-* `SaveAvatar`：下载其头像
+```go
+value, exist := msg.Get("hello")
+```
 
-  ```go
-  func (u *User) SaveAvatar(filename string) error
-  ```
-  
-* `AddFriendsIn`：将好友拉入该群组
 
-  ```go
-  func (g *Group) AddFriendsIn(friends ...*Friend) error
-  ```
-  
-* `Members`：获取该群组所有的成员
 
-  ```go
-  func (g *Group) Members() (Members, error)
-  ```
 
 
+### 登陆用户
 
+登陆成功后调用
 
+```go
+self, err := bot.GetCurrentUser()
+```
 
-### Message
 
-可通过绑定在`Bot.MessageHandler`的回调函数获得
 
-* `Sender`：获取消息的发送者
+#### 文件传输助手
 
-  ```go
-  func (m *Message) Sender() (*User, error)
-  ```
+```go
+fileHelper, err := self.FileHelper()
+```
 
-* `SenderInGroup`：如果是群消息，则可以获取发送消息的群员
 
-  ```go
-  func (m *Message) SenderInGroup() (*User, error)
-  ```
 
-* `Receiver`：消息的接受者
+#### 好友列表
 
-  ```go
-  func (m *Message) Receiver() (*User, error)
-  ```
+```go
+friends, err := self.Friends()
+```
 
-* `IsSendBySelf`：判断当前消息是否由自己发送
 
-  ```go
-  func (m *Message) IsSendBySelf() bool
-  ```
 
-* `IsSendByFriend`：判断当前消息是否由好友发送
+#### 群组列表
 
-  ```go
-  func (m *Message) IsSendByFriend() bool
-  ```
+注：群组列表只显示手机端微信：通讯录：群聊里面的群组，若想将别的群组加入通讯录，点击群组，设置为`保存到通讯录`即可（安卓机）
 
-* `IsSendByGroup`：判断当前消息是否由群组发送
+```go
+groups, err := self.Groups()
+```
 
-  ```go
-  func (m *Message) IsSendByGroup() bool
-  ```
 
-* `Reply`：回复当前消息
 
-  ```go
-  func (m *Message) Reply(msgType int, content, mediaId string) error
-  ```
+#### 公众号列表
 
-* `ReplyText`：回复文本消息
+```go
+mps, err := self.Mps()
+```
 
-  ```go
-  func (m *Message) ReplyText(content string) error
-  ```
 
-* `ReplyImage`：回复图片消息
 
-  ```go
-  func (m *Message) ReplyImage(file *os.File) error
-  ```
+### 好友对象
 
-* `HasFile`：判断当前消息中是否携带文件
+好友对象通过调用`self.Friends()`获取
 
-  ```go
-  func (m *Message) HasFile() bool
-  ```
+```go
+friends, err := self.Friends()
+```
 
-* `GetFile`：获取文件的响应对象
 
-  ```go
-  func (m *Message) GetFile() (*http.Response, error)
-  ```
 
-* `Card`：获取当前消息的名片详情（可获取名片中的微信号）
+#### 搜索好友
 
-  ```go
-  func (m *Message) Card() (*Card, error)
-  ```
+根据条件查找好友，返回好友列表
 
-* `Set`：往当前对象中存入值
+```go
+friends.SearchByRemarkName(1, "多吃点苹果") // 根据备注查找, limit 参数为限制查找的数量
 
-  ```go
-  func (m *Message) Set(key string, value interface{})
-  ```
+friends.SearchByNickName(1, "多吃点苹果") // 根据昵称查找
 
-* `Get`：从当前对象中取出存入的值
+friends.Search(openwechat.ALL, func(friend *openwechat.Friend) bool {
+		return friend.Sex == openwechat.MALE
+})  // 自定义条件查找(可多个条件)
+```
 
-  ```go
-  func (m *Message) Get(key string) (value interface{}, exist bool)
-  ```
 
+
+#### 获取第一个好友
+
+返回好友对象
+
+```go
+firend := friends.First() // 可能为nil
+```
+
+
+
+#### 获取最后一个好友
+
+```go
+firend := friends.Last() // 可能为nil
+```
+
+
+
+#### 好友数量统计
+
+```go
+count := friends.Count()
+```
+
+
+
+#### 发送消息
+
+```go
+friend := friends.First()
+if friend != nil {
+		friend.SendText("hello")
+  	// SendFile 	发送文件
+  	// SendImage	发送图片
+}
+```
+
+
+
+#### 设置备注消息
+
+```go
+friend := friends.First()
+if friend != nil {
+		friend.SetRemarkName("remark name")
+}
+```
+
+
+
+#### 拉入群聊
+
+```go
+groups, _ := self.Groups()
+
+friend := friends.First() // ensure it won't be bil
+
+friend.AddIntoGroup(groups...)
+```
+
+
+
+
+
+### 群组对象
+
+好友对象通过调用`self.Groups()`获取
+
+```go
+groups, err := self.Groups()
+```
+
+
+
+#### 发送消息
+
+```go
+group := groups.First()
+if group != nil {
+		group.SendText("hello")
+  	// SendFile 	发送文件
+  	// SendImage	发送图片
+}
+```
+
+
+
+#### 获取群员列表
+
+```go
+group := groups.First()
+if group != nil {
+  	members, err := group.Members()
+}
+```
+
+
+
+#### 拉好友入群
+
+```go
+group := groups.First()  // ensure it won't be bil
+
+group.AddFriendsIn(friend1, friend2)
+```
 
 
 
 ### Emoji
 
-可支持发送emoji表情，所有的`emoji`表情维护在`openwechat.Emoji`这个匿名结构体里面
+emoji表情可当做一个文本消息发送，具体见`openwechat.Emoji`
 
 ```go
-friend.SendText(openwechat.Emoji.Hungry)
+friend.SendText(openwechat.Emoji.Doge) // [旺柴]
 ```
 
 
 
-昵称格式化
+#### 格式化带emoji表情的昵称
 
-* `FormatEmoji`：该方法可以格式化带有`emoji`表情的用户昵称
+```go
+fmt.Println(openchat.FormatEmoji(`多吃点苹果<span class="emoji emoji1f34f"></span>`)) 
+```
 
-  ```go
-  func FormatEmoji(text string) string
-  
-  // 多吃点苹果<span class="emoji emoji1f34f"></span>  => 多吃点苹果🍏
-  ```
 
-  
+
+**更多功能请在源码中探索**
+
+```go
+// TODO ADD MORE SUPPORT
+```
+
+
 
 
 

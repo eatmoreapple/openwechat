@@ -146,6 +146,13 @@ func (m *Message) ReplyImage(file *os.File) (*SentMessage, error) {
 	return m.Bot.Caller.WebWxSendImageMsg(file, request, info, m.Bot.self.UserName, m.FromUserName)
 }
 
+// 回复文件消息
+func (m *Message) ReplyFile(file *os.File) (*SentMessage, error) {
+	info := m.Bot.storage.LoginInfo
+	request := m.Bot.storage.Request
+	return m.Bot.Caller.WebWxSendFile(file, request, info, m.Bot.self.UserName, m.FromUserName)
+}
+
 func (m *Message) IsText() bool {
 	return m.MsgType == 1 && m.Url == ""
 }
@@ -196,7 +203,7 @@ func (m *Message) IsTransferAccounts() bool {
 	return m.IsMedia() && m.FileName == "微信转账"
 }
 
-// 判断当前是否发出红包
+// 否发出红包判断当前是
 func (m *Message) IsSendRedPacket() bool {
 	return m.IsSystem() && m.Content == "发出红包，请在手机上查看"
 }
