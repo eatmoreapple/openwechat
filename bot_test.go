@@ -317,3 +317,29 @@ func TestSendFile(t *testing.T) {
 	}
 	t.Log(msg.MsgId)
 }
+
+func TestForwardMessage(t *testing.T) {
+	bot := defaultBot(Desktop)
+	if err := bot.HotLogin(NewJsonFileHotReloadStorage("2.json"), true); err != nil {
+		t.Error(err)
+		return
+	}
+	self, err := bot.GetCurrentUser()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	groups, err := self.Groups()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	f, _ := os.Open("README.md")
+	defer f.Close()
+	sentM, err := self.SendFileToGroup(groups.First(), f)
+	if err != nil {
+		t.Log(err)
+		return
+	}
+	self.ForwardMessageToGroups(sentM, groups...)
+}

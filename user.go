@@ -356,6 +356,57 @@ func (s *Self) RevokeMessage(msg *SentMessage) error {
 	return s.Bot.Caller.WebWxRevokeMsg(msg, s.Bot.storage.Request)
 }
 
+// 转发消息接口
+func (s *Self) forwardMessage(msg *SentMessage, users ...*User) error {
+	info := s.Bot.storage.LoginInfo
+	req := s.Bot.storage.Request
+	switch msg.Type {
+	case TextMessage:
+		for _, user := range users {
+			msg.FromUserName = s.UserName
+			msg.ToUserName = user.UserName
+			if _, err := s.Self.Bot.Caller.WebWxSendMsg(msg.SendMessage, info, req); err != nil {
+				return err
+			}
+		}
+	case ImageMessage:
+		for _, user := range users {
+			msg.FromUserName = s.UserName
+			msg.ToUserName = user.UserName
+			if _, err := s.Self.Bot.Caller.Client.WebWxSendMsgImg(msg.SendMessage, req, info); err != nil {
+				return err
+			}
+		}
+	case AppMessage:
+		for _, user := range users {
+			msg.FromUserName = s.UserName
+			msg.ToUserName = user.UserName
+			if _, err := s.Self.Bot.Caller.Client.WebWxSendAppMsg(msg.SendMessage, req); err != nil {
+				return err
+			}
+		}
+	}
+	return errors.New("unsupport message")
+}
+
+// 转发给好友
+func (s *Self) ForwardMessageToFriends(msg *SentMessage, friends ...*Friend) error {
+	var users []*User
+	for _, friend := range friends {
+		users = append(users, friend.User)
+	}
+	return s.forwardMessage(msg, users...)
+}
+
+// 转发给群组
+func (s *Self) ForwardMessageToGroups(msg *SentMessage, groups ...*Group) error {
+	var users []*User
+	for _, group := range groups {
+		users = append(users, group.User)
+	}
+	return s.forwardMessage(msg, users...)
+}
+
 // 抽象的用户组
 type Members []*User
 
