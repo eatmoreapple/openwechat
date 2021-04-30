@@ -308,9 +308,9 @@ func TestSendFile(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	f, _ := os.Open("Taylor+Swift+-+Red")
+	f, _ := os.Open("README.md")
 	defer f.Close()
-	msg, err := self.SendFileToFriend(fh, f)
+	msg, err := fh.SendFile(f)
 	if err != nil {
 		t.Error(err)
 		return
