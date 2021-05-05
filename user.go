@@ -121,14 +121,8 @@ type Self struct {
 // 获取所有的好友、群组、公众号信息
 func (s *Self) Members(update ...bool) (Members, error) {
 	// 首先判断缓存里有没有,如果没有则去更新缓存
-	if s.members == nil {
-		if err := s.updateMembers(); err != nil {
-			return nil, err
-		}
-		return s.members, nil
-	}
-	// 判断是否需要更新,如果传入的参数不为nil,则取最后一个
-	if len(update) > 0 && update[0] {
+	// 判断是否需要更新,如果传入的参数不为nil,则取第一个
+	if s.members == nil || (len(update) > 0 && update[0]) {
 		if err := s.updateMembers(); err != nil {
 			return nil, err
 		}
@@ -161,9 +155,10 @@ func (s *Self) FileHelper() (*Friend, error) {
 	}
 	users := members.SearchByUserName(1, "filehelper")
 	if users == nil {
-		return NewFriendHelper(s), nil
+		s.fileHelper = NewFriendHelper(s)
+	} else {
+		s.fileHelper = &Friend{users.First()}
 	}
-	s.fileHelper = &Friend{users.First()}
 	return s.fileHelper, nil
 }
 
