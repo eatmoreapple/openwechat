@@ -254,9 +254,9 @@ func TestFriendHelper(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	f, _ := os.Open("webwxgetmsgimg.jpg")
+	f, _ := os.Open("run")
 	defer f.Close()
-	msg, err := fh.SendImage(f)
+	msg, err := fh.SendFile(f)
 	if err != nil {
 		t.Error(err)
 		return
