@@ -179,7 +179,7 @@ func TestLogout(t *testing.T) {
 }
 
 func TestSendMessage(t *testing.T) {
-	bot := defaultBot()
+	bot := defaultBot(Desktop)
 	if err := bot.Login(); err != nil {
 		t.Error(err)
 		return

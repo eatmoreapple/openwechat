@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"strings"
 )
 
 // 调用请求和解析请求
@@ -71,6 +72,11 @@ func (c *Caller) GetLoginInfo(body []byte) (*LoginInfo, error) {
 		return nil, errors.New("redirect url does not match")
 	}
 	path := string(results[1])
+	if strings.Contains(path, "wx2") {
+		c.Client.UrlManager = normal
+	} else {
+		c.Client.UrlManager = desktop
+	}
 	resp := NewReturnResponse(c.Client.GetLoginInfo(path))
 	if resp.Err() != nil {
 		return nil, resp.Err()
