@@ -81,6 +81,9 @@ func (u *User) SaveAvatar(filename string) error {
 
 // 获取用户的详情
 func (u *User) Detail() (*User, error) {
+	if u.UserName == u.Self.UserName {
+		return u.Self.User, nil
+	}
 	members := Members{u}
 	request := u.Self.Bot.storage.Request
 	newMembers, err := u.Self.Bot.Caller.WebWxBatchGetContact(members, request)

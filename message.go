@@ -56,18 +56,11 @@ type Message struct {
 
 // 获取消息的发送者
 func (m *Message) Sender() (*User, error) {
-	members, err := m.Bot.self.Members(true)
-	if err != nil {
-		return nil, err
-	}
 	if m.FromUserName == m.Bot.self.User.UserName {
 		return m.Bot.self.User, nil
 	}
-	user := members.SearchByUserName(1, m.FromUserName)
-	if user == nil {
-		return nil, noSuchUserFoundError
-	}
-	return user.First().Detail()
+	user := &User{Self: m.Bot.self, UserName: m.FromUserName}
+	return user.Detail()
 }
 
 // 获取消息在群里面的发送者
