@@ -284,19 +284,25 @@ var Emoji = struct {
 }
 
 func FormatEmoji(text string) string {
-	if result := emojiRegexp.FindAllStringSubmatch(text, -1); len(result) != 0 {
-		for _, item := range result {
-			value := item[0]
-			var builder strings.Builder
-			builder.WriteString(`\U`)
-			times := 10 - len(item[1]) - 2
-			for i := 0; i < times; i++ {
-				builder.WriteString("0")
-			}
-			u := strings.ToUpper(item[1])
-			builder.WriteString(u)
-			text = strings.ReplaceAll(text, value, builder.String())
-		}
+	result := emojiRegexp.FindAllStringSubmatch(text, -1)
+	if len(result) == 0 {
+		return text
 	}
+
+	for _, item := range result {
+		if len(item) != 2 {
+			continue
+		}
+		value := item[0]
+		emojiCodeStr := item[1]
+		emojiCode, err := strconv.ParseInt(emojiCodeStr, 16, 64)
+		if err != nil {
+			continue
+		}
+
+		emojiStr := html.UnescapeString("&#" + strconv.FormatInt(emojiCode, 10) + ";")
+		text = strings.Replace(text, value, emojiStr, -1)
+	}
+
 	return text
 }
