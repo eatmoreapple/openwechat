@@ -165,7 +165,7 @@ func TestRemoveFriendIntoChatRoom(t *testing.T) {
 }
 
 func TestLogout(t *testing.T) {
-	bot := defaultBot()
+	bot := defaultBot(Desktop)
 	bot.MessageHandler = func(msg *Message) {
 		if msg.Content == "logout" {
 			msg.Bot.Logout()
