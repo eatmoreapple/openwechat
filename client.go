@@ -18,10 +18,27 @@ import (
 	"time"
 )
 
+// 请求上下文钩子
+type HttpHook interface {
+	BeforeRequest(req *http.Request)
+	AfterRequest(response *http.Response, err error)
+}
+
+type HttpHooks []HttpHook
+
+type UserAgentHook struct{}
+
+func (u UserAgentHook) BeforeRequest(req *http.Request) {
+	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36")
+}
+
+func (u UserAgentHook) AfterRequest(response *http.Response, err error) {}
+
 // http请求客户端
 // 客户端需要维持Session会话
 // 并且客户端不允许跳转
 type Client struct {
+	HttpHooks HttpHooks
 	*http.Client
 	UrlManager
 	mu      sync.Mutex
@@ -45,12 +62,25 @@ func DefaultClient(urlManager UrlManager) *Client {
 	return NewClient(client, urlManager)
 }
 
+func (c *Client) AddHttpHook(hooks ...HttpHook) {
+	c.HttpHooks = append(c.HttpHooks, hooks...)
+}
+
+func (c *Client) do(req *http.Request) (*http.Response, error) {
+	for _, hook := range c.HttpHooks {
+		hook.BeforeRequest(req)
+	}
+	resp, err := c.Client.Do(req)
+	for _, hook := range c.HttpHooks {
+		hook.AfterRequest(resp, err)
+	}
+	return resp, err
+}
+
 // 抽象Do方法,将所有的有效的cookie存入Client.cookies
 // 方便热登陆时获取
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
-	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36")
-	req.URL.RawQuery += "&target=t"
-	resp, err := c.Client.Do(req)
+	resp, err := c.do(req)
 	if err != nil {
 		return resp, err
 	}
