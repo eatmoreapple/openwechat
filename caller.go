@@ -3,8 +3,8 @@ package openwechat
 import (
 	"errors"
 	"net/http"
+	"net/url"
 	"os"
-	"strings"
 )
 
 // 调用请求和解析请求
@@ -19,8 +19,8 @@ func NewCaller(client *Client) *Caller {
 }
 
 // Default Constructor for Caller
-func DefaultCaller(urlManager UrlManager) *Caller {
-	return NewCaller(DefaultClient(urlManager))
+func DefaultCaller() *Caller {
+	return NewCaller(DefaultClient())
 }
 
 // 获取登录的uuid
@@ -71,13 +71,17 @@ func (c *Caller) GetLoginInfo(body []byte) (*LoginInfo, error) {
 	if len(results) != 2 {
 		return nil, errors.New("redirect url does not match")
 	}
-	path := string(results[1])
-	if strings.Contains(path, "wx2") {
-		c.Client.UrlManager = normal
-	} else {
-		c.Client.UrlManager = desktop
+	path, err := url.Parse(string(results[1]))
+	if err != nil {
+		return nil, err
 	}
-	resp := NewReturnResponse(c.Client.GetLoginInfo(path))
+	host := path.Host
+	domain, err := getDomainByHost(host)
+	if err != nil {
+		return nil, err
+	}
+	c.Client.domain = domain
+	resp := NewReturnResponse(c.Client.GetLoginInfo(path.String()))
 	if resp.Err() != nil {
 		return nil, resp.Err()
 	}
