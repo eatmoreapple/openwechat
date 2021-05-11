@@ -47,18 +47,18 @@ var domainMap = map[string][]string{
 	"wechat.com":      {"https://wechat.com", "https://file.web.wechat.com", "https://webpush.web.wechat.com"},
 }
 
-func getDomainByHost(host string) (*domain, error) {
+func getDomainByHost(host string) (*WechatDomain, error) {
 	value, exist := domainMap[host]
 	if !exist {
 		return nil, errors.New("invalid host")
 	}
-	return &domain{
+	return &WechatDomain{
 		BaseHost: value[0],
 		FileHost: value[1],
 		SyncHost: value[2],
 	}, nil
 }
 
-type domain struct {
+type WechatDomain struct {
 	BaseHost, FileHost, SyncHost string
 }

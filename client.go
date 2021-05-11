@@ -40,7 +40,7 @@ func (u UserAgentHook) AfterRequest(response *http.Response, err error) {}
 type Client struct {
 	HttpHooks HttpHooks
 	*http.Client
-	domain  *domain
+	domain  *WechatDomain
 	mode    mode
 	mu      sync.Mutex
 	cookies map[string][]*http.Cookie
