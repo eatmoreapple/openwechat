@@ -39,7 +39,7 @@ const (
 	qrcode            = "https://login.weixin.qq.com/qrcode/"
 )
 
-var domainMap = map[string][]string{
+var domainMap = map[string]*WechatDomain{
 	"wx.qq.com":       {"https://wx.qq.com", "https://file.wx.qq.com", "https://webpush.wx.qq.com"},
 	"wx2.qq.com":      {"https://wx2.qq.com", "https://file.wx2.qq.com", "https://webpush.wx2.qq.com"},
 	"wx8.qq.com":      {"https://wx8.qq.com", "https://file.wx8.qq.com", "https://webpush.wx8.qq.com"},
@@ -52,11 +52,7 @@ func getDomainByHost(host string) (*WechatDomain, error) {
 	if !exist {
 		return nil, errors.New("invalid host")
 	}
-	return &WechatDomain{
-		BaseHost: value[0],
-		FileHost: value[1],
-		SyncHost: value[2],
-	}, nil
+	return value, nil
 }
 
 type WechatDomain struct {
