@@ -12,7 +12,7 @@ type Bot struct {
     LoginCallBack          func(body []byte)  // 登陆回调
     LogoutCallBack         func(bot *Bot)     // 退出回调
     UUIDCallback           func(uuid string)  // 获取UUID的回调函数
-    MessageHandler         func(msg *Message) // 获取消息成功的handle
+    MessageHandler         MessageHandler // 获取消息成功的handle
     GetMessageErrorHandler func(err error)    // 获取消息发生错误的handle
     isHot                  bool
     err                    error

@@ -343,3 +343,34 @@ func TestForwardMessage(t *testing.T) {
 	}
 	self.ForwardMessageToGroups(sentM, groups...)
 }
+
+func TestMessageMatchDispatcher(t *testing.T) {
+	dispatcher := NewMessageMatchDispatcher()
+
+	m1 := func(ctx *MessageContext) {
+		if ctx.Content == "ping" {
+			ctx.ReplyText("pong")
+		}
+		ctx.Next()
+		t.Log("处理完毕~")
+	}
+
+	m2 := func(ctx *MessageContext) {
+		if ctx.Content == "hello" {
+			ctx.ReplyText("world")
+		}
+	}
+
+	dispatcher.OnText(m1, m2)
+
+	dispatcher.OnFriendByRemarkName("1", func(ctx *MessageContext) { ctx.ReplyText("我收到了你的信息了") })
+
+	bot := defaultBot(Desktop)
+	bot.MessageHandler = DispatchMessage(dispatcher)
+
+	if err := bot.Login(); err != nil {
+		t.Error(err)
+		return
+	}
+	bot.Block()
+}
