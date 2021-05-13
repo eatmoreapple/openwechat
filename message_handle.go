@@ -105,37 +105,27 @@ func (m *MessageMatchDispatcher) RegisterHandler(matchFunc matchFunc, handlers .
 
 // 注册处理消息类型为Text的处理函数
 func (m *MessageMatchDispatcher) OnText(handlers ...MessageContextHandler) {
-	m.RegisterHandler(func(message *Message) bool {
-		return message.IsText()
-	}, handlers...)
+	m.RegisterHandler(func(message *Message) bool { return message.IsText() }, handlers...)
 }
 
 // 注册处理消息类型为Image的处理函数
 func (m *MessageMatchDispatcher) OnImage(handlers ...MessageContextHandler) {
-	m.RegisterHandler(func(message *Message) bool {
-		return message.IsPicture()
-	}, handlers...)
+	m.RegisterHandler(func(message *Message) bool { return message.IsPicture() }, handlers...)
 }
 
 // 注册处理消息类型为Voice的处理函数
 func (m *MessageMatchDispatcher) OnVoice(handlers ...MessageContextHandler) {
-	m.RegisterHandler(func(message *Message) bool {
-		return message.IsVoice()
-	}, handlers...)
+	m.RegisterHandler(func(message *Message) bool { return message.IsVoice() }, handlers...)
 }
 
 // 注册处理消息类型为FriendAdd的处理函数
 func (m *MessageMatchDispatcher) OnFriendAdd(handlers ...MessageContextHandler) {
-	m.RegisterHandler(func(message *Message) bool {
-		return message.IsFriendAdd()
-	}, handlers...)
+	m.RegisterHandler(func(message *Message) bool { return message.IsFriendAdd() }, handlers...)
 }
 
 // 注册处理消息类型为Card的处理函数
 func (m *MessageMatchDispatcher) OnCard(handlers ...MessageContextHandler) {
-	m.RegisterHandler(func(message *Message) bool {
-		return message.IsCard()
-	}, handlers...)
+	m.RegisterHandler(func(message *Message) bool { return message.IsCard() }, handlers...)
 }
 
 // 注册根据好友昵称是否匹配的消息处理函数
@@ -150,26 +140,40 @@ func (m *MessageMatchDispatcher) OnFriendByNickName(nickName string, handlers ..
 	m.RegisterHandler(matchFunc, handlers...)
 }
 
+// 注册发送者为好友的处理函数
+func (m *MessageMatchDispatcher) OnFriend(handlers ...MessageContextHandler) {
+	m.RegisterHandler(func(message *Message) bool { return message.IsSendByFriend() }, handlers...)
+}
+
+// 注册发送者为群组的处理函数
+func (m *MessageMatchDispatcher) OnGroup(handlers ...MessageContextHandler) {
+	m.RegisterHandler(func(message *Message) bool { return message.IsSendByGroup() }, handlers...)
+}
+
+// 注册根据消息发送者的行为是否匹配的消息处理函数
+func (m *MessageMatchDispatcher) OnUser(f func(user *User) bool, handlers ...MessageContextHandler) {
+	mf := func(message *Message) bool {
+		sender, err := message.Sender()
+		if err != nil {
+			return false
+		}
+		return f(sender)
+	}
+	m.RegisterHandler(mf, handlers...)
+}
+
 // 注册根据好友备注是否匹配的消息处理函数
 func (m *MessageMatchDispatcher) OnFriendByRemarkName(remarkName string, handlers ...MessageContextHandler) {
-	f := func(message *Message) bool {
-		if message.IsSendByFriend() {
-			sender, err := message.Sender()
-			return err == nil && sender.RemarkName == remarkName
-		}
-		return false
+	f := func(user *User) bool {
+		return user.IsFriend() && user.RemarkName == remarkName
 	}
-	m.RegisterHandler(f, handlers...)
+	m.OnUser(f, handlers...)
 }
 
 // 注册根据群名是否匹配的消息处理函数
 func (m *MessageMatchDispatcher) OnGroupByGroupName(groupName string, handlers ...MessageContextHandler) {
-	f := func(message *Message) bool {
-		if message.IsSendByGroup() {
-			sender, err := message.Sender()
-			return err == nil && sender.NickName == groupName
-		}
-		return false
+	f := func(user *User) bool {
+		return user.IsGroup() && user.NickName == groupName
 	}
-	m.RegisterHandler(f, handlers...)
+	m.OnUser(f, handlers...)
 }
