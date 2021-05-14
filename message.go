@@ -111,7 +111,7 @@ func (m *Message) IsSendBySelf() bool {
 
 // 判断消息是否由好友发送
 func (m *Message) IsSendByFriend() bool {
-	return !m.IsSendByGroup() && strings.HasPrefix(m.FromUserName, "@")
+	return !m.IsSendByGroup() && strings.HasPrefix(m.FromUserName, "@") && !m.IsSendBySelf()
 }
 
 // 判断消息是否由群组发送
