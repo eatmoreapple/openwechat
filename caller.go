@@ -83,6 +83,7 @@ func (c *Caller) GetLoginInfo(body []byte) (*LoginInfo, error) {
 	}
 	c.Client.domain = domain
 
+
 	resp := NewReturnResponse(c.Client.GetLoginInfo(path.String()))
 	if resp.Err() != nil {
 		uErr, ok := resp.Err().(*url.Error)
