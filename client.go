@@ -87,7 +87,8 @@ func (c *Client) setCookie(resp *http.Response) {
 	if c.cookies == nil {
 		c.cookies = make(map[string][]*http.Cookie)
 	}
-	c.cookies[resp.Request.URL.String()] = cookies
+	path := fmt.Sprintf("%s://%s%s", resp.Request.URL.Scheme, resp.Request.URL.Host, resp.Request.URL.Path)
+	c.cookies[path] = cookies
 }
 
 // 抽象Do方法,将所有的有效的cookie存入Client.cookies
