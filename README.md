@@ -19,8 +19,6 @@
 
 
 
-
-
 ### 安装
 
 `go get`
@@ -83,15 +81,10 @@ func main() {
 
 ### 支持功能
 
-> ​	消息回复、给指定对象（好友、群组）发送文本、图片、文件、emoji表情等消息
->
-> ​	热登陆（无需重复扫码登录）、自定义消息处理、文件下载、消息防撤回
->
-> ​	获取对象信息、设置好友备注、拉好友进群等
-
-
-
-**更多功能请查看文档**
+* 消息回复、给指定对象（好友、群组）发送文本、图片、文件、emoji表情等消息
+* 热登陆（无需重复扫码登录）、自定义消息处理、文件下载、消息防撤回
+* 获取对象信息、设置好友备注、拉好友进群等
+* 更多功能请查看文档
 
 
 
@@ -107,7 +100,9 @@ func main() {
 
 ## Thanks
 
-<a href="https://www.jetbrains.com/?from=openwechat"><img src="https://goframe.org/download/thumbnails/1114119/jetbrains.png" height="200" alt="JetBrains"/></a>
+<a href="https://www.jetbrains.com/?from=openwechat"><img src="https://account.jetbrains.com/static/images/jetbrains-logo-inv.svg" height="200" alt="JetBrains"/></a>
+
+
 
 
 

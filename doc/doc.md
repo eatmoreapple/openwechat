@@ -219,6 +219,71 @@ value, exist := msg.Get("hello")
 
 
 
+#### 消息分发
+
+```go
+type MessageDispatcher interface {
+	Dispatch(msg *Message)
+}
+
+func DispatchMessage(dispatcher MessageDispatcher) func(msg *Message) {
+	return func(msg *Message) { dispatcher.Dispatch(msg) }
+}
+```
+
+消息分发处理接口跟 DispatchMessage 结合封装成 MessageHandler
+
+
+
+##### MessageMatchDispatcher
+
+> ​	MessageMatchDispatcher impl MessageDispatcher interface
+
+###### example
+
+```go
+dispatcher := NewMessageMatchDispatcher()
+dispatcher.OnText(func(msg *Message){
+	msg.ReplyText("hello")
+})
+bot := DefaultBot()
+bot.MessageHandler = DispatchMessage(dispatcher)
+```
+
+###### 注册消息处理函数
+
+```go
+dispatcher.RegisterHandler(matchFunc matchFunc, handlers ...MessageContextHandler)
+```
+
+`matchFunc`为匹配函数，返回为`true`代表执行对应的`MessageContextHandler`
+
+
+
+###### 注册文本消息处理函数
+
+```go
+dispatcher.OnText(handlers ...MessageContextHandler)
+```
+
+
+
+###### 注册图片消息的处理函数
+
+```go
+dispatcher.OnImage(handlers ...MessageContextHandler)
+```
+
+
+
+###### 注册语音消息的处理函数
+
+```go
+dispatcher.OnVoice(handlers ...MessageContextHandler)
+```
+
+
+
 
 
 ### 登陆用户
