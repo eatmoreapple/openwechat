@@ -383,6 +383,11 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 	if chunks > 1 {
 		content["chunks"] = strconv.FormatInt(chunks, 10)
 	}
+
+	if _, err = file.Seek(0, 0); err != nil {
+		return nil, err
+	}
+
 	// 分块上传
 	for chunk := 0; int64(chunk) < chunks; chunk++ {
 

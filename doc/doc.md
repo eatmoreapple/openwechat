@@ -284,6 +284,22 @@ dispatcher.OnVoice(handlers ...MessageContextHandler)
 
 
 
+###### 注册消息类型为`好友添加`的处理函数
+
+```go
+dispatcher.OnFriendAdd(handlers ...MessageContextHandler)
+```
+
+
+
+###### 注册消息类型为`Card`的处理函数
+
+```go
+dispatcher.OnCard(handlers ...MessageContextHandler)
+```
+
+
+
 
 
 ### 登陆用户
