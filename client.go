@@ -432,11 +432,12 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 		req.Header.Set("Content-Type", ct)
 		// 发送数据
 		resp, err = c.Do(req)
-
+		if err != nil {
+			return nil, err
+		}
 		// 如果不是最后一次, 解析有没有错误
 		if !isLastTime {
-			returnResp := NewReturnResponse(resp, err)
-			if err := parseBaseResponseError(returnResp); err != nil {
+			if err := parseBaseResponseError(resp); err != nil {
 				return nil, err
 			}
 		}
