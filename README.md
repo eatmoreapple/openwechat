@@ -41,6 +41,7 @@ import (
 
 func main() {
 	bot := openwechat.DefaultBot()
+    // bot := openwechat.DefaultBot(openwechat.Desktop) // 桌面模式，上面登录不上的可以尝试切换这种模式
 
 	// 注册消息处理函数
 	bot.MessageHandler = func(msg *openwechat.Message) {
