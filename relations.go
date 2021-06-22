@@ -172,6 +172,28 @@ func (f Friends) SendImage(file *os.File, delay ...time.Duration) error {
 	return nil
 }
 
+// 群发文件
+func (f Friends)SendFile(file *os.File, delay ...time.Duration) error {
+	total := getTotalDuration(delay...)
+	var (
+		sentMessage *SentMessage
+		err         error
+		self        *Self
+	)
+	for _, friend := range f {
+		self = friend.Self
+		time.Sleep(total)
+		if sentMessage != nil {
+			err = self.ForwardMessageToFriends(sentMessage, f...)
+			return err
+		}
+		if sentMessage, err = friend.SendFile(file); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 type Group struct{ *User }
 
 // implement fmt.Stringer

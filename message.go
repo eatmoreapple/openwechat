@@ -472,6 +472,16 @@ func (s *SentMessage) Revoke() error {
 	return s.Self.RevokeMessage(s)
 }
 
+// 转发该消息给好友
+func (s *SentMessage) ForwardToFriends(friends ...*Friend) error {
+	return s.Self.ForwardMessageToFriends(s, friends...)
+}
+
+// 转发该消息给群组
+func (s *SentMessage) ForwardToGroups(groups ...*Group) error {
+	return s.Self.ForwardMessageToGroups(s, groups...)
+}
+
 type appmsg struct {
 	Type      int    `xml:"type"`
 	AppId     string `xml:"appid,attr"` // wxeb7ec651dd0aefa9
