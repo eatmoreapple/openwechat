@@ -4,7 +4,7 @@
 
 [![Go Doc](https://pkg.go.dev/badge/github.com/eatMoreApple/openwechat)](https://godoc.org/github.com/eatMoreApple/openwechat)
 
-> golang版个人微信号API, 类似开发公众号一样，开发个人微信号
+> golang版个人微信号API, 突破网页版限制，类似开发公众号一样，开发个人微信号
 
 
 
@@ -41,7 +41,7 @@ import (
 
 func main() {
 	bot := openwechat.DefaultBot()
-    // bot := openwechat.DefaultBot(openwechat.Desktop) // 桌面模式，上面登录不上的可以尝试切换这种模式
+  // bot := openwechat.DefaultBot(openwechat.Desktop) // 桌面模式，上面登录不上的可以尝试切换这种模式
 
 	// 注册消息处理函数
 	bot.MessageHandler = func(msg *openwechat.Message) {
@@ -91,7 +91,7 @@ func main() {
 
 ### 文档
 
-[点击查看](doc/doc.md)
+[点击查看](https://openwechat.readthedocs.io/zh/latest/)
 
 ### 项目主页
 
