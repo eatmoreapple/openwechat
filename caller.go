@@ -80,13 +80,7 @@ func (c *Caller) GetLoginInfo(body []byte) (*LoginInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	domain, err := getDomainByHost(path.Host)
-	if err != nil {
-		return nil, err
-	}
-	c.Client.domain = domain
-
+	c.Client.domain = WechatDomain(path.Host)
 	resp, err := c.Client.GetLoginInfo(path.String())
 	if err != nil {
 		uErr, ok := err.(*url.Error)

@@ -1,7 +1,5 @@
 package openwechat
 
-import "errors"
-
 // mode 类型限制
 type mode string
 
@@ -39,22 +37,16 @@ const (
 	qrcode            = "https://login.weixin.qq.com/qrcode/"
 )
 
-var domainMap = map[string]*WechatDomain{
-	"wx.qq.com":       {"https://wx.qq.com", "https://file.wx.qq.com", "https://webpush.wx.qq.com"},
-	"wx2.qq.com":      {"https://wx2.qq.com", "https://file.wx2.qq.com", "https://webpush.wx2.qq.com"},
-	"wx8.qq.com":      {"https://wx8.qq.com", "https://file.wx8.qq.com", "https://webpush.wx8.qq.com"},
-	"web2.wechat.com": {"https://web2.wechat.com", "https://file.web2.wechat.com", "https://webpush.web2.wechat.com"},
-	"wechat.com":      {"https://wechat.com", "https://file.web.wechat.com", "https://webpush.web.wechat.com"},
+type WechatDomain string
+
+func (w WechatDomain) BaseHost() string {
+	return "https://" + string(w)
 }
 
-func getDomainByHost(host string) (*WechatDomain, error) {
-	value, exist := domainMap[host]
-	if !exist {
-		return nil, errors.New("invalid host")
-	}
-	return value, nil
+func (w WechatDomain) FileHost() string {
+	return "https://file." + string(w)
 }
 
-type WechatDomain struct {
-	BaseHost, FileHost, SyncHost string
+func (w WechatDomain) SyncHost() string {
+	return "https://webpush." + string(w)
 }
