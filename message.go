@@ -331,6 +331,10 @@ func (m *Message) init(bot *Bot) {
 	if regexp.MustCompile(`^&lt;`).MatchString(m.Content) {
 		m.Content = html.UnescapeString(m.Content)
 	}
+	//if m.IsText()
+	{
+		m.Content = strings.Replace(m.Content, `<br/>`, "\n", -1)
+	}
 }
 
 // 发送消息的结构体
