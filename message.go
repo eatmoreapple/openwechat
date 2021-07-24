@@ -5,8 +5,10 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"html"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -325,6 +327,9 @@ func (m *Message) init(bot *Bot) {
 				m.Content = m.Content[index+1:]
 			}
 		}
+	}
+	if regexp.MustCompile(`^&lt;`).MatchString(m.Content) {
+		m.Content = html.UnescapeString(m.Content)
 	}
 }
 
