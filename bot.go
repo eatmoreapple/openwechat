@@ -74,10 +74,8 @@ func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
 	// 如果webInit出错,则说明可能身份信息已经失效
 	// 如果retry为True的话,则进行正常登陆
 	if err = b.webInit(); err != nil {
-		if len(retry) > 0 {
-			if retry[0] {
-				return b.Login()
-			}
+		if len(retry) > 0 && retry[0] {
+			return b.Login()
 		}
 	}
 	return err
@@ -176,7 +174,7 @@ func (b *Bot) handleLogin(data []byte) error {
 
 	// 如果是热登陆,则将当前的重要信息写入hotReloadStorage
 	if b.isHot {
-		if err := b.DumpHotReloadStorage(); err != nil {
+		if err = b.DumpHotReloadStorage(); err != nil {
 			return err
 		}
 	}
@@ -207,7 +205,7 @@ func (b *Bot) webInit() error {
 		if b.GetMessageErrorHandler == nil {
 			b.GetMessageErrorHandler = b.stopAsyncCALL
 		}
-		if err := b.asyncCall(); err != nil {
+		if err = b.asyncCall(); err != nil {
 			b.GetMessageErrorHandler(err)
 		}
 	}()
@@ -306,6 +304,21 @@ func (b *Bot) DumpHotReloadStorage() error {
 		WechatDomain: b.Caller.Client.domain,
 	}
 	return b.hotReloadStorage.Dump(item)
+}
+
+// OnLogin is a setter for LoginCallBack
+func (b *Bot) OnLogin(f func(body []byte)) {
+	b.LoginCallBack = f
+}
+
+// OnScanned is a setter for ScanCallBack
+func (b *Bot) OnScanned(f func(body []byte)) {
+	b.ScanCallBack = f
+}
+
+// OnLogout is a setter for LogoutCallBack
+func (b *Bot) OnLogout(f func(bot *Bot)) {
+	b.LogoutCallBack = f
 }
 
 // Bot的构造方法，需要自己传入Caller

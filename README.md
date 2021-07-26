@@ -24,7 +24,7 @@
 `go get`
 
 ```shell
-go get github.com/eatMoreApple/openwechat
+go get github.com/eatmoreapple/openwechat
 ```
 
 
@@ -36,7 +36,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/eatMoreApple/openwechat"
+	"github.com/eatmoreapple/openwechat"
 )
 
 func main() {
@@ -95,7 +95,7 @@ func main() {
 
 ### 项目主页
 
-[https://github.com/eatMoreApple/openwechat](https://github.com/eatMoreApple/openwechat)
+[https://github.com/eatmoreapple/openwechat](https://github.com/eatmoreapple/openwechat)
 
 
 
