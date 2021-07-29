@@ -1,7 +1,7 @@
 package openwechat
 
 import (
-	"html"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -294,13 +294,11 @@ func FormatEmoji(text string) string {
 		}
 		value := item[0]
 		emojiCodeStr := item[1]
-		emojiCode, err := strconv.ParseInt(emojiCodeStr, 16, 64)
+		emojiCode, err := strconv.ParseInt(emojiCodeStr, 16, 16)
 		if err != nil {
 			continue
 		}
-
-		emojiStr := html.UnescapeString("&#" + strconv.FormatInt(emojiCode, 10) + ";")
-		text = strings.Replace(text, value, emojiStr, -1)
+		text = strings.Replace(text, value, fmt.Sprintf("%c", emojiCode), -1)
 	}
 
 	return text
