@@ -294,7 +294,7 @@ func FormatEmoji(text string) string {
 		}
 		value := item[0]
 		emojiCodeStr := item[1]
-		emojiCode, err := strconv.ParseInt(emojiCodeStr, 16, 16)
+		emojiCode, err := strconv.ParseInt(emojiCodeStr, 16, 64)
 		if err != nil {
 			continue
 		}
