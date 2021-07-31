@@ -77,7 +77,7 @@ var (
 	loginForbiddenError  = errors.New("login forbidden")
 )
 
-// ALL跟search函数搭配
+// ALL 跟search函数搭配
 //      friends.Search(openwechat.ALL, )
 const ALL = 0
 

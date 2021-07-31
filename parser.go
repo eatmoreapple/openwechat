@@ -21,7 +21,7 @@ func ToBuffer(v interface{}) (*bytes.Buffer, error) {
 	return &buffer, err
 }
 
-// 获取随机设备id
+// GetRandomDeviceId 获取随机设备id
 func GetRandomDeviceId() string {
 	rand.Seed(time.Now().Unix())
 	var builder strings.Builder
@@ -42,7 +42,7 @@ func getWebWxDataTicket(cookies []*http.Cookie) string {
 	return ""
 }
 
-// Form Xml 格式化
+// XmlFormString Form Xml 格式化
 func XmlFormString(text string) string {
 	lt := strings.ReplaceAll(text, "&lt;", "<")
 	gt := strings.ReplaceAll(lt, "&gt;", ">")
@@ -58,7 +58,7 @@ func getTotalDuration(delay ...time.Duration) time.Duration {
 	return total
 }
 
-// 获取文件上传的类型
+// GetFileContentType 获取文件上传的类型
 func GetFileContentType(file multipart.File) (string, error) {
 	data := make([]byte, 512)
 	if _, err := file.Read(data); err != nil {

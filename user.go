@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// 抽象的用户结构: 好友 群组 公众号
+// User 抽象的用户结构: 好友 群组 公众号
 type User struct {
 	Uin               int
 	HideInputBarFlag  int
@@ -54,12 +54,12 @@ func (u *User) String() string {
 	return fmt.Sprintf("<User:%s>", u.NickName)
 }
 
-// 获取用户头像
+// GetAvatarResponse 获取用户头像
 func (u *User) GetAvatarResponse() (*http.Response, error) {
 	return u.Self.Bot.Caller.Client.WebWxGetHeadImg(u.HeadImgUrl)
 }
 
-// 下载用户头像
+// SaveAvatar 下载用户头像
 func (u *User) SaveAvatar(filename string) error {
 	resp, err := u.GetAvatarResponse()
 	if err != nil {
@@ -79,7 +79,7 @@ func (u *User) SaveAvatar(filename string) error {
 	return err
 }
 
-// 获取用户的详情
+// Detail 获取用户的详情
 func (u *User) Detail() (*User, error) {
 	if u.UserName == u.Self.UserName {
 		return u.Self.User, nil
@@ -95,22 +95,22 @@ func (u *User) Detail() (*User, error) {
 	return user, nil
 }
 
-// 判断是否为好友
+// IsFriend 判断是否为好友
 func (u *User) IsFriend() bool {
 	return !u.IsGroup() && strings.HasPrefix(u.UserName, "@") && u.VerifyFlag == 0
 }
 
-// 判断是否为群组
+// IsGroup 判断是否为群组
 func (u *User) IsGroup() bool {
 	return strings.HasPrefix(u.UserName, "@@") && u.VerifyFlag == 0
 }
 
-// 判断是否为公众号
+// IsMP  判断是否为公众号
 func (u *User) IsMP() bool {
 	return u.VerifyFlag == 8 || u.VerifyFlag == 24 || u.VerifyFlag == 136
 }
 
-// 自己,当前登录用户对象
+// Self 自己,当前登录用户对象
 type Self struct {
 	*User
 	Bot        *Bot
@@ -121,7 +121,7 @@ type Self struct {
 	mps        Mps
 }
 
-// 获取所有的好友、群组、公众号信息
+// Members 获取所有的好友、群组、公众号信息
 func (s *Self) Members(update ...bool) (Members, error) {
 	// 首先判断缓存里有没有,如果没有则去更新缓存
 	// 判断是否需要更新,如果传入的参数不为nil,则取第一个
@@ -150,7 +150,7 @@ func (s *Self) updateMembers() error {
 	return nil
 }
 
-// 获取文件传输助手对象，封装成Friend返回
+// FileHelper 获取文件传输助手对象，封装成Friend返回
 //      fh, err := self.FileHelper() // or fh := openwechat.NewFriendHelper(self)
 func (s *Self) FileHelper() (*Friend, error) {
 	// 如果缓存里有，直接返回，否则去联系人里面找
@@ -170,7 +170,7 @@ func (s *Self) FileHelper() (*Friend, error) {
 	return s.fileHelper, nil
 }
 
-// 获取所有的好友
+// Friends 获取所有的好友
 func (s *Self) Friends(update ...bool) (Friends, error) {
 	if s.friends == nil || (len(update) > 0 && update[0]) {
 		if _, err := s.Members(true); err != nil {
@@ -181,7 +181,7 @@ func (s *Self) Friends(update ...bool) (Friends, error) {
 	return s.friends, nil
 }
 
-// 获取所有的群组
+// Groups 获取所有的群组
 func (s *Self) Groups(update ...bool) (Groups, error) {
 	if s.groups == nil || (len(update) > 0 && update[0]) {
 		if _, err := s.Members(true); err != nil {
@@ -192,7 +192,7 @@ func (s *Self) Groups(update ...bool) (Groups, error) {
 	return s.groups, nil
 }
 
-// 获取所有的公众号
+// Mps 获取所有的公众号
 func (s *Self) Mps(update ...bool) (Mps, error) {
 	if s.mps == nil || (len(update) > 0 && update[0]) {
 		if _, err := s.Members(true); err != nil {
@@ -203,7 +203,7 @@ func (s *Self) Mps(update ...bool) (Mps, error) {
 	return s.mps, nil
 }
 
-// 更新所有的联系人信息
+// UpdateMembersDetail 更新所有的联系人信息
 func (s *Self) UpdateMembersDetail() error {
 	// 先获取所有的联系人
 	members, err := s.Members()
@@ -227,39 +227,39 @@ func (s *Self) sendMessageToUser(user *User, msg *SendMessage) (*SentMessage, er
 	return successSendMessage, nil
 }
 
-// 发送消息给好友
+// SendMessageToFriend 发送消息给好友
 func (s *Self) SendMessageToFriend(friend *Friend, msg *SendMessage) (*SentMessage, error) {
 	return s.sendMessageToUser(friend.User, msg)
 }
 
-// 发送文本消息给好友
+// SendTextToFriend 发送文本消息给好友
 func (s *Self) SendTextToFriend(friend *Friend, text string) (*SentMessage, error) {
 	msg := NewTextSendMessage(text, s.UserName, friend.UserName)
 	return s.SendMessageToFriend(friend, msg)
 }
 
-// 发送图片消息给好友
+// SendImageToFriend 发送图片消息给好友
 func (s *Self) SendImageToFriend(friend *Friend, file *os.File) (*SentMessage, error) {
 	req := s.Bot.storage.Request
 	info := s.Bot.storage.LoginInfo
 	return s.Bot.Caller.WebWxSendImageMsg(file, req, info, s.UserName, friend.UserName)
 }
 
-// 发送文件给好友
+// SendFileToFriend 发送文件给好友
 func (s *Self) SendFileToFriend(friend *Friend, file *os.File) (*SentMessage, error) {
 	req := s.Bot.storage.Request
 	info := s.Bot.storage.LoginInfo
 	return s.Bot.Caller.WebWxSendFile(file, req, info, s.UserName, friend.UserName)
 }
 
-// 设置好友备注
+// SetRemarkNameToFriend 设置好友备注
 //      self.SetRemarkNameToFriend(friend, "remark") // or friend.SetRemarkName("remark")
 func (s *Self) SetRemarkNameToFriend(friend *Friend, remarkName string) error {
 	req := s.Bot.storage.Request
 	return s.Bot.Caller.WebWxOplog(req, remarkName, friend.UserName)
 }
 
-// 拉多名好友进群
+// AddFriendsIntoGroup 拉多名好友进群
 // 最好自己是群主,成功率高一点,因为有的群允许非群组拉人,而有的群不允许
 func (s *Self) AddFriendsIntoGroup(group *Group, friends ...*Friend) error {
 	if len(friends) == 0 {
@@ -283,7 +283,7 @@ func (s *Self) AddFriendsIntoGroup(group *Group, friends ...*Friend) error {
 	return s.Bot.Caller.AddFriendIntoChatRoom(req, info, group, friends...)
 }
 
-// 从群聊中移除用户
+// RemoveMemberFromGroup 从群聊中移除用户
 // Deprecated
 // 无论是网页版，还是程序上都不起作用
 func (s *Self) RemoveMemberFromGroup(group *Group, members Members) error {
@@ -314,7 +314,7 @@ func (s *Self) RemoveMemberFromGroup(group *Group, members Members) error {
 	return s.Bot.Caller.RemoveFriendFromChatRoom(req, info, group, members...)
 }
 
-// 拉好友进多个群聊
+// AddFriendIntoManyGroups 拉好友进多个群聊
 // AddFriendIntoGroups, 名字和上面的有点像
 func (s *Self) AddFriendIntoManyGroups(friend *Friend, groups ...*Group) error {
 	for _, group := range groups {
@@ -325,32 +325,32 @@ func (s *Self) AddFriendIntoManyGroups(friend *Friend, groups ...*Group) error {
 	return nil
 }
 
-// 发送消息给群组
+// SendMessageToGroup 发送消息给群组
 func (s *Self) SendMessageToGroup(group *Group, msg *SendMessage) (*SentMessage, error) {
 	return s.sendMessageToUser(group.User, msg)
 }
 
-// 发送文本消息给群组
+// SendTextToGroup 发送文本消息给群组
 func (s *Self) SendTextToGroup(group *Group, text string) (*SentMessage, error) {
 	msg := NewTextSendMessage(text, s.UserName, group.UserName)
 	return s.SendMessageToGroup(group, msg)
 }
 
-// 发送图片消息给群组
+// SendImageToGroup 发送图片消息给群组
 func (s *Self) SendImageToGroup(group *Group, file *os.File) (*SentMessage, error) {
 	req := s.Bot.storage.Request
 	info := s.Bot.storage.LoginInfo
 	return s.Bot.Caller.WebWxSendImageMsg(file, req, info, s.UserName, group.UserName)
 }
 
-// 发送文件给群组
+// SendFileToGroup 发送文件给群组
 func (s *Self) SendFileToGroup(group *Group, file *os.File) (*SentMessage, error) {
 	req := s.Bot.storage.Request
 	info := s.Bot.storage.LoginInfo
 	return s.Bot.Caller.WebWxSendFile(file, req, info, s.UserName, group.UserName)
 }
 
-// 撤回消息
+// RevokeMessage 撤回消息
 //      sentMessage, err := friend.SendText("message")
 //      if err == nil {
 //          self.RevokeMessage(sentMessage) // or sentMessage.Revoke()
@@ -392,7 +392,7 @@ func (s *Self) forwardMessage(msg *SentMessage, users ...*User) error {
 	return errors.New("unsupport message")
 }
 
-// 转发给好友
+// ForwardMessageToFriends 转发给好友
 func (s *Self) ForwardMessageToFriends(msg *SentMessage, friends ...*Friend) error {
 	var users = make([]*User, len(friends))
 	for index, friend := range friends {
@@ -401,7 +401,7 @@ func (s *Self) ForwardMessageToFriends(msg *SentMessage, friends ...*Friend) err
 	return s.forwardMessage(msg, users...)
 }
 
-// 转发给群组
+// ForwardMessageToGroups 转发给群组
 func (s *Self) ForwardMessageToGroups(msg *SentMessage, groups ...*Group) error {
 	var users = make([]*User, len(groups))
 	for index, group := range groups {
@@ -410,15 +410,15 @@ func (s *Self) ForwardMessageToGroups(msg *SentMessage, groups ...*Group) error 
 	return s.forwardMessage(msg, users...)
 }
 
-// 抽象的用户组
+// Members 抽象的用户组
 type Members []*User
 
-// 统计数量
+// Count 统计数量
 func (m Members) Count() int {
 	return len(m)
 }
 
-// 获取第一个
+// First 获取第一个
 func (m Members) First() *User {
 	if m.Count() > 0 {
 		u := m[0]
@@ -427,7 +427,7 @@ func (m Members) First() *User {
 	return nil
 }
 
-// 获取最后一个
+// Last 获取最后一个
 func (m Members) Last() *User {
 	if m.Count() > 0 {
 		u := m[m.Count()-1]
@@ -436,7 +436,7 @@ func (m Members) Last() *User {
 	return nil
 }
 
-// 设置owner
+// SetOwner 设置owner
 // 请不要随意设置
 func (m Members) SetOwner(s *Self) {
 	for _, member := range m {
@@ -444,22 +444,22 @@ func (m Members) SetOwner(s *Self) {
 	}
 }
 
-// 根据用户名查找
+// SearchByUserName 根据用户名查找
 func (m Members) SearchByUserName(limit int, username string) (results Members) {
 	return m.Search(limit, func(user *User) bool { return user.UserName == username })
 }
 
-// 根据昵称查找
+// SearchByNickName 根据昵称查找
 func (m Members) SearchByNickName(limit int, nickName string) (results Members) {
 	return m.Search(limit, func(user *User) bool { return user.NickName == nickName })
 }
 
-// 根据备注查找
+// SearchByRemarkName 根据备注查找
 func (m Members) SearchByRemarkName(limit int, remarkName string) (results Members) {
 	return m.Search(limit, func(user *User) bool { return user.RemarkName == remarkName })
 }
 
-// 根据自定义条件查找
+// Search 根据自定义条件查找
 func (m Members) Search(limit int, condFuncList ...func(user *User) bool) (results Members) {
 	if condFuncList == nil {
 		return m
@@ -569,7 +569,7 @@ func (m Members) detail(self *Self) error {
 	return nil
 }
 
-// 这里为了兼容Desktop版本找不到文件传输助手的问题
+// NewFriendHelper 这里为了兼容Desktop版本找不到文件传输助手的问题
 // 文件传输助手的微信身份标识符永远是filehelper
 // 这种形式的对象可能缺少一些其他属性
 // 但是不影响发送信息的功能

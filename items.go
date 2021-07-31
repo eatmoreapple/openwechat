@@ -9,7 +9,7 @@ import (
 一些网络返回信息的封装
 */
 
-// 登录信息
+// LoginInfo 登录信息
 type LoginInfo struct {
 	Ret         int    `xml:"ret"`
 	WxUin       int    `xml:"wxuin"`
@@ -28,14 +28,14 @@ func (l LoginInfo) Error() string {
 	return l.Message
 }
 
-// 初始的请求信息
+// BaseRequest 初始的请求信息
 // 几乎所有的请求都要携带该参数
 type BaseRequest struct {
 	Uin                 int
 	Sid, Skey, DeviceID string
 }
 
-// 大部分返回对象都携带该信息
+// BaseResponse 大部分返回对象都携带该信息
 type BaseResponse struct {
 	Ret    int
 	ErrMsg string
@@ -80,7 +80,7 @@ type SyncKey struct {
 	List  []struct{ Key, Val int64 }
 }
 
-// 初始化的相应信息
+// WebInitResponse 初始化的相应信息
 type WebInitResponse struct {
 	Count               int
 	ClientVersion       int
@@ -98,7 +98,7 @@ type WebInitResponse struct {
 	ContactList         []User
 }
 
-// 公众号的订阅信息
+// MPSubscribeMsg 公众号的订阅信息
 type MPSubscribeMsg struct {
 	MPArticleCount int
 	Time           int64

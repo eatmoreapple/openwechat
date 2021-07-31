@@ -8,24 +8,24 @@ import (
 	"os"
 )
 
-// 调用请求和解析请求
+// Caller 调用请求和解析请求
 // 上层模块可以直接获取封装后的请求结果
 type Caller struct {
 	Client *Client
 	path   *url.URL
 }
 
-// Constructor for Caller
+// NewCaller Constructor for Caller
 func NewCaller(client *Client) *Caller {
 	return &Caller{Client: client}
 }
 
-// Default Constructor for Caller
+// DefaultCaller Default Constructor for Caller
 func DefaultCaller() *Caller {
 	return NewCaller(DefaultClient())
 }
 
-// 获取登录的uuid
+// GetLoginUUID 获取登录的uuid
 func (c *Caller) GetLoginUUID() (string, error) {
 	resp, err := c.Client.GetLoginUUID()
 	if err != nil {
@@ -47,7 +47,7 @@ func (c *Caller) GetLoginUUID() (string, error) {
 	return string(results[1]), nil
 }
 
-// 检查是否登录成功
+// CheckLogin 检查是否登录成功
 func (c *Caller) CheckLogin(uuid string) (*CheckLoginResponse, error) {
 	resp, err := c.Client.CheckLogin(uuid)
 	if err != nil {
@@ -69,7 +69,7 @@ func (c *Caller) CheckLogin(uuid string) (*CheckLoginResponse, error) {
 	return &CheckLoginResponse{Code: code, Raw: buffer.Bytes()}, nil
 }
 
-// 获取登录信息
+// GetLoginInfo 获取登录信息
 func (c *Caller) GetLoginInfo(body []byte) (*LoginInfo, error) {
 	// 从响应体里面获取需要跳转的url
 	results := redirectUriRegexp.FindSubmatch(body)
@@ -102,7 +102,7 @@ func (c *Caller) GetLoginInfo(body []byte) (*LoginInfo, error) {
 	return &loginInfo, nil
 }
 
-// 获取初始化信息
+// WebInit 获取初始化信息
 func (c *Caller) WebInit(request *BaseRequest) (*WebInitResponse, error) {
 	resp, err := c.Client.WebInit(request)
 	if err != nil {
@@ -116,7 +116,7 @@ func (c *Caller) WebInit(request *BaseRequest) (*WebInitResponse, error) {
 	return &webInitResponse, nil
 }
 
-// 通知手机已登录
+// WebWxStatusNotify 通知手机已登录
 func (c *Caller) WebWxStatusNotify(request *BaseRequest, response *WebInitResponse, info *LoginInfo) error {
 	resp, err := c.Client.WebWxStatusNotify(request, response, info)
 	if err != nil {
@@ -133,7 +133,7 @@ func (c *Caller) WebWxStatusNotify(request *BaseRequest, response *WebInitRespon
 	return nil
 }
 
-// 异步获取是否有新的消息
+// SyncCheck 异步获取是否有新的消息
 func (c *Caller) SyncCheck(info *LoginInfo, response *WebInitResponse) (*SyncCheckResponse, error) {
 	resp, err := c.Client.SyncCheck(info, response)
 	if err != nil {
@@ -153,7 +153,7 @@ func (c *Caller) SyncCheck(info *LoginInfo, response *WebInitResponse) (*SyncChe
 	return syncCheckResponse, nil
 }
 
-// 获取所有的联系人
+// WebWxGetContact 获取所有的联系人
 func (c *Caller) WebWxGetContact(info *LoginInfo) (Members, error) {
 	resp, err := c.Client.WebWxGetContact(info)
 	if err != nil {
@@ -170,7 +170,7 @@ func (c *Caller) WebWxGetContact(info *LoginInfo) (Members, error) {
 	return item.MemberList, nil
 }
 
-// 获取联系人的详情
+// WebWxBatchGetContact 获取联系人的详情
 // 注: Members参数的长度不要大于50
 func (c *Caller) WebWxBatchGetContact(members Members, request *BaseRequest) (Members, error) {
 	resp, err := c.Client.WebWxBatchGetContact(members, request)
@@ -188,7 +188,7 @@ func (c *Caller) WebWxBatchGetContact(members Members, request *BaseRequest) (Me
 	return item.ContactList, nil
 }
 
-// 获取新的消息接口
+// WebWxSync 获取新的消息接口
 func (c *Caller) WebWxSync(request *BaseRequest, response *WebInitResponse, info *LoginInfo) (*WebWxSyncResponse, error) {
 	resp, err := c.Client.WebWxSync(request, response, info)
 	if err != nil {
@@ -202,13 +202,13 @@ func (c *Caller) WebWxSync(request *BaseRequest, response *WebInitResponse, info
 	return &webWxSyncResponse, nil
 }
 
-// 发送消息接口
+// WebWxSendMsg 发送消息接口
 func (c *Caller) WebWxSendMsg(msg *SendMessage, info *LoginInfo, request *BaseRequest) (*SentMessage, error) {
 	resp, err := c.Client.WebWxSendMsg(msg, info, request)
 	return getSuccessSentMessage(msg, resp, err)
 }
 
-// 修改用户备注接口
+// WebWxOplog 修改用户备注接口
 func (c *Caller) WebWxOplog(request *BaseRequest, remarkName, toUserName string) error {
 	resp, err := c.Client.WebWxOplog(request, remarkName, toUserName)
 	if err != nil {
@@ -240,7 +240,7 @@ func (c *Caller) UploadMedia(file *os.File, request *BaseRequest, info *LoginInf
 	return &item, nil
 }
 
-// 发送图片消息接口
+// WebWxSendImageMsg 发送图片消息接口
 func (c *Caller) WebWxSendImageMsg(file *os.File, request *BaseRequest, info *LoginInfo, fromUserName, toUserName string) (*SentMessage, error) {
 	// 首先尝试上传图片
 	resp, err := c.UploadMedia(file, request, info, fromUserName, toUserName)
@@ -270,13 +270,13 @@ func (c *Caller) WebWxSendFile(file *os.File, req *BaseRequest, info *LoginInfo,
 	return c.WebWxSendAppMsg(msg, req)
 }
 
-// 发送媒体消息
+// WebWxSendAppMsg 发送媒体消息
 func (c *Caller) WebWxSendAppMsg(msg *SendMessage, req *BaseRequest) (*SentMessage, error) {
 	resp, err := c.Client.WebWxSendAppMsg(msg, req)
 	return getSuccessSentMessage(msg, resp, err)
 }
 
-// 用户退出
+// Logout 用户退出
 func (c *Caller) Logout(info *LoginInfo) error {
 	resp, err := c.Client.Logout(info)
 	if err != nil {
@@ -285,7 +285,7 @@ func (c *Caller) Logout(info *LoginInfo) error {
 	return parseBaseResponseError(resp)
 }
 
-// 拉好友入群
+// AddFriendIntoChatRoom 拉好友入群
 func (c *Caller) AddFriendIntoChatRoom(req *BaseRequest, info *LoginInfo, group *Group, friends ...*Friend) error {
 	if len(friends) == 0 {
 		return errors.New("no friends found")
@@ -297,7 +297,7 @@ func (c *Caller) AddFriendIntoChatRoom(req *BaseRequest, info *LoginInfo, group 
 	return parseBaseResponseError(resp)
 }
 
-// 从群聊中移除用户
+// RemoveFriendFromChatRoom 从群聊中移除用户
 func (c *Caller) RemoveFriendFromChatRoom(req *BaseRequest, info *LoginInfo, group *Group, users ...*User) error {
 	if len(users) == 0 {
 		return errors.New("no users found")
@@ -309,7 +309,7 @@ func (c *Caller) RemoveFriendFromChatRoom(req *BaseRequest, info *LoginInfo, gro
 	return parseBaseResponseError(resp)
 }
 
-// 同意加好友请求
+// WebWxVerifyUser 同意加好友请求
 func (c *Caller) WebWxVerifyUser(storage *Storage, info RecommendInfo, verifyContent string) error {
 	resp, err := c.Client.WebWxVerifyUser(storage, info, verifyContent)
 	if err != nil {
@@ -318,7 +318,7 @@ func (c *Caller) WebWxVerifyUser(storage *Storage, info RecommendInfo, verifyCon
 	return parseBaseResponseError(resp)
 }
 
-// 撤回消息操作
+// WebWxRevokeMsg 撤回消息操作
 func (c *Caller) WebWxRevokeMsg(msg *SentMessage, request *BaseRequest) error {
 	resp, err := c.Client.WebWxRevokeMsg(msg, request)
 	if err != nil {

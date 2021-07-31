@@ -208,6 +208,7 @@ func TestSendMessage(t *testing.T) {
 func TestAgreeFriendsAdd(t *testing.T) {
 	bot := defaultBot()
 	bot.MessageHandler = func(msg *Message) {
+		msg.Sender()
 		if msg.IsFriendAdd() {
 			if err := msg.Agree(); err != nil {
 				t.Error(err)

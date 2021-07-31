@@ -24,7 +24,7 @@ type Bot struct {
 	hotReloadStorage       HotReloadStorage
 }
 
-// 判断当前用户是否正常在线
+// Alive 判断当前用户是否正常在线
 func (b *Bot) Alive() bool {
 	if b.self == nil {
 		return false
@@ -37,7 +37,7 @@ func (b *Bot) Alive() bool {
 	}
 }
 
-// 获取当前的用户
+// GetCurrentUser 获取当前的用户
 //		self, err := bot.GetCurrentUser()
 //		if err != nil {
 //			return
@@ -50,7 +50,7 @@ func (b *Bot) GetCurrentUser() (*Self, error) {
 	return b.self, nil
 }
 
-// 热登录,可实现重复登录,
+// HotLogin 热登录,可实现重复登录,
 // retry设置为true可在热登录失效后进行普通登录行为
 //		storage := NewJsonFileHotReloadStorage("storage.json")
 //		err := bot.HotLogin(storage, true)
@@ -98,7 +98,7 @@ func (b *Bot) hotLoginInit() error {
 	return nil
 }
 
-// 用户登录
+// Login 用户登录
 // 该方法会一直阻塞，直到用户扫码登录，或者二维码过期
 func (b *Bot) Login() error {
 	uuid, err := b.Caller.GetLoginUUID()
@@ -135,7 +135,7 @@ func (b *Bot) Login() error {
 	}
 }
 
-// 用户退出
+// Logout 用户退出
 func (b *Bot) Logout() error {
 	if b.Alive() {
 		if b.LogoutCallBack != nil {
@@ -267,7 +267,7 @@ func (b *Bot) getNewWechatMessage() error {
 	return nil
 }
 
-// 当消息同步发生了错误或者用户主动在手机上退出，该方法会立即返回，否则会一直阻塞
+// Block 当消息同步发生了错误或者用户主动在手机上退出，该方法会立即返回，否则会一直阻塞
 func (b *Bot) Block() error {
 	if b.self == nil {
 		return errors.New("`Block` must be called after user login")
@@ -276,22 +276,22 @@ func (b *Bot) Block() error {
 	return nil
 }
 
-// 获取当前Bot崩溃的原因
+// CrashReason 获取当前Bot崩溃的原因
 func (b *Bot) CrashReason() error {
 	return b.err
 }
 
-// setter for Bot.MessageHandler
+// MessageOnSuccess setter for Bot.MessageHandler
 func (b *Bot) MessageOnSuccess(h func(msg *Message)) {
 	b.MessageHandler = h
 }
 
-// setter for Bot.GetMessageErrorHandler
+// MessageOnError setter for Bot.GetMessageErrorHandler
 func (b *Bot) MessageOnError(h func(err error)) {
 	b.GetMessageErrorHandler = h
 }
 
-// 写入HotReloadStorage
+// DumpHotReloadStorage 写入HotReloadStorage
 func (b *Bot) DumpHotReloadStorage() error {
 	if b.hotReloadStorage == nil {
 		return errors.New("hotReloadStorage can be nil")
@@ -321,13 +321,13 @@ func (b *Bot) OnLogout(f func(bot *Bot)) {
 	b.LogoutCallBack = f
 }
 
-// Bot的构造方法，需要自己传入Caller
+// NewBot Bot的构造方法，需要自己传入Caller
 func NewBot(caller *Caller) *Bot {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Bot{Caller: caller, storage: &Storage{}, context: ctx, cancel: cancel}
 }
 
-// 默认的Bot的构造方法,
+// DefaultBot 默认的Bot的构造方法,
 // mode不传入默认为openwechat.Normal,详情见mode
 //     bot := openwechat.DefaultBot(openwechat.Desktop)
 func DefaultBot(modes ...mode) *Bot {
@@ -339,15 +339,17 @@ func DefaultBot(modes ...mode) *Bot {
 	}
 	caller := DefaultCaller()
 	caller.Client.mode = m
-	return NewBot(caller)
+	bot := NewBot(caller)
+	bot.UUIDCallback = PrintlnQrcodeUrl
+	return bot
 }
 
-// 通过uuid获取登录二维码的url
+// GetQrcodeUrl 通过uuid获取登录二维码的url
 func GetQrcodeUrl(uuid string) string {
 	return qrcode + uuid
 }
 
-// 打印登录二维码
+// PrintlnQrcodeUrl 打印登录二维码
 func PrintlnQrcodeUrl(uuid string) {
 	println("访问下面网址扫描二维码登录")
 	println(GetQrcodeUrl(uuid))

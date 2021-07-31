@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-// 身份信息, 维持整个登陆的Session会话
+// Storage 身份信息, 维持整个登陆的Session会话
 type Storage struct {
 	LoginInfo *LoginInfo
 	Request   *BaseRequest
@@ -21,21 +21,21 @@ type HotReloadStorageItem struct {
 	WechatDomain WechatDomain
 }
 
-// 热登陆存储接口
+// HotReloadStorage 热登陆存储接口
 type HotReloadStorage interface {
 	GetHotReloadStorageItem() HotReloadStorageItem // 获取HotReloadStorageItem
 	Dump(item HotReloadStorageItem) error          // 实现该方法, 将必要信息进行序列化
 	Load() error                                   // 实现该方法, 将存储媒介的内容反序列化
 }
 
-// 实现HotReloadStorage接口
+// JsonFileHotReloadStorage 实现HotReloadStorage接口
 // 默认以json文件的形式存储
 type JsonFileHotReloadStorage struct {
 	item     HotReloadStorageItem
 	filename string
 }
 
-// 将信息写入json文件
+// Dump 将信息写入json文件
 func (f *JsonFileHotReloadStorage) Dump(item HotReloadStorageItem) error {
 
 	file, err := os.OpenFile(f.filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm)
@@ -56,7 +56,7 @@ func (f *JsonFileHotReloadStorage) Dump(item HotReloadStorageItem) error {
 	return err
 }
 
-// 从文件中读取信息
+// Load 从文件中读取信息
 func (f *JsonFileHotReloadStorage) Load() error {
 	file, err := os.Open(f.filename)
 
