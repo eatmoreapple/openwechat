@@ -287,6 +287,11 @@ func (m *Message) Agree(verifyContents ...string) error {
 	return m.Bot.Caller.WebWxVerifyUser(m.Bot.storage, m.RecommendInfo, builder.String())
 }
 
+// AsRead 将消息设置为已读
+func (m *Message) AsRead() error {
+	return m.Bot.Caller.WebWxStatusAsRead(m.Bot.storage.Request, m.Bot.storage.LoginInfo, m)
+}
+
 // Set 往消息上下文中设置值
 // goroutine safe
 func (m *Message) Set(key string, value interface{}) {

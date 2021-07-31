@@ -327,6 +327,15 @@ func (c *Caller) WebWxRevokeMsg(msg *SentMessage, request *BaseRequest) error {
 	return parseBaseResponseError(resp)
 }
 
+// WebWxStatusAsRead 将消息设置为已读
+func (c *Caller) WebWxStatusAsRead(request *BaseRequest, info *LoginInfo, msg *Message) error {
+	resp, err := c.Client.WebWxStatusAsRead(request, info, msg)
+	if err != nil {
+		return err
+	}
+	return parseBaseResponseError(resp)
+}
+
 // 处理响应返回的结果是否正常
 func parseBaseResponseError(resp *http.Response) error {
 	defer resp.Body.Close()

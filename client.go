@@ -655,3 +655,22 @@ func (c *Client) webWxCheckUpload(stat os.FileInfo, request *BaseRequest, fileMd
 	req.Header.Add("Content-Type", jsonContentType)
 	return c.Do(req)
 }
+
+func (c *Client) WebWxStatusAsRead(request *BaseRequest, info *LoginInfo, msg *Message) (*http.Response, error) {
+	path, _ := url.Parse(c.domain.BaseHost() + webwxstatusnotify)
+	content := map[string]interface{}{
+		"BaseRequest":  request,
+		"DeviceID":     request.DeviceID,
+		"Sid":          request.Sid,
+		"Skey":         request.Skey,
+		"Uin":          info.WxUin,
+		"ClientMsgId":  time.Now().Unix(),
+		"Code":         1,
+		"FromUserName": msg.ToUserName,
+		"ToUserName":   msg.FromUserName,
+	}
+	body, _ := ToBuffer(content)
+	req, _ := http.NewRequest(http.MethodPost, path.String(), body)
+	req.Header.Add("Content-Type", jsonContentType)
+	return c.Do(req)
+}
