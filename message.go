@@ -28,7 +28,7 @@ type Message struct {
 	ImgStatus             int
 	ImgWidth              int
 	ForwardFlag           int
-	MsgType               int
+	MsgType               MessageType
 	Status                int
 	StatusNotifyCode      int
 	SubMsgType            int
@@ -149,44 +149,44 @@ func (m *Message) ReplyFile(file *os.File) (*SentMessage, error) {
 }
 
 func (m *Message) IsText() bool {
-	return m.MsgType == 1 && m.Url == ""
+	return m.MsgType == MsgtypeText && m.Url == ""
 }
 
 func (m *Message) IsMap() bool {
-	return m.MsgType == 1 && m.Url != ""
+	return m.MsgType == MsgtypeText && m.Url != ""
 }
 
 func (m *Message) IsPicture() bool {
-	return m.MsgType == 3 || m.MsgType == 47
+	return m.MsgType == MsgtypeImage || m.MsgType == MsgtypeEmoticon
 }
 
 func (m *Message) IsVoice() bool {
-	return m.MsgType == 34
+	return m.MsgType == MsgtypeVoice
 }
 
 func (m *Message) IsFriendAdd() bool {
-	return m.MsgType == 37 && m.FromUserName == "fmessage"
+	return m.MsgType == MsgtypeVerifymsg && m.FromUserName == "fmessage"
 }
 
 func (m *Message) IsCard() bool {
-	return m.MsgType == 42
+	return m.MsgType == MsgtypeSharecard
 }
 
 func (m *Message) IsVideo() bool {
-	return m.MsgType == 43 || m.MsgType == 62
+	return m.MsgType == MsgtypeVideo || m.MsgType == MsgtypeMicrovideo
 }
 
 func (m *Message) IsMedia() bool {
-	return m.MsgType == 49
+	return m.MsgType == MsgtypeApp
 }
 
 // IsRecalled 判断是否撤回
 func (m *Message) IsRecalled() bool {
-	return m.MsgType == 10002
+	return m.MsgType == MsgtypeRecalled
 }
 
 func (m *Message) IsSystem() bool {
-	return m.MsgType == 10000
+	return m.MsgType == MsgtypeSys
 }
 
 func (m *Message) IsNotify() bool {
