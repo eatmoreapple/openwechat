@@ -204,11 +204,11 @@ func (c *Client) SyncCheck(info *LoginInfo, response *WebInitResponse) (*http.Re
 	params.Add("uin", strconv.Itoa(info.WxUin))
 	params.Add("deviceid", GetRandomDeviceId())
 	params.Add("_", strconv.FormatInt(time.Now().Unix(), 10))
-	var syncKeyStringSlice []string
+	var syncKeyStringSlice = make([]string, response.SyncKey.Count)
 	// 将SyncKey里面的元素按照特定的格式拼接起来
-	for _, item := range response.SyncKey.List {
+	for index, item := range response.SyncKey.List {
 		i := fmt.Sprintf("%d_%d", item.Key, item.Val)
-		syncKeyStringSlice = append(syncKeyStringSlice, i)
+		syncKeyStringSlice[index] = i
 	}
 	syncKey := strings.Join(syncKeyStringSlice, "|")
 	params.Add("synckey", syncKey)
@@ -587,9 +587,9 @@ func (c *Client) AddMemberIntoChatRoom(req *BaseRequest, info *LoginInfo, group 
 	params.Add("pass_ticket", info.PassTicket)
 	params.Add("lang", "zh_CN")
 	path.RawQuery = params.Encode()
-	addMemberList := make([]string, 0)
-	for _, friend := range friends {
-		addMemberList = append(addMemberList, friend.UserName)
+	addMemberList := make([]string, len(friends))
+	for index, friend := range friends {
+		addMemberList[index] = friend.UserName
 	}
 	content := map[string]interface{}{
 		"ChatRoomName":  group.UserName,
@@ -609,9 +609,9 @@ func (c *Client) RemoveMemberFromChatRoom(req *BaseRequest, info *LoginInfo, gro
 	params.Add("fun", "delmember")
 	params.Add("lang", "zh_CN")
 	params.Add("pass_ticket", info.PassTicket)
-	delMemberList := make([]string, 0)
-	for _, friend := range friends {
-		delMemberList = append(delMemberList, friend.UserName)
+	delMemberList := make([]string, len(friends))
+	for index, friend := range friends {
+		delMemberList[index] = friend.UserName
 	}
 	content := map[string]interface{}{
 		"ChatRoomName":  group.UserName,
