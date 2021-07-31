@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/url"
+	"sync"
 )
 
 type Bot struct {
@@ -14,7 +15,8 @@ type Bot struct {
 	UUIDCallback           func(uuid string) // 获取UUID的回调函数
 	MessageHandler         MessageHandler    // 获取消息成功的handle
 	GetMessageErrorHandler func(err error)   // 获取消息发生错误的handle
-	isHot                  bool
+	isHot                  bool              // 是否为热登录模式
+	once                   sync.Once
 	err                    error
 	context                context.Context
 	cancel                 context.CancelFunc
@@ -56,6 +58,9 @@ func (b *Bot) GetCurrentUser() (*Self, error) {
 //		err := bot.HotLogin(storage, true)
 //		fmt.Println(err)
 func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
+	if b.Alive() {
+		b.cancel()
+	}
 	b.isHot = true
 	b.hotReloadStorage = storage
 
@@ -201,14 +206,16 @@ func (b *Bot) webInit() error {
 		return err
 	}
 	// 开启协程，轮询获取是否有新的消息返回
-	go func() {
+
+	// FIX: 当bot在线的情况下执行热登录,会开启多次事件监听
+	go b.once.Do(func() {
 		if b.GetMessageErrorHandler == nil {
 			b.GetMessageErrorHandler = b.stopAsyncCALL
 		}
 		if err = b.asyncCall(); err != nil {
 			b.GetMessageErrorHandler(err)
 		}
-	}()
+	})
 	return nil
 }
 

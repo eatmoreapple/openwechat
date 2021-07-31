@@ -9,20 +9,6 @@ func TestFormatEmoji(t *testing.T) {
 	t.Log(FormatEmoji(`多吃点苹果<span class="emoji emoji1f34f"></span>高兴<span class="emoji emoji1f604"></span><span class="emoji emoji1f604"></span><span class="emoji emoji1f604"></span> 生气<span class="emoji emoji1f64e"></span> 点赞<span class="emoji emoji1f44d"></span>`))
 }
 
-func TestSendEmoji(t *testing.T) {
-	self, err := getSelf()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	f, err := self.FileHelper()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	_, _ = f.SendText(Emoji.Dagger)
-}
-
 func BenchmarkFormatEmojiString(b *testing.B) {
 	str := `多吃点苹果<span class="emoji emoji1f34f"></span>高兴<span class="emoji emoji1f604"></span><span class="emoji emoji1f604"></span><span class="emoji emoji1f604"></span> 生气<span class="emoji emoji1f64e"></span> 点赞<span class="emoji emoji1f44d"></span>`
 	b.SetBytes(int64(len(str)))
