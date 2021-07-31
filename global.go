@@ -3,6 +3,8 @@ package openwechat
 import (
 	"errors"
 	"regexp"
+
+	"github.com/suntong/enum"
 )
 
 var (
@@ -43,23 +45,24 @@ const (
 // https://res.wx.qq.com/a/wx_fed/webwx/res/static/js/index_c7d281c.js
 // varcaser.Caser{
 //		From: varcaser.ScreamingSnakeCase, To: varcaser.UpperCamelCaseKeepCaps}
-const (
-	MsgtypeText              = 1     // 文本消息
-	MsgtypeImage             = 3     // 图片消息
-	MsgtypeVoice             = 34    // 语音消息
-	MsgtypeVerifymsg         = 37    // 认证消息
-	MsgtypePossiblefriendMsg = 40    // 好友推荐消息
-	MsgtypeSharecard         = 42    // 名片消息
-	MsgtypeVideo             = 43    // 视频消息
-	MsgtypeEmoticon          = 47    // 表情消息
-	MsgtypeLocation          = 48    // 地理位置消息
-	MsgtypeApp               = 49    // APP消息
-	MsgtypeVoipmsg           = 50    // voip msg	//VOIP消息
-	MsgtypeVoipnotify        = 52    // voip 结束消息
-	MsgtypeVoipinvite        = 53    // voip 邀请
-	MsgtypeMicrovideo        = 62    // 小视频消息
-	MsgtypeSys               = 10000 // 系统消息
-	MsgtypeRecalled          = 10002 // 消息撤回
+var (
+	WxMsgType                = enum.NewEnum()
+	MsgtypeText              = WxMsgType.IotaAt("文本消息", 1)
+	MsgtypeImage             = WxMsgType.IotaAt("图片消息", 3)
+	MsgtypeVoice             = WxMsgType.IotaAt("语音消息", 34)
+	MsgtypeVerifymsg         = WxMsgType.IotaAt("认证消息", 37)
+	MsgtypePossiblefriendMsg = WxMsgType.IotaAt("好友推荐消息", 40)
+	MsgtypeSharecard         = WxMsgType.IotaAt("名片消息", 42)
+	MsgtypeVideo             = WxMsgType.IotaAt("视频消息", 43)
+	MsgtypeEmoticon          = WxMsgType.IotaAt("表情消息", 47)
+	MsgtypeLocation          = WxMsgType.IotaAt("地理位置消息", 48)
+	MsgtypeApp               = WxMsgType.IotaAt("APP消息", 49)
+	MsgtypeVoipmsg           = WxMsgType.IotaAt("VOIP消息", 50)
+	MsgtypeVoipnotify        = WxMsgType.IotaAt("VOIP结束消息", 52)
+	MsgtypeVoipinvite        = WxMsgType.IotaAt("VOIP邀请", 53)
+	MsgtypeMicrovideo        = WxMsgType.IotaAt("小视频消息", 62)
+	MsgtypeSys               = WxMsgType.IotaAt("系统消息", 10000)
+	MsgtypeRecalled          = WxMsgType.IotaAt("消息撤回", 10002)
 )
 
 // 登录状态
