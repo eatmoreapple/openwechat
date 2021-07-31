@@ -674,3 +674,19 @@ func (c *Client) WebWxStatusAsRead(request *BaseRequest, info *LoginInfo, msg *M
 	req.Header.Add("Content-Type", jsonContentType)
 	return c.Do(req)
 }
+
+// WebWxRelationPin 联系人置顶接口
+func (c *Client) WebWxRelationPin(request *BaseRequest, op uint8, user *User) (*http.Response, error) {
+	path, _ := url.Parse(c.domain.BaseHost() + webwxoplog)
+	content := map[string]interface{}{
+		"BaseRequest": request,
+		"CmdId":       3,
+		"OP":          op,
+		"RemarkName":  user.RemarkName,
+		"UserName":    user.UserName,
+	}
+	body, _ := ToBuffer(content)
+	req, _ := http.NewRequest(http.MethodPost, path.String(), body)
+	req.Header.Add("Content-Type", jsonContentType)
+	return c.Do(req)
+}

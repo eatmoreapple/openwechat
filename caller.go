@@ -336,6 +336,15 @@ func (c *Caller) WebWxStatusAsRead(request *BaseRequest, info *LoginInfo, msg *M
 	return parseBaseResponseError(resp)
 }
 
+// WebWxRelationPin 将联系人是否置顶
+func (c *Caller) WebWxRelationPin(request *BaseRequest, user *User, op uint8) error {
+	resp, err := c.Client.WebWxRelationPin(request, op, user)
+	if err != nil {
+		return err
+	}
+	return parseBaseResponseError(resp)
+}
+
 // 处理响应返回的结果是否正常
 func parseBaseResponseError(resp *http.Response) error {
 	defer resp.Body.Close()

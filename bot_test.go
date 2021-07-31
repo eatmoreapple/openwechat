@@ -2,6 +2,7 @@ package openwechat
 
 import (
 	"testing"
+	"time"
 )
 
 func TestLogin(t *testing.T) {
@@ -84,4 +85,28 @@ func TestGroups(t *testing.T) {
 		return
 	}
 	t.Log(groups)
+}
+
+func TestPinUser(t *testing.T) {
+	bot := DefaultBot(Desktop)
+	if err := bot.Login(); err != nil {
+		t.Error(err)
+		return
+	}
+	user, err := bot.GetCurrentUser()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	friends, err := user.Friends()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if friends.Count() > 0 {
+		f := friends.First()
+		f.Pin()
+		time.Sleep(time.Second * 5)
+		f.UnPin()
+	}
 }

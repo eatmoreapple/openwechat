@@ -110,6 +110,18 @@ func (u *User) IsMP() bool {
 	return u.VerifyFlag == 8 || u.VerifyFlag == 24 || u.VerifyFlag == 136
 }
 
+// Pin 将联系人置顶
+func (u *User) Pin() error {
+	req := u.Self.Bot.storage.Request
+	return u.Self.Bot.Caller.WebWxRelationPin(req, u, 1)
+}
+
+// UnPin 将联系人取消置顶
+func (u *User) UnPin() error {
+	req := u.Self.Bot.storage.Request
+	return u.Self.Bot.Caller.WebWxRelationPin(req, u, 0)
+}
+
 // Self 自己,当前登录用户对象
 type Self struct {
 	*User
