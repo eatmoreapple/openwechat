@@ -58,9 +58,6 @@ func (b *Bot) GetCurrentUser() (*Self, error) {
 //		err := bot.HotLogin(storage, true)
 //		fmt.Println(err)
 func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
-	if b.Alive() {
-		b.cancel()
-	}
 	b.isHot = true
 	b.hotReloadStorage = storage
 
