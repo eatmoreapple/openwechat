@@ -310,7 +310,10 @@ func (m *Message) Get(key string) (value interface{}, exist bool) {
 // 消息初始化,根据不同的消息作出不同的处理
 func (m *Message) init(bot *Bot) {
 	m.Bot = bot
+
+	// 如果是群消息
 	if m.IsSendByGroup() {
+		// 将Username和正文分开
 		data := strings.Split(m.Content, ":<br/>")
 		m.Content = strings.Join(data[1:], "")
 		m.senderInGroupUserName = data[0]
@@ -320,6 +323,7 @@ func (m *Message) init(bot *Bot) {
 			if displayName == "" {
 				displayName = receiver.NickName
 			}
+			// 判断是不是@消息
 			atFlag := "@" + displayName
 			index := len(atFlag) + 1 + 1
 			if strings.HasPrefix(m.Content, atFlag) && unicode.IsSpace(rune(m.Content[index])) {
@@ -334,6 +338,11 @@ func (m *Message) init(bot *Bot) {
 	//if m.IsText()
 	{
 		m.Content = strings.Replace(m.Content, `<br/>`, "\n", -1)
+	}
+
+	// 格式化文本消息中的emoji表情
+	if m.IsText() {
+		m.Content = FormatEmoji(m.Content)
 	}
 }
 

@@ -200,7 +200,7 @@ func (b *Bot) webInit() error {
 	if err = b.Caller.WebWxStatusNotify(req, resp, info); err != nil {
 		return err
 	}
-	// 开启协程，轮训获取是否有新的消息返回
+	// 开启协程，轮询获取是否有新的消息返回
 	go func() {
 		if b.GetMessageErrorHandler == nil {
 			b.GetMessageErrorHandler = b.stopAsyncCALL
@@ -212,7 +212,7 @@ func (b *Bot) webInit() error {
 	return nil
 }
 
-// 轮训请求
+// 轮询请求
 // 根据状态码判断是否有新的请求
 func (b *Bot) asyncCall() error {
 	var (
@@ -220,7 +220,7 @@ func (b *Bot) asyncCall() error {
 		resp *SyncCheckResponse
 	)
 	for b.Alive() {
-		// 长轮训检查是否有消息返回
+		// 长轮询检查是否有消息返回
 		resp, err = b.Caller.SyncCheck(b.storage.LoginInfo, b.storage.Response)
 		if err != nil {
 			return err

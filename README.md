@@ -73,7 +73,7 @@ func main() {
 	groups, err := self.Groups()
 	fmt.Println(groups, err)
 
-	// 阻塞主goroutine, 知道发生异常或者用户主动退出
+	// 阻塞主goroutine, 直到发生异常或者用户主动退出
 	bot.Block()
 }
 ```
