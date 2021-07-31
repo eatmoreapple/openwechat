@@ -40,26 +40,49 @@ const (
 	AppMessage   = 6
 )
 
+// MessageType以Go惯用形式定义了PC微信所有的官方消息类型。
+// 详见 message_test.go
+type MessageType int
+
+//go:generate stringer -type=MessageType -linecomment=true
+
 // https://res.wx.qq.com/a/wx_fed/webwx/res/static/js/index_c7d281c.js
+// MSGTYPE_TEXT
+// MSGTYPE_IMAGE
+// MSGTYPE_VOICE
+// MSGTYPE_VERIFYMSG
+// MSGTYPE_POSSIBLEFRIEND_MSG
+// MSGTYPE_SHARECARD
+// MSGTYPE_VIDEO
+// MSGTYPE_EMOTICON
+// MSGTYPE_LOCATION
+// MSGTYPE_APP
+// MSGTYPE_VOIPMSG
+// MSGTYPE_VOIPNOTIFY
+// MSGTYPE_VOIPINVITE
+// MSGTYPE_MICROVIDEO
+// MSGTYPE_SYS
+// MSGTYPE_RECALLED
 // varcaser.Caser{
 //		From: varcaser.ScreamingSnakeCase, To: varcaser.UpperCamelCaseKeepCaps}
+
 const (
-	MsgtypeText              = 1     // 文本消息
-	MsgtypeImage             = 3     // 图片消息
-	MsgtypeVoice             = 34    // 语音消息
-	MsgtypeVerifymsg         = 37    // 认证消息
-	MsgtypePossiblefriendMsg = 40    // 好友推荐消息
-	MsgtypeSharecard         = 42    // 名片消息
-	MsgtypeVideo             = 43    // 视频消息
-	MsgtypeEmoticon          = 47    // 表情消息
-	MsgtypeLocation          = 48    // 地理位置消息
-	MsgtypeApp               = 49    // APP消息
-	MsgtypeVoipmsg           = 50    // voip msg	//VOIP消息
-	MsgtypeVoipnotify        = 52    // voip 结束消息
-	MsgtypeVoipinvite        = 53    // voip 邀请
-	MsgtypeMicrovideo        = 62    // 小视频消息
-	MsgtypeSys               = 10000 // 系统消息
-	MsgtypeRecalled          = 10002 // 消息撤回
+	MsgtypeText              MessageType = 1     // 文本消息
+	MsgtypeImage             MessageType = 3     // 图片消息
+	MsgtypeVoice             MessageType = 34    // 语音消息
+	MsgtypeVerifymsg         MessageType = 37    // 认证消息
+	MsgtypePossiblefriendMsg MessageType = 40    // 好友推荐消息
+	MsgtypeSharecard         MessageType = 42    // 名片消息
+	MsgtypeVideo             MessageType = 43    // 视频消息
+	MsgtypeEmoticon          MessageType = 47    // 表情消息
+	MsgtypeLocation          MessageType = 48    // 地理位置消息
+	MsgtypeApp               MessageType = 49    // APP消息
+	MsgtypeVoipmsg           MessageType = 50    // VOIP消息
+	MsgtypeVoipnotify        MessageType = 52    // VOIP结束消息
+	MsgtypeVoipinvite        MessageType = 53    // VOIP邀请
+	MsgtypeMicrovideo        MessageType = 62    // 小视频消息
+	MsgtypeSys               MessageType = 10000 // 系统消息
+	MsgtypeRecalled          MessageType = 10002 // 消息撤回
 )
 
 // 登录状态
