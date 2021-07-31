@@ -141,6 +141,11 @@ func (s *Self) updateMembers() error {
 		return err
 	}
 	members.SetOwner(s)
+	// 格式化emoji表情
+	for _, member := range members {
+		member.NickName = FormatEmoji(member.NickName)
+		member.RemarkName = FormatEmoji(member.RemarkName)
+	}
 	s.members = members
 	return nil
 }
