@@ -125,8 +125,8 @@ func (m *Message) IsSendByGroup() bool {
 // Reply 回复消息
 func (m *Message) Reply(msgType int, content, mediaId string) (*SentMessage, error) {
 	msg := NewSendMessage(msgType, content, m.Bot.self.User.UserName, m.FromUserName, mediaId)
-	info := m.Bot.storage.LoginInfo
-	request := m.Bot.storage.Request
+	info := m.Bot.Storage.LoginInfo
+	request := m.Bot.Storage.Request
 	return m.Bot.Caller.WebWxSendMsg(msg, info, request)
 }
 
@@ -137,15 +137,15 @@ func (m *Message) ReplyText(content string) (*SentMessage, error) {
 
 // ReplyImage 回复图片消息
 func (m *Message) ReplyImage(file *os.File) (*SentMessage, error) {
-	info := m.Bot.storage.LoginInfo
-	request := m.Bot.storage.Request
+	info := m.Bot.Storage.LoginInfo
+	request := m.Bot.Storage.Request
 	return m.Bot.Caller.WebWxSendImageMsg(file, request, info, m.Bot.self.UserName, m.FromUserName)
 }
 
 // ReplyFile 回复文件消息
 func (m *Message) ReplyFile(file *os.File) (*SentMessage, error) {
-	info := m.Bot.storage.LoginInfo
-	request := m.Bot.storage.Request
+	info := m.Bot.Storage.LoginInfo
+	request := m.Bot.Storage.Request
 	return m.Bot.Caller.WebWxSendFile(file, request, info, m.Bot.self.UserName, m.FromUserName)
 }
 
@@ -234,16 +234,16 @@ func (m *Message) GetFile() (*http.Response, error) {
 		return nil, errors.New("invalid message type")
 	}
 	if m.IsPicture() || m.IsEmoticon() {
-		return m.Bot.Caller.Client.WebWxGetMsgImg(m, m.Bot.storage.LoginInfo)
+		return m.Bot.Caller.Client.WebWxGetMsgImg(m, m.Bot.Storage.LoginInfo)
 	}
 	if m.IsVoice() {
-		return m.Bot.Caller.Client.WebWxGetVoice(m, m.Bot.storage.LoginInfo)
+		return m.Bot.Caller.Client.WebWxGetVoice(m, m.Bot.Storage.LoginInfo)
 	}
 	if m.IsVideo() {
-		return m.Bot.Caller.Client.WebWxGetVideo(m, m.Bot.storage.LoginInfo)
+		return m.Bot.Caller.Client.WebWxGetVideo(m, m.Bot.Storage.LoginInfo)
 	}
 	if m.IsMedia() {
-		return m.Bot.Caller.Client.WebWxGetMedia(m, m.Bot.storage.LoginInfo)
+		return m.Bot.Caller.Client.WebWxGetMedia(m, m.Bot.Storage.LoginInfo)
 	}
 	return nil, errors.New("unsupported type")
 }
@@ -290,12 +290,12 @@ func (m *Message) Agree(verifyContents ...string) error {
 	for _, v := range verifyContents {
 		builder.WriteString(v)
 	}
-	return m.Bot.Caller.WebWxVerifyUser(m.Bot.storage, m.RecommendInfo, builder.String())
+	return m.Bot.Caller.WebWxVerifyUser(m.Bot.Storage, m.RecommendInfo, builder.String())
 }
 
 // AsRead 将消息设置为已读
 func (m *Message) AsRead() error {
-	return m.Bot.Caller.WebWxStatusAsRead(m.Bot.storage.Request, m.Bot.storage.LoginInfo, m)
+	return m.Bot.Caller.WebWxStatusAsRead(m.Bot.Storage.Request, m.Bot.Storage.LoginInfo, m)
 }
 
 // Set 往消息上下文中设置值
