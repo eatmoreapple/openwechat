@@ -113,6 +113,11 @@ func (m *MessageMatchDispatcher) OnImage(handlers ...MessageContextHandler) {
 	m.RegisterHandler(func(message *Message) bool { return message.IsPicture() }, handlers...)
 }
 
+// OnEmoticon 注册处理消息类型为Emoticon的处理函数(表情包)
+func (m *MessageMatchDispatcher) OnEmoticon(handlers ...MessageContextHandler) {
+	m.RegisterHandler(func(message *Message) bool { return message.IsEmoticon() }, handlers...)
+}
+
 // OnVoice 注册处理消息类型为Voice的处理函数
 func (m *MessageMatchDispatcher) OnVoice(handlers ...MessageContextHandler) {
 	m.RegisterHandler(func(message *Message) bool { return message.IsVoice() }, handlers...)
@@ -126,6 +131,11 @@ func (m *MessageMatchDispatcher) OnFriendAdd(handlers ...MessageContextHandler) 
 // OnCard 注册处理消息类型为Card的处理函数
 func (m *MessageMatchDispatcher) OnCard(handlers ...MessageContextHandler) {
 	m.RegisterHandler(func(message *Message) bool { return message.IsCard() }, handlers...)
+}
+
+// OnMedia 注册处理消息类型为Media(多媒体消息，包括但不限于APP分享、文件分享)的处理函数
+func (m *MessageMatchDispatcher) OnMedia(handlers ...MessageContextHandler) {
+	m.RegisterHandler(func(message *Message) bool { return message.IsMedia() }, handlers...)
 }
 
 // OnFriendByNickName 注册根据好友昵称是否匹配的消息处理函数

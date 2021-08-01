@@ -8,22 +8,22 @@ func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
-	_ = x[MsgtypeText-1]
-	_ = x[MsgtypeImage-3]
-	_ = x[MsgtypeVoice-34]
-	_ = x[MsgtypeVerifymsg-37]
-	_ = x[MsgtypePossiblefriendMsg-40]
-	_ = x[MsgtypeSharecard-42]
-	_ = x[MsgtypeVideo-43]
-	_ = x[MsgtypeEmoticon-47]
-	_ = x[MsgtypeLocation-48]
-	_ = x[MsgtypeApp-49]
-	_ = x[MsgtypeVoipmsg-50]
-	_ = x[MsgtypeVoipnotify-52]
-	_ = x[MsgtypeVoipinvite-53]
-	_ = x[MsgtypeMicrovideo-62]
-	_ = x[MsgtypeSys-10000]
-	_ = x[MsgtypeRecalled-10002]
+	_ = x[MsgTypeText-1]
+	_ = x[MsgTypeImage-3]
+	_ = x[MsgTypeVoice-34]
+	_ = x[MsgTypeVerify-37]
+	_ = x[MsgTypePossibleFriend-40]
+	_ = x[MsgTypeShareCard-42]
+	_ = x[MsgTypeVideo-43]
+	_ = x[MsgTypeEmoticon-47]
+	_ = x[MsgTypeLocation-48]
+	_ = x[MsgTypeApp-49]
+	_ = x[MsgTypeVoip-50]
+	_ = x[MsgTypeVoipNotify-52]
+	_ = x[MsgTypeVoipInvite-53]
+	_ = x[MsgTypeMicroVideo-62]
+	_ = x[MsgTypeSys-10000]
+	_ = x[MsgTypeRecalled-10002]
 }
 
 const _MessageType_name = "文本消息图片消息语音消息认证消息好友推荐消息名片消息视频消息表情消息地理位置消息APP消息VOIP消息VOIP结束消息VOIP邀请小视频消息系统消息消息撤回"

@@ -150,44 +150,49 @@ func (m *Message) ReplyFile(file *os.File) (*SentMessage, error) {
 }
 
 func (m *Message) IsText() bool {
-	return m.MsgType == MsgtypeText && m.Url == ""
+	return m.MsgType == MsgTypeText && m.Url == ""
 }
 
 func (m *Message) IsMap() bool {
-	return m.MsgType == MsgtypeText && m.Url != ""
+	return m.MsgType == MsgTypeText && m.Url != ""
 }
 
 func (m *Message) IsPicture() bool {
-	return m.MsgType == MsgtypeImage || m.MsgType == MsgtypeEmoticon
+	return m.MsgType == MsgTypeImage
+}
+
+// IsEmoticon 是否为表情包消息
+func (m *Message) IsEmoticon() bool {
+	return m.MsgType == MsgTypeEmoticon
 }
 
 func (m *Message) IsVoice() bool {
-	return m.MsgType == MsgtypeVoice
+	return m.MsgType == MsgTypeVoice
 }
 
 func (m *Message) IsFriendAdd() bool {
-	return m.MsgType == MsgtypeVerifymsg && m.FromUserName == "fmessage"
+	return m.MsgType == MsgTypeVerify && m.FromUserName == "fmessage"
 }
 
 func (m *Message) IsCard() bool {
-	return m.MsgType == MsgtypeSharecard
+	return m.MsgType == MsgTypeShareCard
 }
 
 func (m *Message) IsVideo() bool {
-	return m.MsgType == MsgtypeVideo || m.MsgType == MsgtypeMicrovideo
+	return m.MsgType == MsgTypeVideo || m.MsgType == MsgTypeMicroVideo
 }
 
 func (m *Message) IsMedia() bool {
-	return m.MsgType == MsgtypeApp
+	return m.MsgType == MsgTypeApp
 }
 
 // IsRecalled 判断是否撤回
 func (m *Message) IsRecalled() bool {
-	return m.MsgType == MsgtypeRecalled
+	return m.MsgType == MsgTypeRecalled
 }
 
 func (m *Message) IsSystem() bool {
-	return m.MsgType == MsgtypeSys
+	return m.MsgType == MsgTypeSys
 }
 
 func (m *Message) IsNotify() bool {
@@ -220,7 +225,7 @@ func (m *Message) StatusNotify() bool {
 
 // HasFile 判断消息是否为文件类型的消息
 func (m *Message) HasFile() bool {
-	return m.IsPicture() || m.IsVoice() || m.IsVideo() || m.IsMedia()
+	return m.IsPicture() || m.IsVoice() || m.IsVideo() || m.IsMedia() || m.IsEmoticon()
 }
 
 // GetFile 获取文件消息的文件
@@ -228,7 +233,7 @@ func (m *Message) GetFile() (*http.Response, error) {
 	if !m.HasFile() {
 		return nil, errors.New("invalid message type")
 	}
-	if m.IsPicture() {
+	if m.IsPicture() || m.IsEmoticon() {
 		return m.Bot.Caller.Client.WebWxGetMsgImg(m, m.Bot.storage.LoginInfo)
 	}
 	if m.IsVoice() {
