@@ -87,10 +87,10 @@ const (
 
 // 登录状态
 const (
-	statusSuccess = "200"
-	statusScanned = "201"
-	statusTimeout = "400"
-	statusWait    = "408"
+	StatusSuccess = "200"
+	StatusScanned = "201"
+	StatusTimeout = "400"
+	StatusWait    = "408"
 )
 
 // errors
