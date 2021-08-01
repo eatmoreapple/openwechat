@@ -1,8 +1,7 @@
 package openwechat
 
 import (
-	"bytes"
-	"encoding/json"
+	"io"
 	"net/http"
 	"os"
 )
@@ -22,60 +21,38 @@ type HotReloadStorageItem struct {
 }
 
 // HotReloadStorage 热登陆存储接口
-type HotReloadStorage interface {
-	GetHotReloadStorageItem() HotReloadStorageItem // 获取HotReloadStorageItem
-	Dump(item HotReloadStorageItem) error          // 实现该方法, 将必要信息进行序列化
-	Load() error                                   // 实现该方法, 将存储媒介的内容反序列化
-}
+type HotReloadStorage io.ReadWriter
 
 // JsonFileHotReloadStorage 实现HotReloadStorage接口
 // 默认以json文件的形式存储
 type JsonFileHotReloadStorage struct {
-	item     HotReloadStorageItem
-	filename string
+	FileName string
+	file     *os.File
 }
 
-// Dump 将信息写入json文件
-func (f *JsonFileHotReloadStorage) Dump(item HotReloadStorageItem) error {
-
-	file, err := os.OpenFile(f.filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm)
-
-	if err != nil {
-		return err
+func (j *JsonFileHotReloadStorage) Read(p []byte) (n int, err error) {
+	if j.file == nil {
+		j.file, err = os.Open(j.FileName)
+		if err != nil {
+			return 0, err
+		}
 	}
-
-	defer file.Close()
-
-	f.item = item
-
-	data, err := json.Marshal(f.item)
-	if err != nil {
-		return err
+	n, err = j.file.Read(p)
+	if err == io.EOF {
+		j.file.Close()
 	}
-	_, err = file.Write(data)
-	return err
+	return n, err
 }
 
-// Load 从文件中读取信息
-func (f *JsonFileHotReloadStorage) Load() error {
-	file, err := os.Open(f.filename)
-
+func (j *JsonFileHotReloadStorage) Write(p []byte) (n int, err error) {
+	file, err := os.Create(j.FileName)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer file.Close()
-	var buffer bytes.Buffer
-	if _, err := buffer.ReadFrom(file); err != nil {
-		return err
-	}
-	err = json.Unmarshal(buffer.Bytes(), &f.item)
-	return err
-}
-
-func (f *JsonFileHotReloadStorage) GetHotReloadStorageItem() HotReloadStorageItem {
-	return f.item
+	return file.Write(p)
 }
 
 func NewJsonFileHotReloadStorage(filename string) *JsonFileHotReloadStorage {
-	return &JsonFileHotReloadStorage{filename: filename}
+	return &JsonFileHotReloadStorage{FileName: filename}
 }
