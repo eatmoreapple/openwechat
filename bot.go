@@ -72,30 +72,11 @@ func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
 		return b.Login()
 	}
 
-<<<<<<< HEAD
 	var item HotReloadStorageItem
 	if err = json.NewDecoder(&buffer).Decode(&item); err != nil {
 		return err
 	}
-=======
-	if err = b.HotLoginInit(); err != nil {
-		return err
-	}
 
-	// 如果webInit出错,则说明可能身份信息已经失效
-	// 如果retry为True的话,则进行正常登陆
-	if err = b.WebInit(); err != nil {
-		if len(retry) > 0 && retry[0] {
-			return b.Login()
-		}
-	}
-	return err
-}
-
-// HotLoginInit 热登陆初始化
-func (b *Bot) HotLoginInit() error {
-	item := b.HotReloadStorage.GetHotReloadStorageItem()
->>>>>>> cd0bd5f693ac16de065adb579331fb738d9f7b02
 	cookies := item.Cookies
 	for u, ck := range cookies {
 		path, err := url.Parse(u)
@@ -110,7 +91,7 @@ func (b *Bot) HotLoginInit() error {
 
 	// 如果webInit出错,则说明可能身份信息已经失效
 	// 如果retry为True的话,则进行正常登陆
-	if err = b.webInit(); err != nil {
+	if err = b.WebInit(); err != nil {
 		if len(retry) > 0 && retry[0] {
 			return b.Login()
 		}
@@ -342,16 +323,14 @@ func (b *Bot) DumpHotReloadStorage() error {
 		LoginInfo:    b.storage.LoginInfo,
 		WechatDomain: b.Caller.Client.domain,
 	}
-<<<<<<< HEAD
+
 	data, err := json.Marshal(item)
 	if err != nil {
 		return err
 	}
-	_, err = b.hotReloadStorage.Write(data)
+	_, err = b.HotReloadStorage.Write(data)
 	return err
-=======
-	return b.HotReloadStorage.Dump(item)
->>>>>>> cd0bd5f693ac16de065adb579331fb738d9f7b02
+
 }
 
 // OnLogin is a setter for LoginCallBack
