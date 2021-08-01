@@ -15,7 +15,7 @@ type Bot struct {
 	UUIDCallback           func(uuid string) // 获取UUID的回调函数
 	MessageHandler         MessageHandler    // 获取消息成功的handle
 	GetMessageErrorHandler func(err error)   // 获取消息发生错误的handle
-	isHot                  bool              // 是否为热登录模式
+	IsHot                  bool              // 是否为热登录模式
 	once                   sync.Once
 	err                    error
 	context                context.Context
@@ -23,7 +23,7 @@ type Bot struct {
 	Caller                 *Caller
 	self                   *Self
 	storage                *Storage
-	hotReloadStorage       HotReloadStorage
+	HotReloadStorage       HotReloadStorage
 }
 
 // Alive 判断当前用户是否正常在线
@@ -58,8 +58,8 @@ func (b *Bot) GetCurrentUser() (*Self, error) {
 //		err := bot.HotLogin(storage, true)
 //		fmt.Println(err)
 func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
-	b.isHot = true
-	b.hotReloadStorage = storage
+	b.IsHot = true
+	b.HotReloadStorage = storage
 
 	var err error
 
@@ -69,13 +69,13 @@ func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
 		return b.Login()
 	}
 
-	if err = b.hotLoginInit(); err != nil {
+	if err = b.HotLoginInit(); err != nil {
 		return err
 	}
 
 	// 如果webInit出错,则说明可能身份信息已经失效
 	// 如果retry为True的话,则进行正常登陆
-	if err = b.webInit(); err != nil {
+	if err = b.WebInit(); err != nil {
 		if len(retry) > 0 && retry[0] {
 			return b.Login()
 		}
@@ -83,9 +83,9 @@ func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
 	return err
 }
 
-// 热登陆初始化
-func (b *Bot) hotLoginInit() error {
-	item := b.hotReloadStorage.GetHotReloadStorageItem()
+// HotLoginInit 热登陆初始化
+func (b *Bot) HotLoginInit() error {
+	item := b.HotReloadStorage.GetHotReloadStorageItem()
 	cookies := item.Cookies
 	for u, ck := range cookies {
 		path, err := url.Parse(u)
@@ -118,20 +118,20 @@ func (b *Bot) Login() error {
 			return err
 		}
 		switch resp.Code {
-		case statusSuccess:
+		case StatusSuccess:
 			// 判断是否有登录回调，如果有执行它
 			if b.LoginCallBack != nil {
 				b.LoginCallBack(resp.Raw)
 			}
-			return b.handleLogin(resp.Raw)
-		case statusScanned:
+			return b.HandleLogin(resp.Raw)
+		case StatusScanned:
 			// 执行扫码回调
 			if b.ScanCallBack != nil {
 				b.ScanCallBack(resp.Raw)
 			}
-		case statusTimeout:
+		case StatusTimeout:
 			return errors.New("login time out")
-		case statusWait:
+		case StatusWait:
 			continue
 		}
 	}
@@ -153,8 +153,8 @@ func (b *Bot) Logout() error {
 	return errors.New("user not login")
 }
 
-// 登录逻辑
-func (b *Bot) handleLogin(data []byte) error {
+// HandleLogin 登录逻辑
+func (b *Bot) HandleLogin(data []byte) error {
 	// 获取登录的一些基本的信息
 	info, err := b.Caller.GetLoginInfo(data)
 	if err != nil {
@@ -175,17 +175,17 @@ func (b *Bot) handleLogin(data []byte) error {
 	b.storage.Request = request
 
 	// 如果是热登陆,则将当前的重要信息写入hotReloadStorage
-	if b.isHot {
+	if b.IsHot {
 		if err = b.DumpHotReloadStorage(); err != nil {
 			return err
 		}
 	}
 
-	return b.webInit()
+	return b.WebInit()
 }
 
-// 根据有效凭证获取和初始化用户信息
-func (b *Bot) webInit() error {
+// WebInit 根据有效凭证获取和初始化用户信息
+func (b *Bot) WebInit() error {
 	req := b.storage.Request
 	info := b.storage.LoginInfo
 	// 获取初始化的用户信息和一些必要的参数
@@ -297,8 +297,8 @@ func (b *Bot) MessageOnError(h func(err error)) {
 
 // DumpHotReloadStorage 写入HotReloadStorage
 func (b *Bot) DumpHotReloadStorage() error {
-	if b.hotReloadStorage == nil {
-		return errors.New("hotReloadStorage can be nil")
+	if b.HotReloadStorage == nil {
+		return errors.New("HotReloadStorage can be nil")
 	}
 	cookies := b.Caller.Client.GetCookieMap()
 	item := HotReloadStorageItem{
@@ -307,7 +307,7 @@ func (b *Bot) DumpHotReloadStorage() error {
 		LoginInfo:    b.storage.LoginInfo,
 		WechatDomain: b.Caller.Client.domain,
 	}
-	return b.hotReloadStorage.Dump(item)
+	return b.HotReloadStorage.Dump(item)
 }
 
 // OnLogin is a setter for LoginCallBack
