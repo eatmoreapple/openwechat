@@ -122,6 +122,11 @@ func (u *User) UnPin() error {
 	return u.Self.Bot.Caller.WebWxRelationPin(req, u, 0)
 }
 
+// IsPin 判断当前联系人(好友、群组、公众号)是否为置顶状态
+func (u *User) IsPin() bool {
+	return u.ContactFlag == 2051
+}
+
 // Self 自己,当前登录用户对象
 type Self struct {
 	*User
