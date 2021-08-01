@@ -346,13 +346,11 @@ func (m *Message) init(bot *Bot) {
 	if regexp.MustCompile(`^&lt;`).MatchString(m.Content) {
 		m.Content = html.UnescapeString(m.Content)
 	}
-	//if m.IsText()
-	{
-		m.Content = strings.Replace(m.Content, `<br/>`, "\n", -1)
-	}
 
-	// 格式化文本消息中的emoji表情
+	// 文本消息
 	if m.IsText() {
+		m.Content = strings.Replace(m.Content, `<br/>`, "\n", -1)
+		// 格式化文本消息中的emoji表情
 		m.Content = FormatEmoji(m.Content)
 	}
 }
