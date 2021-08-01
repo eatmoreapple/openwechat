@@ -71,23 +71,17 @@ func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
 	if _, err := buffer.ReadFrom(storage); err != nil {
 		return b.Login()
 	}
+	defer b.HotReloadStorage.Close()
 
 	var item HotReloadStorageItem
+
 	if err = json.NewDecoder(&buffer).Decode(&item); err != nil {
 		return err
 	}
 
-	cookies := item.Cookies
-	for u, ck := range cookies {
-		path, err := url.Parse(u)
-		if err != nil {
-			return err
-		}
-		b.Caller.Client.Jar.SetCookies(path, ck)
+	if err = b.hotLoginInit(item); err != nil {
+		return err
 	}
-	b.storage.LoginInfo = item.LoginInfo
-	b.storage.Request = item.BaseRequest
-	b.Caller.Client.domain = item.WechatDomain
 
 	// 如果webInit出错,则说明可能身份信息已经失效
 	// 如果retry为True的话,则进行正常登陆
@@ -100,21 +94,20 @@ func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
 }
 
 // 热登陆初始化
-//func (b *Bot) hotLoginInit() error {
-//	item := b.hotReloadStorage.GetHotReloadStorageItem()
-//	cookies := item.Cookies
-//	for u, ck := range cookies {
-//		path, err := url.Parse(u)
-//		if err != nil {
-//			return err
-//		}
-//		b.Caller.Client.Jar.SetCookies(path, ck)
-//	}
-//	b.storage.LoginInfo = item.LoginInfo
-//	b.storage.Request = item.BaseRequest
-//	b.Caller.Client.domain = item.WechatDomain
-//	return nil
-//}
+func (b *Bot) hotLoginInit(item HotReloadStorageItem) error {
+	cookies := item.Cookies
+	for u, ck := range cookies {
+		path, err := url.Parse(u)
+		if err != nil {
+			return err
+		}
+		b.Caller.Client.Jar.SetCookies(path, ck)
+	}
+	b.storage.LoginInfo = item.LoginInfo
+	b.storage.Request = item.BaseRequest
+	b.Caller.Client.domain = item.WechatDomain
+	return nil
+}
 
 // Login 用户登录
 // 该方法会一直阻塞，直到用户扫码登录，或者二维码过期
@@ -328,9 +321,10 @@ func (b *Bot) DumpHotReloadStorage() error {
 	if err != nil {
 		return err
 	}
-	_, err = b.HotReloadStorage.Write(data)
-	return err
-
+	if _, err = b.HotReloadStorage.Write(data); err != nil {
+		return err
+	}
+	return b.HotReloadStorage.Close()
 }
 
 // OnLogin is a setter for LoginCallBack
