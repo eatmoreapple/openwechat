@@ -82,6 +82,7 @@ func (m *Message) SenderInGroup() (*User, error) {
 	if users == nil {
 		return nil, noSuchUserFoundError
 	}
+	users.init(m.Bot.self)
 	return users.First(), nil
 }
 

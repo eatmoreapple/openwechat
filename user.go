@@ -90,8 +90,8 @@ func (u *User) Detail() (*User, error) {
 	if err != nil {
 		return nil, err
 	}
+	newMembers.init(u.Self)
 	user := newMembers.First()
-	user.Self = u.Self
 	return user, nil
 }
 
@@ -157,12 +157,7 @@ func (s *Self) updateMembers() error {
 	if err != nil {
 		return err
 	}
-	members.SetOwner(s)
-	// 格式化emoji表情
-	for _, member := range members {
-		member.NickName = FormatEmoji(member.NickName)
-		member.RemarkName = FormatEmoji(member.RemarkName)
-	}
+	members.init(s)
 	s.members = members
 	return nil
 }
@@ -453,14 +448,6 @@ func (m Members) Last() *User {
 	return nil
 }
 
-// SetOwner 设置owner
-// 请不要随意设置
-func (m Members) SetOwner(s *Self) {
-	for _, member := range m {
-		member.Self = s
-	}
-}
-
 // SearchByUserName 根据用户名查找
 func (m Members) SearchByUserName(limit int, username string) (results Members) {
 	return m.Search(limit, func(user *User) bool { return user.UserName == username })
@@ -580,10 +567,19 @@ func (m Members) detail(self *Self) error {
 		newMembers = append(newMembers, nMembers...)
 	}
 	if len(newMembers) > 0 {
-		newMembers.SetOwner(self)
+		newMembers.init(self)
 		self.members = newMembers
 	}
 	return nil
+}
+
+func (m Members) init(self *Self) {
+	for _, member := range m {
+		member.Self = self
+		member.NickName = FormatEmoji(member.NickName)
+		member.RemarkName = FormatEmoji(member.RemarkName)
+		member.DisplayName = FormatEmoji(member.DisplayName)
+	}
 }
 
 // NewFriendHelper 这里为了兼容Desktop版本找不到文件传输助手的问题

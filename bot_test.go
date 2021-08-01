@@ -1,6 +1,7 @@
 package openwechat
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
@@ -109,4 +110,20 @@ func TestPinUser(t *testing.T) {
 		time.Sleep(time.Second * 5)
 		f.UnPin()
 	}
+}
+
+func TestSender(t *testing.T) {
+	bot := DefaultBot(Desktop)
+	bot.MessageHandler = func(msg *Message) {
+		if msg.IsSendByGroup() {
+			fmt.Println(msg.SenderInGroup())
+		} else {
+			fmt.Println(msg.Sender())
+		}
+	}
+	if err := bot.Login(); err != nil {
+		t.Error(err)
+		return
+	}
+	bot.Block()
 }
