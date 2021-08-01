@@ -7,10 +7,10 @@ import (
 
 func ExampleMessageType_output() {
 	for _, wxt := range []MessageType{
-		MsgtypeText, MsgtypeImage, MsgtypeVoice, MsgtypeVerifymsg,
-		MsgtypePossiblefriendMsg, MsgtypeSharecard, MsgtypeVideo, MsgtypeEmoticon,
-		MsgtypeLocation, MsgtypeApp, MsgtypeVoipmsg, MsgtypeVoipnotify,
-		MsgtypeVoipinvite, MsgtypeMicrovideo, MsgtypeSys, MsgtypeRecalled} {
+		MsgTypeText, MsgTypeImage, MsgTypeVoice, MsgTypeVerify,
+		MsgTypePossibleFriend, MsgTypeShareCard, MsgTypeVideo, MsgTypeEmoticon,
+		MsgTypeLocation, MsgTypeApp, MsgTypeVoip, MsgTypeVoipNotify,
+		MsgTypeVoipInvite, MsgTypeMicroVideo, MsgTypeSys, MsgTypeRecalled} {
 		fmt.Printf("收到一条%s(type %d)\n", wxt, wxt)
 	}
 	fmt.Println("=======")
