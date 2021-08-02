@@ -20,6 +20,28 @@ type LoginInfo struct {
 	PassTicket  string `xml:"pass_ticket"`
 }
 
+// errors
+const (
+	errParamError         = "param error"
+	errTicketError        = "ticket error"
+	errLoginEnvError      = "login env error"
+	errLoginFailedWarn    = "failed login warn"
+	errLoginFailedCheck   = "failed login check"
+	errCookieInvalidError = "cookie invalid error"
+	errOptTooOften        = "opt too often"
+)
+
+var (
+	ErrParamError         = errors.New(errParamError)
+	ErrTicketError        = errors.New(errTicketError)
+	ErrLoginEnvError      = errors.New(errLoginEnvError)
+	ErrLoginFailedWarn    = errors.New(errLoginFailedWarn)
+	ErrLoginFailedCheck   = errors.New(errLoginFailedCheck)
+	ErrCookieInvalidError = errors.New(errCookieInvalidError)
+	ErrOptTooOften        = errors.New(errOptTooOften)
+	ErrBaseResponseError  error
+)
+
 func (l LoginInfo) Ok() bool {
 	return l.Ret == 0
 }
@@ -57,21 +79,22 @@ func getResponseErrorWithRetCode(code int) error {
 	case 0:
 		return nil
 	case 1:
-		return errors.New("param error")
+		return ErrParamError
 	case -14:
-		return errors.New("ticket error")
+		return ErrTicketError
 	case 1100:
-		return errors.New("not login warn")
+		return ErrLoginFailedWarn
 	case 1101:
-		return errors.New("not login check")
+		return ErrLoginFailedCheck
 	case 1102:
-		return errors.New("cookie invalid error")
+		return ErrCookieInvalidError
 	case 1203:
-		return errors.New("login env error")
+		return ErrLoginEnvError
 	case 1205:
-		return errors.New("opt too often")
+		return ErrOptTooOften
 	default:
-		return fmt.Errorf("base response ret code %d", code)
+		ErrBaseResponseError = fmt.Errorf("base response ret code %d", code)
+		return ErrBaseResponseError
 	}
 }
 
@@ -147,19 +170,19 @@ func (s *SyncCheckResponse) Error() string {
 	case "0":
 		return ""
 	case "1":
-		return "param error"
+		return errParamError
 	case "-14":
-		return "ticker error"
+		return errTicketError
 	case "1100":
-		return "not login warn"
+		return errLoginFailedWarn
 	case "1101":
-		return "not login check"
+		return errLoginFailedCheck
 	case "1102":
-		return "cookie invalid error"
+		return errCookieInvalidError
 	case "1203":
-		return "login env error"
+		return errLoginEnvError
 	case "1205":
-		return "opt too often"
+		return errOptTooOften
 	default:
 		return fmt.Sprintf("sync check response error code %s", s.RetCode)
 	}

@@ -80,7 +80,7 @@ func (m *Message) SenderInGroup() (*User, error) {
 	}
 	users := group.MemberList.SearchByUserName(1, m.senderInGroupUserName)
 	if users == nil {
-		return nil, noSuchUserFoundError
+		return nil, ErrNoSuchUserFoundError
 	}
 	users.init(m.Bot.self)
 	return users.First(), nil
@@ -94,14 +94,14 @@ func (m *Message) Receiver() (*User, error) {
 		} else {
 			users := sender.MemberList.SearchByUserName(1, m.ToUserName)
 			if users == nil {
-				return nil, noSuchUserFoundError
+				return nil, ErrNoSuchUserFoundError
 			}
 			return users.First(), nil
 		}
 	} else {
 		users := m.Bot.self.MemberList.SearchByUserName(1, m.ToUserName)
 		if users == nil {
-			return nil, noSuchUserFoundError
+			return nil, ErrNoSuchUserFoundError
 		}
 		return users.First(), nil
 	}
