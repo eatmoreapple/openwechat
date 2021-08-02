@@ -347,12 +347,10 @@ func (m *Message) init(bot *Bot) {
 		m.Content = html.UnescapeString(m.Content)
 	}
 
-	// 文本消息
-	if m.IsText() {
-		m.Content = strings.Replace(m.Content, `<br/>`, "\n", -1)
-		// 格式化文本消息中的emoji表情
-		m.Content = FormatEmoji(m.Content)
-	}
+	// 处理消息中的换行
+	m.Content = strings.Replace(m.Content, `<br/>`, "\n", -1)
+	// 处理消息中的emoji表情
+	m.Content = FormatEmoji(m.Content)
 }
 
 // SendMessage 发送消息的结构体
