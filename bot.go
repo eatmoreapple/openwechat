@@ -24,7 +24,7 @@ type Bot struct {
 	cancel                 context.CancelFunc
 	Caller                 *Caller
 	self                   *Self
-	storage                *Storage
+	Storage                *Storage
 	HotReloadStorage       HotReloadStorage
 }
 
@@ -56,8 +56,8 @@ func (b *Bot) GetCurrentUser() (*Self, error) {
 
 // HotLogin 热登录,可实现重复登录,
 // retry设置为true可在热登录失效后进行普通登录行为
-//		storage := NewJsonFileHotReloadStorage("storage.json")
-//		err := bot.HotLogin(storage, true)
+//		Storage := NewJsonFileHotReloadStorage("Storage.json")
+//		err := bot.HotLogin(Storage, true)
 //		fmt.Println(err)
 func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
 	b.IsHot = true
@@ -103,9 +103,9 @@ func (b *Bot) hotLoginInit(item HotReloadStorageItem) error {
 		}
 		b.Caller.Client.Jar.SetCookies(path, ck)
 	}
-	b.storage.LoginInfo = item.LoginInfo
-	b.storage.Request = item.BaseRequest
-	b.Caller.Client.domain = item.WechatDomain
+	b.Storage.LoginInfo = item.LoginInfo
+	b.Storage.Request = item.BaseRequest
+	b.Caller.Client.Domain = item.WechatDomain
 	return nil
 }
 
@@ -152,7 +152,7 @@ func (b *Bot) Logout() error {
 		if b.LogoutCallBack != nil {
 			b.LogoutCallBack(b)
 		}
-		info := b.storage.LoginInfo
+		info := b.Storage.LoginInfo
 		if err := b.Caller.Logout(info); err != nil {
 			return err
 		}
@@ -170,7 +170,7 @@ func (b *Bot) HandleLogin(data []byte) error {
 		return err
 	}
 	// 将LoginInfo存到storage里面
-	b.storage.LoginInfo = info
+	b.Storage.LoginInfo = info
 
 	// 构建BaseRequest
 	request := &BaseRequest{
@@ -181,7 +181,7 @@ func (b *Bot) HandleLogin(data []byte) error {
 	}
 
 	// 将BaseRequest存到storage里面方便后续调用
-	b.storage.Request = request
+	b.Storage.Request = request
 
 	// 如果是热登陆,则将当前的重要信息写入hotReloadStorage
 	if b.IsHot {
@@ -195,8 +195,8 @@ func (b *Bot) HandleLogin(data []byte) error {
 
 // WebInit 根据有效凭证获取和初始化用户信息
 func (b *Bot) WebInit() error {
-	req := b.storage.Request
-	info := b.storage.LoginInfo
+	req := b.Storage.Request
+	info := b.Storage.LoginInfo
 	// 获取初始化的用户信息和一些必要的参数
 	resp, err := b.Caller.WebInit(req)
 	if err != nil {
@@ -205,7 +205,7 @@ func (b *Bot) WebInit() error {
 	// 设置当前的用户
 	b.self = &Self{Bot: b, User: &resp.User}
 	b.self.Self = b.self
-	b.storage.Response = resp
+	b.Storage.Response = resp
 
 	// 通知手机客户端已经登录
 	if err = b.Caller.WebWxStatusNotify(req, resp, info); err != nil {
@@ -234,7 +234,7 @@ func (b *Bot) asyncCall() error {
 	)
 	for b.Alive() {
 		// 长轮询检查是否有消息返回
-		resp, err = b.Caller.SyncCheck(b.storage.LoginInfo, b.storage.Response)
+		resp, err = b.Caller.SyncCheck(b.Storage.LoginInfo, b.Storage.Response)
 		if err != nil {
 			return err
 		}
@@ -262,12 +262,12 @@ func (b *Bot) stopAsyncCALL(err error) {
 
 // 获取新的消息
 func (b *Bot) getNewWechatMessage() error {
-	resp, err := b.Caller.WebWxSync(b.storage.Request, b.storage.Response, b.storage.LoginInfo)
+	resp, err := b.Caller.WebWxSync(b.Storage.Request, b.Storage.Response, b.Storage.LoginInfo)
 	if err != nil {
 		return err
 	}
 	// 更新SyncKey并且重新存入storage
-	b.storage.Response.SyncKey = resp.SyncKey
+	b.Storage.Response.SyncKey = resp.SyncKey
 	// 遍历所有的新的消息，依次处理
 	for _, message := range resp.AddMsgList {
 		// 根据不同的消息类型来进行处理，方便后续统一调用
@@ -311,10 +311,10 @@ func (b *Bot) DumpHotReloadStorage() error {
 	}
 	cookies := b.Caller.Client.GetCookieMap()
 	item := HotReloadStorageItem{
-		BaseRequest:  b.storage.Request,
+		BaseRequest:  b.Storage.Request,
 		Cookies:      cookies,
-		LoginInfo:    b.storage.LoginInfo,
-		WechatDomain: b.Caller.Client.domain,
+		LoginInfo:    b.Storage.LoginInfo,
+		WechatDomain: b.Caller.Client.Domain,
 	}
 
 	data, err := json.Marshal(item)
@@ -345,7 +345,7 @@ func (b *Bot) OnLogout(f func(bot *Bot)) {
 // NewBot Bot的构造方法，需要自己传入Caller
 func NewBot(caller *Caller) *Bot {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &Bot{Caller: caller, storage: &Storage{}, context: ctx, cancel: cancel}
+	return &Bot{Caller: caller, Storage: &Storage{}, context: ctx, cancel: cancel}
 }
 
 // DefaultBot 默认的Bot的构造方法,
