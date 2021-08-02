@@ -116,9 +116,10 @@ const (
 
 // errors
 var (
-	noSuchUserFoundError = errors.New("no such user found")
-	missLocationHeader   = errors.New("301 response missing Location header")
-	loginForbiddenError  = errors.New("login forbidden")
+	ErrNoSuchUserFoundError = errors.New("no such user found")
+	ErrMissLocationHeader   = errors.New("301 response missing Location header")
+	ErrLoginForbiddenError  = errors.New("login forbidden")
+	ErrLoginTimeout         = errors.New("login timeout")
 )
 
 // ALL 跟search函数搭配

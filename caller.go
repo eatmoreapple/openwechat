@@ -84,8 +84,8 @@ func (c *Caller) GetLoginInfo(body []byte) (*LoginInfo, error) {
 	resp, err := c.Client.GetLoginInfo(path.String())
 	if err != nil {
 		uErr, ok := err.(*url.Error)
-		if ok && (uErr.Err.Error() == missLocationHeader.Error()) {
-			return nil, loginForbiddenError
+		if ok && (uErr.Err.Error() == ErrMissLocationHeader.Error()) {
+			return nil, ErrLoginForbiddenError
 		}
 		return nil, err
 	}

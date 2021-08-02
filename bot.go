@@ -139,7 +139,7 @@ func (b *Bot) Login() error {
 				b.ScanCallBack(resp.Raw)
 			}
 		case StatusTimeout:
-			return errors.New("login time out")
+			return ErrLoginTimeout
 		case StatusWait:
 			continue
 		}
@@ -307,7 +307,7 @@ func (b *Bot) MessageOnError(h func(err error)) {
 // DumpHotReloadStorage 写入HotReloadStorage
 func (b *Bot) DumpHotReloadStorage() error {
 	if b.HotReloadStorage == nil {
-		return errors.New("HotReloadStorage can be nil")
+		return errors.New("HotReloadStorage can not be nil")
 	}
 	cookies := b.Caller.Client.GetCookieMap()
 	item := HotReloadStorageItem{
