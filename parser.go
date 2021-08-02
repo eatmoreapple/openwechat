@@ -7,15 +7,17 @@ import (
 	"math/rand"
 	"mime/multipart"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
+	"unsafe"
 )
 
 func ToBuffer(v interface{}) (*bytes.Buffer, error) {
 	var buffer bytes.Buffer
 	encoder := json.NewEncoder(&buffer)
-	// 这里要设置进制html转义
+	// 这里要设置禁止html转义
 	encoder.SetEscapeHTML(false)
 	err := encoder.Encode(v)
 	return &buffer, err
@@ -25,6 +27,7 @@ func ToBuffer(v interface{}) (*bytes.Buffer, error) {
 func GetRandomDeviceId() string {
 	rand.Seed(time.Now().Unix())
 	var builder strings.Builder
+	builder.Grow(16)
 	builder.WriteString("e")
 	for i := 0; i < 15; i++ {
 		r := rand.Intn(9)
@@ -40,14 +43,6 @@ func getWebWxDataTicket(cookies []*http.Cookie) string {
 		}
 	}
 	return ""
-}
-
-// XmlFormString Form Xml 格式化
-func XmlFormString(text string) string {
-	lt := strings.ReplaceAll(text, "&lt;", "<")
-	gt := strings.ReplaceAll(lt, "&gt;", ">")
-	br := strings.ReplaceAll(gt, "<br/>", "\n")
-	return strings.ReplaceAll(br, "&amp;amp;", "&")
 }
 
 func getTotalDuration(delay ...time.Duration) time.Duration {
@@ -106,4 +101,8 @@ func scanJson(resp *http.Response, v interface{}) error {
 		return err
 	}
 	return json.Unmarshal(buffer.Bytes(), v)
+}
+
+func stringToByte(s string) []byte {
+	return *(*[]byte)(unsafe.Pointer(&*(*reflect.StringHeader)(unsafe.Pointer(&s))))
 }

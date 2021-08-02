@@ -8,7 +8,6 @@ import (
 	"html"
 	"net/http"
 	"os"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -254,8 +253,7 @@ func (m *Message) Card() (*Card, error) {
 		return nil, errors.New("card message required")
 	}
 	var card Card
-	content := XmlFormString(m.Content)
-	err := xml.Unmarshal([]byte(content), &card)
+	err := xml.Unmarshal(stringToByte(m.Content), &card)
 	return &card, err
 }
 
@@ -265,8 +263,7 @@ func (m *Message) FriendAddMessageContent() (*FriendAddMessage, error) {
 		return nil, errors.New("friend add message required")
 	}
 	var f FriendAddMessage
-	content := XmlFormString(m.Content)
-	err := xml.Unmarshal([]byte(content), &f)
+	err := xml.Unmarshal(stringToByte(m.Content), &f)
 	return &f, err
 }
 
@@ -276,8 +273,7 @@ func (m *Message) RevokeMsg() (*RevokeMsg, error) {
 		return nil, errors.New("recalled message required")
 	}
 	var r RevokeMsg
-	content := XmlFormString(m.Content)
-	err := xml.Unmarshal([]byte(content), &r)
+	err := xml.Unmarshal(stringToByte(m.Content), &r)
 	return &r, err
 }
 
@@ -343,17 +339,12 @@ func (m *Message) init(bot *Bot) {
 			}
 		}
 	}
-	if regexp.MustCompile(`^&lt;`).MatchString(m.Content) {
-		m.Content = html.UnescapeString(m.Content)
-	}
-
 	// 处理消息中的换行
 	m.Content = strings.Replace(m.Content, `<br/>`, "\n", -1)
+	// 处理html转义字符
+	m.Content = html.UnescapeString(m.Content)
 	// 处理消息中的emoji表情
 	m.Content = FormatEmoji(m.Content)
-	if m.IsText() {
-		m.Content = XmlFormString(m.Content)
-	}
 }
 
 // SendMessage 发送消息的结构体
