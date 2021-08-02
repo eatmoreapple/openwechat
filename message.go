@@ -351,6 +351,9 @@ func (m *Message) init(bot *Bot) {
 	m.Content = strings.Replace(m.Content, `<br/>`, "\n", -1)
 	// 处理消息中的emoji表情
 	m.Content = FormatEmoji(m.Content)
+	if m.IsText() {
+		m.Content = XmlFormString(m.Content)
+	}
 }
 
 // SendMessage 发送消息的结构体
