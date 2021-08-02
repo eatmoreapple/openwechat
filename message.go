@@ -123,7 +123,7 @@ func (m *Message) IsSendByGroup() bool {
 }
 
 // Reply 回复消息
-func (m *Message) Reply(msgType int, content, mediaId string) (*SentMessage, error) {
+func (m *Message) Reply(msgType MessageType, content, mediaId string) (*SentMessage, error) {
 	msg := NewSendMessage(msgType, content, m.Bot.self.User.UserName, m.FromUserName, mediaId)
 	info := m.Bot.Storage.LoginInfo
 	request := m.Bot.Storage.Request
@@ -132,7 +132,7 @@ func (m *Message) Reply(msgType int, content, mediaId string) (*SentMessage, err
 
 // ReplyText 回复文本消息
 func (m *Message) ReplyText(content string) (*SentMessage, error) {
-	return m.Reply(TextMessage, content, "")
+	return m.Reply(MsgTypeText, content, "")
 }
 
 // ReplyImage 回复图片消息
@@ -346,20 +346,18 @@ func (m *Message) init(bot *Bot) {
 	if regexp.MustCompile(`^&lt;`).MatchString(m.Content) {
 		m.Content = html.UnescapeString(m.Content)
 	}
-	//if m.IsText()
-	{
-		m.Content = strings.Replace(m.Content, `<br/>`, "\n", -1)
-	}
 
-	// 格式化文本消息中的emoji表情
+	// 文本消息
 	if m.IsText() {
+		m.Content = strings.Replace(m.Content, `<br/>`, "\n", -1)
+		// 格式化文本消息中的emoji表情
 		m.Content = FormatEmoji(m.Content)
 	}
 }
 
 // SendMessage 发送消息的结构体
 type SendMessage struct {
-	Type         int
+	Type         MessageType
 	Content      string
 	FromUserName string
 	ToUserName   string
@@ -369,7 +367,7 @@ type SendMessage struct {
 }
 
 // NewSendMessage SendMessage的构造方法
-func NewSendMessage(msgType int, content, fromUserName, toUserName, mediaId string) *SendMessage {
+func NewSendMessage(msgType MessageType, content, fromUserName, toUserName, mediaId string) *SendMessage {
 	id := strconv.FormatInt(time.Now().UnixNano()/1e2, 10)
 	return &SendMessage{
 		Type:         msgType,
@@ -384,11 +382,11 @@ func NewSendMessage(msgType int, content, fromUserName, toUserName, mediaId stri
 
 // NewTextSendMessage 文本消息的构造方法
 func NewTextSendMessage(content, fromUserName, toUserName string) *SendMessage {
-	return NewSendMessage(TextMessage, content, fromUserName, toUserName, "")
+	return NewSendMessage(MsgTypeText, content, fromUserName, toUserName, "")
 }
 
 // NewMediaSendMessage 媒体消息的构造方法
-func NewMediaSendMessage(msgType int, fromUserName, toUserName, mediaId string) *SendMessage {
+func NewMediaSendMessage(msgType MessageType, fromUserName, toUserName, mediaId string) *SendMessage {
 	return NewSendMessage(msgType, "", fromUserName, toUserName, mediaId)
 }
 

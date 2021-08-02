@@ -283,7 +283,7 @@ func (c *Client) sendMessage(request *BaseRequest, url string, msg *SendMessage)
 
 // WebWxSendMsg 发送文本消息
 func (c *Client) WebWxSendMsg(msg *SendMessage, info *LoginInfo, request *BaseRequest) (*http.Response, error) {
-	msg.Type = TextMessage
+	msg.Type = MsgTypeText
 	path, _ := url.Parse(c.Domain.BaseHost() + webwxsendmsg)
 	params := url.Values{}
 	params.Add("lang", "zh_CN")
@@ -450,7 +450,7 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 // 这个接口依赖上传文件的接口
 // 发送的图片必须是已经成功上传的图片
 func (c *Client) WebWxSendMsgImg(msg *SendMessage, request *BaseRequest, info *LoginInfo) (*http.Response, error) {
-	msg.Type = ImageMessage
+	msg.Type = MsgTypeImage
 	path, _ := url.Parse(c.Domain.BaseHost() + webwxsendmsgimg)
 	params := url.Values{}
 	params.Add("fun", "async")

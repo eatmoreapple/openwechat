@@ -248,7 +248,7 @@ func (c *Caller) WebWxSendImageMsg(file *os.File, request *BaseRequest, info *Lo
 		return nil, err
 	}
 	// 构造新的图片类型的信息
-	msg := NewMediaSendMessage(ImageMessage, fromUserName, toUserName, resp.MediaId)
+	msg := NewMediaSendMessage(MsgTypeImage, fromUserName, toUserName, resp.MediaId)
 	// 发送图片信息
 	resp1, err := c.Client.WebWxSendMsgImg(msg, request, info)
 	return getSuccessSentMessage(msg, resp1, err)

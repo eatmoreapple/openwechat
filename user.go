@@ -376,7 +376,7 @@ func (s *Self) forwardMessage(msg *SentMessage, users ...*User) error {
 	info := s.Bot.Storage.LoginInfo
 	req := s.Bot.Storage.Request
 	switch msg.Type {
-	case TextMessage:
+	case MsgTypeText:
 		for _, user := range users {
 			msg.FromUserName = s.UserName
 			msg.ToUserName = user.UserName
@@ -384,7 +384,7 @@ func (s *Self) forwardMessage(msg *SentMessage, users ...*User) error {
 				return err
 			}
 		}
-	case ImageMessage:
+	case MsgTypeImage:
 		for _, user := range users {
 			msg.FromUserName = s.UserName
 			msg.ToUserName = user.UserName
