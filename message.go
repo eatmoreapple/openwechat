@@ -299,6 +299,23 @@ func (m *Message) AsRead() error {
 	return m.Bot.Caller.WebWxStatusAsRead(m.Bot.Storage.Request, m.Bot.Storage.LoginInfo, m)
 }
 
+// IsArticle 判断当前的消息类型是否为文章
+func (m *Message) IsArticle() bool {
+	return m.AppMsgType == AppMsgTypeUrl
+}
+
+// MediaData 获取当前App Message的具体内容
+func (m *Message) MediaData() (*AppMessageData, error) {
+	if !m.IsMedia() {
+		return nil, errors.New("media message required")
+	}
+	var data AppMessageData
+	if err := xml.Unmarshal(stringToByte(m.Content), &data); err != nil {
+		return nil, err
+	}
+	return &data, nil
+}
+
 // Set 往消息上下文中设置值
 // goroutine safe
 func (m *Message) Set(key string, value interface{}) {
@@ -545,4 +562,73 @@ func NewFileAppMessage(stat os.FileInfo, attachId string) *appmsg {
 	m.Type = 6
 	m.AppAttach.FileExt = getFileExt(stat.Name())
 	return m
+}
+
+// AppMessageData 获取APP消息的正文
+// See https://github.com/eatmoreapple/openwechat/issues/62
+type AppMessageData struct {
+	XMLName xml.Name `xml:"msg"`
+	AppMsg  struct {
+		Appid             string         `xml:"appid,attr"`
+		SdkVer            string         `xml:"sdkver,attr"`
+		Title             string         `xml:"title"`
+		Des               string         `xml:"des"`
+		Action            string         `xml:"action"`
+		Type              AppMessageType `xml:"type"`
+		ShowType          string         `xml:"showtype"`
+		Content           string         `xml:"content"`
+		URL               string         `xml:"url"`
+		DataUrl           string         `xml:"dataurl"`
+		LowUrl            string         `xml:"lowurl"`
+		LowDataUrl        string         `xml:"lowdataurl"`
+		RecordItem        string         `xml:"recorditem"`
+		ThumbUrl          string         `xml:"thumburl"`
+		MessageAction     string         `xml:"messageaction"`
+		Md5               string         `xml:"md5"`
+		ExtInfo           string         `xml:"extinfo"`
+		SourceUsername    string         `xml:"sourceusername"`
+		SourceDisplayName string         `xml:"sourcedisplayname"`
+		CommentUrl        string         `xml:"commenturl"`
+		AppAttach         struct {
+			TotalLen          string `xml:"totallen"`
+			AttachId          string `xml:"attachid"`
+			EmoticonMd5       string `xml:"emoticonmd5"`
+			FileExt           string `xml:"fileext"`
+			FileUploadToken   string `xml:"fileuploadtoken"`
+			OverwriteNewMsgId string `xml:"overwrite_newmsgid"`
+			FileKey           string `xml:"filekey"`
+			CdnAttachUrl      string `xml:"cdnattachurl"`
+			AesKey            string `xml:"aeskey"`
+			EncryVer          string `xml:"encryver"`
+		} `xml:"appattach"`
+		WeAppInfo struct {
+			PagePath       string `xml:"pagepath"`
+			Username       string `xml:"username"`
+			Appid          string `xml:"appid"`
+			AppServiceType string `xml:"appservicetype"`
+		} `xml:"weappinfo"`
+		WebSearch string `xml:"websearch"`
+	} `xml:"appmsg"`
+	FromUsername string `xml:"fromusername"`
+	Scene        string `xml:"scene"`
+	AppInfo      struct {
+		Version string `xml:"version"`
+		AppName string `xml:"appname"`
+	} `xml:"appinfo"`
+	CommentUrl string `xml:"commenturl"`
+}
+
+// IsFromApplet 判断当前的消息类型是否来自小程序
+func (a *AppMessageData) IsFromApplet() bool {
+	return a.AppMsg.Appid != ""
+}
+
+// IsArticle 判断当前的消息类型是否为文章
+func (a *AppMessageData) IsArticle() bool {
+	return a.AppMsg.Type == AppMsgTypeUrl
+}
+
+// IsFile 判断当前的消息类型是否为文件
+func (a AppMessageData) IsFile() bool {
+	return a.AppMsg.Type == AppMsgTypeAttach
 }
