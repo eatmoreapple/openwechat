@@ -126,7 +126,12 @@ func (m *Message) Reply(msgType MessageType, content, mediaId string) (*SentMess
 	msg := NewSendMessage(msgType, content, m.Bot.self.User.UserName, m.FromUserName, mediaId)
 	info := m.Bot.Storage.LoginInfo
 	request := m.Bot.Storage.Request
-	return m.Bot.Caller.WebWxSendMsg(msg, info, request)
+	sentMessage, err := m.Bot.Caller.WebWxSendMsg(msg, info, request)
+	if err != nil {
+		return nil, err
+	}
+	sentMessage.Self = m.Bot.self
+	return sentMessage, nil
 }
 
 // ReplyText 回复文本消息
@@ -489,6 +494,16 @@ type SentMessage struct {
 // Revoke 撤回该消息
 func (s *SentMessage) Revoke() error {
 	return s.Self.RevokeMessage(s)
+}
+
+// CanRevoke 是否可以撤回该消息
+func (s *SentMessage) CanRevoke() bool {
+	i, err := strconv.ParseInt(s.ClientMsgId, 10, 64)
+	if err != nil {
+		return false
+	}
+	start := time.Unix(i/10000000, 0)
+	return time.Now().Sub(start) < time.Minute*2
 }
 
 // ForwardToFriends 转发该消息给好友
