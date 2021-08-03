@@ -21,7 +21,7 @@ type Message struct {
 		Type  int
 		AppID string
 	}
-	AppMsgType            int
+	AppMsgType            AppMessageType
 	HasProductId          int
 	ImgHeight             int
 	ImgStatus             int
@@ -229,7 +229,7 @@ func (m *Message) StatusNotify() bool {
 
 // HasFile 判断消息是否为文件类型的消息
 func (m *Message) HasFile() bool {
-	return m.IsPicture() || m.IsVoice() || m.IsVideo() || m.IsMedia() || m.IsEmoticon()
+	return m.IsPicture() || m.IsVoice() || m.IsVideo() || (m.IsMedia() && m.AppMsgType == AppMsgTypeAttach) || m.IsEmoticon()
 }
 
 // GetFile 获取文件消息的文件
