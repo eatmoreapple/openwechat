@@ -538,6 +538,8 @@ func (c *Client) WebWxGetVoice(msg *Message, info *LoginInfo) (*http.Response, e
     params.Add("skey", info.SKey)
     path.RawQuery = params.Encode()
     req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
+    req.Header.Add("Referer", path.String())
+    req.Header.Add("Range", "bytes=0-")
     return c.Do(req)
 }
 
@@ -549,6 +551,8 @@ func (c *Client) WebWxGetVideo(msg *Message, info *LoginInfo) (*http.Response, e
     params.Add("skey", info.SKey)
     path.RawQuery = params.Encode()
     req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
+    req.Header.Add("Referer", path.String())
+    req.Header.Add("Range", "bytes=0-")
     return c.Do(req)
 }
 
@@ -564,6 +568,8 @@ func (c *Client) WebWxGetMedia(msg *Message, info *LoginInfo) (*http.Response, e
     params.Add("webwx_data_ticket", getWebWxDataTicket(c.Jar.Cookies(path)))
     path.RawQuery = params.Encode()
     req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
+    req.Header.Add("Referer", path.String())
+    req.Header.Add("Range", "bytes=0-")
     return c.Do(req)
 }
 
