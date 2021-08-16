@@ -274,6 +274,18 @@ msg.Agree()
 
 
 
+#### 设置为已读
+
+```go
+msg.AsRead()
+```
+
+该当前消息设置为已读
+
+
+
+
+
 #### 设置消息的上下文
 
 用于多个消息处理函数之间的通信，并且是协程安全的。
@@ -316,6 +328,14 @@ sentMsg, err := msg.ReplyText("hello") // 通过回复消息获取
 
 ```go
 sentMsg.Revoke()
+```
+
+
+
+#### 判断是否可以撤回
+
+```go
+sentMsg.CanRevoke()
 ```
 
 

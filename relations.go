@@ -227,6 +227,7 @@ func (g *Group) Members() (Members, error) {
 	if err != nil {
 		return nil, err
 	}
+	group.MemberList.init(g.Self)
 	return group.MemberList, nil
 }
 

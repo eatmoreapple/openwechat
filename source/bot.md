@@ -90,11 +90,7 @@ bot.HotLogin(reloadStorage)
 
 ```go
 // 热登陆存储接口
-type HotReloadStorage interface {
-    GetHotReloadStorageItem() HotReloadStorageItem // 获取HotReloadStorageItem
-    Dump(item HotReloadStorageItem) error          // 实现该方法, 将必要信息进行序列化
-    Load() error                                   // 实现该方法, 将存储媒介的内容反序列化
-}
+type HotReloadStorage io.ReadWriteCloser
 ```
 
 `NewJsonFileHotReloadStorage`简单实现了该接口，它采用`JSON`的方式存储会话信息。

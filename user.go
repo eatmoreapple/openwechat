@@ -1,9 +1,9 @@
 package openwechat
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -56,7 +56,7 @@ func (u *User) String() string {
 
 // GetAvatarResponse 获取用户头像
 func (u *User) GetAvatarResponse() (*http.Response, error) {
-	return u.Self.Bot.Caller.Client.WebWxGetHeadImg(u.HeadImgUrl)
+	return u.Self.Bot.Caller.Client.WebWxGetHeadImg(u)
 }
 
 // SaveAvatar 下载用户头像
@@ -66,16 +66,12 @@ func (u *User) SaveAvatar(filename string) error {
 		return err
 	}
 	defer resp.Body.Close()
-	buffer := bytes.Buffer{}
-	if _, err := buffer.ReadFrom(resp.Body); err != nil {
-		return err
-	}
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
-	_, err = file.Write(buffer.Bytes())
+	_, err = io.Copy(file, resp.Body)
 	return err
 }
 

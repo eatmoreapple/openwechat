@@ -293,8 +293,19 @@ func (c *Client) WebWxSendMsg(msg *SendMessage, info *LoginInfo, request *BaseRe
 }
 
 // WebWxGetHeadImg 获取用户的头像
-func (c *Client) WebWxGetHeadImg(headImageUrl string) (*http.Response, error) {
-    path := c.Domain.BaseHost() + headImageUrl
+func (c *Client) WebWxGetHeadImg(user *User) (*http.Response, error) {
+    var path string
+    if user.HeadImgUrl != "" {
+        path = c.Domain.BaseHost() + user.HeadImgUrl
+    } else {
+        params := url.Values{}
+        params.Add("username", user.UserName)
+        params.Add("skey", user.Self.Bot.Storage.Request.Skey)
+        params.Add("type", "big")
+        URL, _ := url.Parse(c.Domain.BaseHost() + webwxgeticon)
+        URL.RawQuery = params.Encode()
+        path = URL.String()
+    }
     req, _ := http.NewRequest(http.MethodGet, path, nil)
     return c.Do(req)
 }
