@@ -17,6 +17,7 @@ const (
 	webwxgetcontact      = "/cgi-bin/mmwebwx-bin/webwxgetcontact"
 	webwxsendmsgimg      = "/cgi-bin/mmwebwx-bin/webwxsendmsgimg"
 	webwxsendappmsg      = "/cgi-bin/mmwebwx-bin/webwxsendappmsg"
+	webwxsendvideomsg    = "/cgi-bin/mmwebwx-bin/webwxsendvideomsg"
 	webwxbatchgetcontact = "/cgi-bin/mmwebwx-bin/webwxbatchgetcontact"
 	webwxoplog           = "/cgi-bin/mmwebwx-bin/webwxoplog"
 	webwxverifyuser      = "/cgi-bin/mmwebwx-bin/webwxverifyuser"

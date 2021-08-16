@@ -253,6 +253,13 @@ func (s *Self) SendImageToFriend(friend *Friend, file *os.File) (*SentMessage, e
 	return s.Bot.Caller.WebWxSendImageMsg(file, req, info, s.UserName, friend.UserName)
 }
 
+// SendVideoToFriend 发送视频给好友
+func (s *Self) SendVideoToFriend(friend *Friend, file *os.File) (*SentMessage, error) {
+	req := s.Bot.Storage.Request
+	info := s.Bot.Storage.LoginInfo
+	return s.Bot.Caller.WebWxSendVideoMsg(file, req, info, s.UserName, friend.UserName)
+}
+
 // SendFileToFriend 发送文件给好友
 func (s *Self) SendFileToFriend(friend *Friend, file *os.File) (*SentMessage, error) {
 	req := s.Bot.Storage.Request
@@ -349,6 +356,13 @@ func (s *Self) SendImageToGroup(group *Group, file *os.File) (*SentMessage, erro
 	req := s.Bot.Storage.Request
 	info := s.Bot.Storage.LoginInfo
 	return s.Bot.Caller.WebWxSendImageMsg(file, req, info, s.UserName, group.UserName)
+}
+
+// SendVideoToGroup 发送视频给群组
+func (s *Self) SendVideoToGroup(group *Group, file *os.File) (*SentMessage, error) {
+	req := s.Bot.Storage.Request
+	info := s.Bot.Storage.LoginInfo
+	return s.Bot.Caller.WebWxSendVideoMsg(file, req, info, s.UserName, group.UserName)
 }
 
 // SendFileToGroup 发送文件给群组

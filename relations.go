@@ -33,6 +33,11 @@ func (f *Friend) SendImage(file *os.File) (*SentMessage, error) {
 	return f.Self.SendImageToFriend(f, file)
 }
 
+// SendVideo 发送图片消息
+func (f *Friend) SendVideo(file *os.File) (*SentMessage, error) {
+	return f.Self.SendVideoToFriend(f, file)
+}
+
 // SendFile 发送文件消息
 func (f *Friend) SendFile(file *os.File) (*SentMessage, error) {
 	return f.Self.SendFileToFriend(f, file)
@@ -173,7 +178,7 @@ func (f Friends) SendImage(file *os.File, delay ...time.Duration) error {
 }
 
 // SendFile 群发文件
-func (f Friends)SendFile(file *os.File, delay ...time.Duration) error {
+func (f Friends) SendFile(file *os.File, delay ...time.Duration) error {
 	total := getTotalDuration(delay...)
 	var (
 		sentMessage *SentMessage
@@ -214,6 +219,11 @@ func (g *Group) SendText(content string) (*SentMessage, error) {
 // SendImage 发行图片消息给当前的群组
 func (g *Group) SendImage(file *os.File) (*SentMessage, error) {
 	return g.Self.SendImageToGroup(g, file)
+}
+
+// SendVideo 发行视频消息给当前的群组
+func (g *Group) SendVideo(file *os.File) (*SentMessage, error) {
+	return g.Self.SendVideoToGroup(g, file)
 }
 
 // SendFile 发送文件给当前的群组
