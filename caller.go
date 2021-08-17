@@ -371,6 +371,27 @@ func (c *Caller) WebWxPushLogin(uin int) (*PushLoginResponse, error) {
 	return &item, nil
 }
 
+// WebWxCreateChatRoom 创建群聊
+func (c *Caller) WebWxCreateChatRoom(request *BaseRequest, info *LoginInfo, topic string, friends Friends) (*Group, error) {
+	resp, err := c.Client.WebWxCreateChatRoom(request, info, topic, friends)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	var item struct {
+		BaseResponse BaseResponse
+		ChatRoomName string
+	}
+	if err = json.NewDecoder(resp.Body).Decode(&item); err != nil {
+		return nil, err
+	}
+	if !item.BaseResponse.Ok() {
+		return nil, item.BaseResponse
+	}
+	group := Group{User: &User{UserName: item.ChatRoomName}}
+	return &group, nil
+}
+
 // 处理响应返回的结果是否正常
 func parseBaseResponseError(resp *http.Response) error {
 	defer resp.Body.Close()

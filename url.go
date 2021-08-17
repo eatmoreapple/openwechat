@@ -33,6 +33,7 @@ const (
 	webwxcheckupload     = "/cgi-bin/mmwebwx-bin/webwxcheckupload"
 	webwxpushloginurl    = "/cgi-bin/mmwebwx-bin/webwxpushloginurl"
 	webwxgeticon         = "/cgi-bin/mmwebwx-bin/webwxgeticon"
+	webwxcreatechatroom  = "/cgi-bin/mmwebwx-bin/webwxcreatechatroom"
 
 	webwxnewloginpage = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxnewloginpage"
 	jslogin           = "https://login.wx.qq.com/jslogin"

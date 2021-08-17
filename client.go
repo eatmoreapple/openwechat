@@ -728,3 +728,27 @@ func (c *Client) WebWxSendVideoMsg(request *BaseRequest, msg *SendMessage) (*htt
 	path.RawQuery = params.Encode()
 	return c.sendMessage(request, path.String(), msg)
 }
+
+// WebWxCreateChatRoom 创建群聊
+func (c *Client) WebWxCreateChatRoom(request *BaseRequest, info *LoginInfo, topic string, friends Friends) (*http.Response, error) {
+	path, _ := url.Parse(c.Domain.BaseHost() + webwxcreatechatroom)
+	params := url.Values{}
+	params.Add("pass_ticket", info.PassTicket)
+	params.Add("r", fmt.Sprintf("%d", time.Now().Unix()))
+	path.RawQuery = params.Encode()
+	count := len(friends)
+	memberList := make([]struct{ UserName string }, count)
+	for index, member := range friends {
+		memberList[index] = struct{ UserName string }{member.UserName}
+	}
+	content := map[string]interface{}{
+		"BaseRequest": request,
+		"MemberCount": count,
+		"MemberList":  memberList,
+		"Topic":       topic,
+	}
+	body, _ := ToBuffer(content)
+	req, _ := http.NewRequest(http.MethodPost, path.String(), body)
+	req.Header.Add("Content-Type", jsonContentType)
+	return c.Do(req)
+}

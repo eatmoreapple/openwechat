@@ -76,19 +76,20 @@ func (u *User) SaveAvatar(filename string) error {
 }
 
 // Detail 获取用户的详情
-func (u *User) Detail() (*User, error) {
+func (u *User) Detail() error {
 	if u.UserName == u.Self.UserName {
-		return u.Self.User, nil
+		return nil
 	}
 	members := Members{u}
 	request := u.Self.Bot.Storage.Request
 	newMembers, err := u.Self.Bot.Caller.WebWxBatchGetContact(members, request)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	newMembers.init(u.Self)
 	user := newMembers.First()
-	return user, nil
+	*u = *user
+	return nil
 }
 
 // IsFriend 判断是否为好友
@@ -272,6 +273,24 @@ func (s *Self) SendFileToFriend(friend *Friend, file *os.File) (*SentMessage, er
 func (s *Self) SetRemarkNameToFriend(friend *Friend, remarkName string) error {
 	req := s.Bot.Storage.Request
 	return s.Bot.Caller.WebWxOplog(req, remarkName, friend.UserName)
+}
+
+// CreateGroup 创建群聊
+// topic 群昵称,可以传递字符串
+// friends 群员,最少为2个，加上自己3个,三人才能成群
+func (s *Self) CreateGroup(topic string, friends ...*Friend) (*Group, error) {
+	if len(friends) < 2 {
+		return nil, errors.New("a group must be at least 2 members")
+	}
+	req := s.Bot.Storage.Request
+	info := s.Bot.Storage.LoginInfo
+	group, err := s.Bot.Caller.WebWxCreateChatRoom(req, info, topic, friends)
+	if err != nil {
+		return nil, err
+	}
+	group.Self = s
+	err = group.Detail()
+	return group, err
 }
 
 // AddFriendsIntoGroup 拉多名好友进群

@@ -233,12 +233,11 @@ func (g *Group) SendFile(file *os.File) (*SentMessage, error) {
 
 // Members 获取所有的群成员
 func (g *Group) Members() (Members, error) {
-	group, err := g.Detail()
-	if err != nil {
+	if err := g.Detail(); err != nil {
 		return nil, err
 	}
-	group.MemberList.init(g.Self)
-	return group.MemberList, nil
+	g.MemberList.init(g.Self)
+	return g.MemberList, nil
 }
 
 // AddFriendsIn 拉好友入群
