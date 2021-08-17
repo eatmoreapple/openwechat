@@ -252,6 +252,11 @@ func (g *Group) RemoveMembers(members Members) error {
 	return g.Self.RemoveMemberFromGroup(g, members)
 }
 
+// Rename 群组重命名
+func (g *Group) Rename(name string) error {
+	return g.Self.RenameGroup(g, name)
+}
+
 type Groups []*Group
 
 // Count 获取群组数量

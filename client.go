@@ -752,3 +752,21 @@ func (c *Client) WebWxCreateChatRoom(request *BaseRequest, info *LoginInfo, topi
 	req.Header.Add("Content-Type", jsonContentType)
 	return c.Do(req)
 }
+
+// WebWxRenameChatRoom 群组重命名接口
+func (c *Client) WebWxRenameChatRoom(request *BaseRequest, info *LoginInfo, newTopic string, group *Group) (*http.Response, error) {
+	path, _ := url.Parse(c.Domain.BaseHost() + webwxupdatechatroom)
+	params := url.Values{}
+	params.Add("fun", "modtopic")
+	params.Add("pass_ticket", info.PassTicket)
+	path.RawQuery = params.Encode()
+	content := map[string]interface{}{
+		"BaseRequest":  request,
+		"ChatRoomName": group.UserName,
+		"NewTopic":     newTopic,
+	}
+	body, _ := ToBuffer(content)
+	req, _ := http.NewRequest(http.MethodPost, path.String(), body)
+	req.Header.Add("Content-Type", jsonContentType)
+	return c.Do(req)
+}

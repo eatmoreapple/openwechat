@@ -359,6 +359,13 @@ func (s *Self) AddFriendIntoManyGroups(friend *Friend, groups ...*Group) error {
 	return nil
 }
 
+// RenameGroup 群组重命名
+func (s *Self) RenameGroup(group *Group, newName string) error {
+	req := s.Bot.Storage.Request
+	info := s.Bot.Storage.LoginInfo
+	return s.Bot.Caller.WebWxRenameChatRoom(req, info, newName, group)
+}
+
 // SendMessageToGroup 发送消息给群组
 func (s *Self) SendMessageToGroup(group *Group, msg *SendMessage) (*SentMessage, error) {
 	return s.sendMessageToUser(group.User, msg)

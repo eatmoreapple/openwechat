@@ -392,6 +392,15 @@ func (c *Caller) WebWxCreateChatRoom(request *BaseRequest, info *LoginInfo, topi
 	return &group, nil
 }
 
+// WebWxRenameChatRoom 群组重命名
+func (c *Caller) WebWxRenameChatRoom(request *BaseRequest, info *LoginInfo, newTopic string, group *Group) error {
+	resp, err := c.Client.WebWxRenameChatRoom(request, info, newTopic, group)
+	if err != nil {
+		return err
+	}
+	return parseBaseResponseError(resp)
+}
+
 // 处理响应返回的结果是否正常
 func parseBaseResponseError(resp *http.Response) error {
 	defer resp.Body.Close()
