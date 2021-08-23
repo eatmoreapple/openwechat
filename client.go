@@ -195,14 +195,14 @@ func (c *Client) WebWxStatusNotify(request *BaseRequest, response *WebInitRespon
 }
 
 // SyncCheck 异步检查是否有新的消息返回
-func (c *Client) SyncCheck(info *LoginInfo, response *WebInitResponse) (*http.Response, error) {
+func (c *Client) SyncCheck(request *BaseRequest, info *LoginInfo, response *WebInitResponse) (*http.Response, error) {
 	path, _ := url.Parse(c.Domain.SyncHost() + synccheck)
 	params := url.Values{}
 	params.Add("r", strconv.FormatInt(time.Now().Unix(), 10))
 	params.Add("skey", info.SKey)
 	params.Add("sid", info.WxSid)
 	params.Add("uin", strconv.Itoa(info.WxUin))
-	params.Add("deviceid", GetRandomDeviceId())
+	params.Add("deviceid", request.DeviceID)
 	params.Add("_", strconv.FormatInt(time.Now().Unix(), 10))
 	var syncKeyStringSlice = make([]string, response.SyncKey.Count)
 	// 将SyncKey里面的元素按照特定的格式拼接起来
