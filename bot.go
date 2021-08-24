@@ -7,7 +7,10 @@ import (
 	"log"
 	"net/url"
 	"sync"
+	"time"
 )
+
+const syncCheckDelay = 25
 
 type Bot struct {
 	ScanCallBack           func(body []byte) // 扫码回调,可获取扫码用户的头像
@@ -243,6 +246,8 @@ func (b *Bot) asyncCall() error {
 				return err
 			}
 		}
+		// 模仿官方客户端行为，间隔25秒
+		time.Sleep(syncCheckDelay * time.Second)
 	}
 	return err
 }
