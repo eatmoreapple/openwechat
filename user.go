@@ -625,3 +625,28 @@ func (m Members) init(self *Self) {
 func NewFriendHelper(self *Self) *Friend {
 	return &Friend{&User{UserName: "filehelper", Self: self}}
 }
+
+// SendMessageToMp 发送消息给公众号
+func (s *Self) SendMessageToMp(mp *Mp, msg *SendMessage) (*SentMessage, error) {
+	return s.sendMessageToUser(mp.User, msg)
+}
+
+// SendTextToMp 发送文本消息给公众号
+func (s *Self) SendTextToMp(mp *Mp, text string) (*SentMessage, error) {
+	msg := NewTextSendMessage(text, s.UserName, mp.UserName)
+	return s.SendMessageToMp(mp, msg)
+}
+
+// SendImageToMp 发送图片消息给公众号
+func (s *Self) SendImageToMp(mp *Mp, file *os.File) (*SentMessage, error) {
+	req := s.Bot.Storage.Request
+	info := s.Bot.Storage.LoginInfo
+	return s.Bot.Caller.WebWxSendImageMsg(file, req, info, s.UserName, mp.UserName)
+}
+
+// SendFileToMp 发送文件给公众号
+func (s *Self) SendFileToMp(mp *Mp, file *os.File) (*SentMessage, error) {
+	req := s.Bot.Storage.Request
+	info := s.Bot.Storage.LoginInfo
+	return s.Bot.Caller.WebWxSendFile(file, req, info, s.UserName, mp.UserName)
+}

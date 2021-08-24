@@ -441,3 +441,28 @@ func (m Mps) Search(limit int, condFuncList ...func(group *Mp) bool) (results Mp
 	}
 	return
 }
+
+// SearchByUserName 根据用户名查找
+func (m Mps) SearchByUserName(limit int, userName string) (results Mps) {
+	return m.Search(limit, func(group *Mp) bool { return group.UserName == userName })
+}
+
+// SearchByNickName 根据昵称查找
+func (m Mps) SearchByNickName(limit int, nickName string) (results Mps) {
+	return m.Search(limit, func(group *Mp) bool { return group.NickName == nickName })
+}
+
+// SendText 发送文本消息给公众号
+func (m *Mp) SendText(content string) (*SentMessage, error) {
+	return m.Self.SendTextToMp(m, content)
+}
+
+// SendImage 发送图片消息给公众号
+func (m *Mp) SendImage(file *os.File) (*SentMessage, error) {
+	return m.Self.SendImageToMp(m, file)
+}
+
+// SendFile 发送文件消息给公众号
+func (m *Mp) SendFile(file *os.File) (*SentMessage, error) {
+	return m.Self.SendFileToMp(m, file)
+}
