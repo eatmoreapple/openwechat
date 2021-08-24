@@ -240,3 +240,14 @@ type PushLoginResponse struct {
 func (p PushLoginResponse) Ok() bool {
 	return p.Ret == "0" && p.UUID != ""
 }
+
+type NetworkErr struct{ error }
+
+func (n NetworkErr) Unwrap() error {
+	return n.error
+}
+
+func IsNetworkError(err error) bool {
+	_, ok := err.(NetworkErr)
+	return ok
+}
