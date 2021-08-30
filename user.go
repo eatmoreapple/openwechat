@@ -89,6 +89,7 @@ func (u *User) Detail() error {
 	newMembers.init(u.Self)
 	user := newMembers.First()
 	*u = *user
+	u.MemberList.init(u.Self)
 	return nil
 }
 
