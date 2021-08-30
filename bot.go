@@ -263,14 +263,10 @@ func (b *Bot) getNewWechatMessage() error {
 	}
 	// 更新SyncKey并且重新存入storage
 	b.Storage.Response.SyncKey = resp.SyncKey
-	// 遍历所有的新的消息，依次处理
-	for _, message := range resp.AddMsgList {
-		// 根据不同的消息类型来进行处理，方便后续统一调用
-		message.init(b)
-		// 调用自定义的处理方法
-		if handler := b.MessageHandler; handler != nil {
-			handler(message)
-		}
+	// 异步执行，提升响应速度
+	// 避免单个消息处理函数阻塞，让其他的消息得不到处理
+	if b.MessageHandler != nil {
+		go b.handleMessage(resp.AddMsgList)
 	}
 	return nil
 }
@@ -369,4 +365,13 @@ func GetQrcodeUrl(uuid string) string {
 func PrintlnQrcodeUrl(uuid string) {
 	println("访问下面网址扫描二维码登录")
 	println(GetQrcodeUrl(uuid))
+}
+
+func (b *Bot) handleMessage(messageList []*Message) {
+	for _, message := range messageList {
+		// 根据不同的消息类型来进行处理，方便后续统一调用
+		message.init(b)
+		// 调用自定义的处理方法
+		b.MessageHandler(message)
+	}
 }
