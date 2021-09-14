@@ -255,9 +255,8 @@ func IsNetworkError(err error) bool {
 // IgnoreNetworkError 忽略网络请求的错误
 func IgnoreNetworkError(errHandler func(err error)) func(error) {
 	return func(err error) {
-		if IsNetworkError(err) {
-			return
+		if !IsNetworkError(err) {
+			errHandler(err)
 		}
-		errHandler(err)
 	}
 }
