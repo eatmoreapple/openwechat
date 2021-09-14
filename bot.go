@@ -199,6 +199,7 @@ func (b *Bot) WebInit() error {
 	}
 	// 设置当前的用户
 	b.self = &Self{Bot: b, User: &resp.User}
+	b.self.formatEmoji()
 	b.self.Self = b.self
 	b.Storage.Response = resp
 
@@ -249,6 +250,10 @@ func (b *Bot) asyncCall() error {
 
 // 当获取消息发生错误时, 默认的错误处理行为
 func (b *Bot) stopAsyncCALL(err error) {
+	if IsNetworkError(err) {
+		log.Println(err)
+		return
+	}
 	b.cancel()
 	b.err = err
 	b.self = nil
@@ -263,10 +268,9 @@ func (b *Bot) getNewWechatMessage() error {
 	}
 	// 更新SyncKey并且重新存入storage
 	b.Storage.Response.SyncKey = resp.SyncKey
-	// 异步执行，提升响应速度
 	// 避免单个消息处理函数阻塞，让其他的消息得不到处理
 	if b.MessageHandler != nil {
-		go b.handleMessage(resp.AddMsgList)
+		b.handleMessage(resp.AddMsgList)
 	}
 	return nil
 }

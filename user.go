@@ -125,6 +125,13 @@ func (u *User) IsPin() bool {
 	return u.ContactFlag == 2051
 }
 
+// 格式化emoji表情
+func (u *User) formatEmoji() {
+	u.NickName = FormatEmoji(u.NickName)
+	u.RemarkName = FormatEmoji(u.RemarkName)
+	u.DisplayName = FormatEmoji(u.DisplayName)
+}
+
 // Self 自己,当前登录用户对象
 type Self struct {
 	*User
@@ -613,9 +620,7 @@ func (m Members) detail(self *Self) error {
 func (m Members) init(self *Self) {
 	for _, member := range m {
 		member.Self = self
-		member.NickName = FormatEmoji(member.NickName)
-		member.RemarkName = FormatEmoji(member.RemarkName)
-		member.DisplayName = FormatEmoji(member.DisplayName)
+		member.formatEmoji()
 	}
 }
 
