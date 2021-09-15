@@ -12,7 +12,7 @@ import (
 // LoginInfo 登录信息
 type LoginInfo struct {
 	Ret         int    `xml:"ret"`
-	WxUin       int    `xml:"wxuin"`
+	WxUin       int64    `xml:"wxuin"`
 	IsGrayScale int    `xml:"isgrayscale"`
 	Message     string `xml:"message"`
 	SKey        string `xml:"skey"`
@@ -53,7 +53,7 @@ func (l LoginInfo) Error() string {
 // BaseRequest 初始的请求信息
 // 几乎所有的请求都要携带该参数
 type BaseRequest struct {
-	Uin                 int
+	Uin                 int64
 	Sid, Skey, DeviceID string
 }
 
