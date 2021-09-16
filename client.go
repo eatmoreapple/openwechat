@@ -204,7 +204,7 @@ func (c *Client) SyncCheck(request *BaseRequest, info *LoginInfo, response *WebI
 	params.Add("r", strconv.FormatInt(time.Now().Unix(), 10))
 	params.Add("skey", info.SKey)
 	params.Add("sid", info.WxSid)
-	params.Add("uin", strconv.Itoa(info.WxUin))
+	params.Add("uin", strconv.FormatInt(info.WxUin, 10))
 	params.Add("deviceid", request.DeviceID)
 	params.Add("_", strconv.FormatInt(time.Now().Unix(), 10))
 	var syncKeyStringSlice = make([]string, response.SyncKey.Count)
