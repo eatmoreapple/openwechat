@@ -649,5 +649,5 @@ func (m *Message) IsComeFromGroup() bool {
 }
 
 func (m *Message) String() string {
-	return fmt.Sprintf("<%s:ID:%s>", m.MsgType, m.MsgId)
+	return fmt.Sprintf("<%s:%s>", m.MsgType, m.MsgId)
 }
