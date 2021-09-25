@@ -39,6 +39,7 @@ func TestLogout(t *testing.T) {
 func TestMessageHandle(t *testing.T) {
 	bot := DefaultBot(Desktop)
 	bot.MessageHandler = func(msg *Message) {
+		fmt.Println(msg)
 		if msg.IsText() && msg.Content == "ping" {
 			msg.ReplyText("pong")
 		}

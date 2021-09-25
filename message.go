@@ -647,3 +647,7 @@ func (a AppMessageData) IsFile() bool {
 func (m *Message) IsComeFromGroup() bool {
 	return m.IsSendByGroup() || strings.HasPrefix(m.ToUserName, "@@")
 }
+
+func (m *Message) String() string {
+	return fmt.Sprintf("<%s:ID:%s>", m.MsgType, m.MsgId)
+}
