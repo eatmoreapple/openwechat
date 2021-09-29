@@ -12,11 +12,10 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"unicode"
 )
 
 type Message struct {
-	IsAt    bool
+	isAt    bool
 	AppInfo struct {
 		Type  int
 		AppID string
@@ -362,11 +361,10 @@ func (m *Message) init(bot *Bot) {
 				displayName = receiver.NickName
 			}
 			// 判断是不是@消息
-			atFlag := "@" + displayName
-			index := len(atFlag) + 1 + 1
-			if strings.HasPrefix(m.Content, atFlag) && unicode.IsSpace(rune(m.Content[index])) {
-				m.IsAt = true
-				m.Content = m.Content[index+1:]
+			atFlag := "@" + displayName + "\u2005"
+			if strings.Contains(m.Content, atFlag) {
+				m.isAt = true
+				m.Content = strings.Replace(m.Content, atFlag, "", -1)
 			}
 		}
 	}
@@ -650,4 +648,9 @@ func (m *Message) IsComeFromGroup() bool {
 
 func (m *Message) String() string {
 	return fmt.Sprintf("<%s:%s>", m.MsgType, m.MsgId)
+}
+
+// IsAt 判断消息是否为@消息
+func (m *Message) IsAt() bool {
+	return m.isAt
 }
