@@ -10,13 +10,14 @@ import (
 )
 
 type Bot struct {
-	ScanCallBack           func(body []byte) // 扫码回调,可获取扫码用户的头像
-	LoginCallBack          func(body []byte) // 登陆回调
-	LogoutCallBack         func(bot *Bot)    // 退出回调
-	UUIDCallback           func(uuid string) // 获取UUID的回调函数
-	MessageHandler         MessageHandler    // 获取消息成功的handle
-	GetMessageErrorHandler func(err error)   // 获取消息发生错误的handle
-	IsHot                  bool              // 是否为热登录模式
+	ScanCallBack           func(body []byte)            // 扫码回调,可获取扫码用户的头像
+	LoginCallBack          func(body []byte)            // 登陆回调
+	LogoutCallBack         func(bot *Bot)               // 退出回调
+	UUIDCallback           func(uuid string)            // 获取UUID的回调函数
+	SyncCheckCallback      func(resp SyncCheckResponse) // 心跳回调
+	MessageHandler         MessageHandler               // 获取消息成功的handle
+	GetMessageErrorHandler func(err error)              // 获取消息发生错误的handle
+	IsHot                  bool                         // 是否为热登录模式
 	once                   sync.Once
 	err                    error
 	context                context.Context
@@ -234,6 +235,10 @@ func (b *Bot) asyncCall() error {
 		if err != nil {
 			return err
 		}
+		// 执行心跳回调
+		if b.SyncCheckCallback != nil {
+			b.SyncCheckCallback(*resp)
+		}
 		// 如果不是正常的状态码返回，发生了错误，直接退出
 		if !resp.Success() {
 			return resp
@@ -357,6 +362,15 @@ func DefaultBot(modes ...mode) *Bot {
 	caller.Client.mode = m
 	bot := NewBot(caller)
 	bot.UUIDCallback = PrintlnQrcodeUrl
+	bot.ScanCallBack = func(body []byte) {
+		log.Println("扫码成功,请在手机上确认登录")
+	}
+	bot.LoginCallBack = func(body []byte) {
+		log.Println("登录成功")
+	}
+	bot.SyncCheckCallback = func(resp SyncCheckResponse) {
+		log.Printf("RetCode:%s  Selector:%s", resp.RetCode, resp.Selector)
+	}
 	return bot
 }
 
