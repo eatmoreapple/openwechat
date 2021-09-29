@@ -466,3 +466,43 @@ func (m *Mp) SendImage(file *os.File) (*SentMessage, error) {
 func (m *Mp) SendFile(file *os.File) (*SentMessage, error) {
 	return m.Self.SendFileToMp(m, file)
 }
+
+// GetByUsername 根据username查询一个Friend
+func (f Friends) GetByUsername(username string) *Friend {
+	return f.SearchByUserName(1, username).First()
+}
+
+// GetByRemarkName 根据remarkName查询一个Friend
+func (f Friends) GetByRemarkName(remarkName string) *Friend {
+	return f.SearchByRemarkName(1, remarkName).First()
+}
+
+// GetByNickName 根据nickname查询一个Friend
+func (f Friends) GetByNickName(nickname string) *Friend {
+	return f.SearchByNickName(1, nickname).First()
+}
+
+// GetByUsername 根据username查询一个Group
+func (g Groups) GetByUsername(username string) *Group {
+	return g.SearchByUserName(1, username).First()
+}
+
+// GetByRemarkName 根据remarkName查询一个Group
+func (g Groups) GetByRemarkName(remarkName string) *Group {
+	return g.SearchByRemarkName(1, remarkName).First()
+}
+
+// GetByNickName 根据nickname查询一个Group
+func (g Groups) GetByNickName(nickname string) *Group {
+	return g.SearchByNickName(1, nickname).First()
+}
+
+// GetByNickName 根据nickname查询一个Mp
+func (m Mps) GetByNickName(nickname string) *Mp {
+	return m.SearchByNickName(1, nickname).First()
+}
+
+// GetByUserName 根据username查询一个Mp
+func (m Mps) GetByUserName(username string) *Mp {
+	return m.SearchByUserName(1, username).First()
+}
