@@ -401,6 +401,11 @@ func (c *Caller) WebWxRenameChatRoom(request *BaseRequest, info *LoginInfo, newT
 	return parseBaseResponseError(resp)
 }
 
+// SetMode 设置Client的模式
+func (c *Client) SetMode(mode mode) {
+	c.mode = mode
+}
+
 // 处理响应返回的结果是否正常
 func parseBaseResponseError(resp *http.Response) error {
 	defer resp.Body.Close()

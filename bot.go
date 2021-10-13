@@ -348,7 +348,9 @@ func (b *Bot) OnLogout(f func(bot *Bot)) {
 }
 
 // NewBot Bot的构造方法，需要自己传入Caller
-func NewBot(caller *Caller) *Bot {
+func NewBot() *Bot {
+	caller := DefaultCaller()
+	caller.Client.SetMode(Desktop)
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Bot{Caller: caller, Storage: &Storage{}, context: ctx, cancel: cancel}
 }
@@ -357,15 +359,10 @@ func NewBot(caller *Caller) *Bot {
 // mode不传入默认为openwechat.Normal,详情见mode
 //     bot := openwechat.DefaultBot(openwechat.Desktop)
 func DefaultBot(modes ...mode) *Bot {
-	var m mode
-	if len(modes) == 0 {
-		m = Normal
-	} else {
-		m = modes[0]
+	bot := NewBot()
+	if len(modes) > 0 {
+		bot.Caller.Client.SetMode(modes[0])
 	}
-	caller := DefaultCaller()
-	caller.Client.mode = m
-	bot := NewBot(caller)
 	bot.UUIDCallback = PrintlnQrcodeUrl
 	bot.ScanCallBack = func(body []byte) {
 		log.Println("扫码成功,请在手机上确认登录")
