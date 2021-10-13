@@ -260,6 +260,38 @@ func (m *Message) GetFile() (*http.Response, error) {
 	return nil, errors.New("unsupported type")
 }
 
+// GetPicture 获取图片消息的响应
+func (m *Message) GetPicture() (*http.Response, error) {
+	if !(m.IsPicture() || m.IsEmoticon()) {
+		return nil, errors.New("picture message required")
+	}
+	return m.Bot.Caller.Client.WebWxGetMsgImg(m, m.Bot.Storage.LoginInfo)
+}
+
+// GetVoice 获取录音消息的响应
+func (m *Message) GetVoice() (*http.Response, error) {
+	if !m.IsVoice() {
+		return nil, errors.New("voice message required")
+	}
+	return m.Bot.Caller.Client.WebWxGetVoice(m, m.Bot.Storage.LoginInfo)
+}
+
+// GetVideo 获取视频消息的响应
+func (m *Message) GetVideo() (*http.Response, error) {
+	if !m.IsVideo() {
+		return nil, errors.New("video message required")
+	}
+	return m.Bot.Caller.Client.WebWxGetVideo(m, m.Bot.Storage.LoginInfo)
+}
+
+// GetMedia 获取媒体消息的响应
+func (m *Message) GetMedia() (*http.Response, error) {
+	if !m.IsMedia() {
+		return nil, errors.New("media message required")
+	}
+	return m.Bot.Caller.Client.WebWxGetMedia(m, m.Bot.Storage.LoginInfo)
+}
+
 // Card 获取card类型
 func (m *Message) Card() (*Card, error) {
 	if !m.IsCard() {
@@ -295,11 +327,7 @@ func (m *Message) Agree(verifyContents ...string) error {
 	if !m.IsFriendAdd() {
 		return fmt.Errorf("friend add message required")
 	}
-	var builder strings.Builder
-	for _, v := range verifyContents {
-		builder.WriteString(v)
-	}
-	return m.Bot.Caller.WebWxVerifyUser(m.Bot.Storage, m.RecommendInfo, builder.String())
+	return m.Bot.Caller.WebWxVerifyUser(m.Bot.Storage, m.RecommendInfo, strings.Join(verifyContents, ""))
 }
 
 // AsRead 将消息设置为已读
