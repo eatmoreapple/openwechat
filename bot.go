@@ -259,9 +259,8 @@ func (b *Bot) stopAsyncCALL(err error) {
 		log.Println(err)
 		return
 	}
-	b.cancel()
 	b.err = err
-	b.self = nil
+	b.Exit()
 	log.Printf("exit with : %s", err.Error())
 }
 
@@ -287,6 +286,12 @@ func (b *Bot) Block() error {
 	}
 	<-b.context.Done()
 	return nil
+}
+
+// Exit 主动退出，让 Block 不在阻塞
+func (b *Bot) Exit() {
+	b.self = nil
+	b.cancel()
 }
 
 // CrashReason 获取当前Bot崩溃的原因
