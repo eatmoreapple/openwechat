@@ -154,6 +154,13 @@ func (m *Message) ReplyImage(file *os.File) (*SentMessage, error) {
 	return m.Bot.Caller.WebWxSendImageMsg(file, request, info, m.Bot.self.UserName, m.FromUserName)
 }
 
+// ReplyVideo 回复视频消息
+func (m *Message) ReplyVideo(file *os.File) (*SentMessage, error) {
+	info := m.Bot.Storage.LoginInfo
+	request := m.Bot.Storage.Request
+	return m.Bot.Caller.WebWxSendVideoMsg(file, request, info, m.Bot.self.UserName, m.FromUserName)
+}
+
 // ReplyFile 回复文件消息
 func (m *Message) ReplyFile(file *os.File) (*SentMessage, error) {
 	info := m.Bot.Storage.LoginInfo
