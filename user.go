@@ -11,7 +11,6 @@ import (
 
 // User 抽象的用户结构: 好友 群组 公众号
 type User struct {
-	Uin               int64
 	HideInputBarFlag  int
 	StarFriend        int
 	Sex               int
@@ -27,7 +26,8 @@ type User struct {
 	UniFriend         int
 	OwnerUin          int
 	Statues           int
-	AttrStatus        int
+	AttrStatus        int64
+	Uin               int64
 	Province          string
 	City              string
 	Alias             string
