@@ -33,7 +33,7 @@ func (f *Friend) SendImage(file *os.File) (*SentMessage, error) {
 	return f.Self.SendImageToFriend(f, file)
 }
 
-// SendVideo 发送图片消息
+// SendVideo 发送视频消息
 func (f *Friend) SendVideo(file *os.File) (*SentMessage, error) {
 	return f.Self.SendVideoToFriend(f, file)
 }

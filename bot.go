@@ -6,6 +6,8 @@ import (
 	"errors"
 	"log"
 	"net/url"
+	"os/exec"
+	"runtime"
 	"sync"
 )
 
@@ -384,7 +386,31 @@ func GetQrcodeUrl(uuid string) string {
 // PrintlnQrcodeUrl 打印登录二维码
 func PrintlnQrcodeUrl(uuid string) {
 	println("访问下面网址扫描二维码登录")
-	println(GetQrcodeUrl(uuid))
+	qrcodeUrl := GetQrcodeUrl(uuid)
+	println(qrcodeUrl)
+
+	// browser open the login url
+	_ = open(qrcodeUrl)
+}
+
+// open opens the specified URL in the default browser of the user.
+func open(url string) error {
+	var (
+		cmd  string
+		args []string
+	)
+
+	switch runtime.GOOS {
+	case "windows":
+		cmd, args = "cmd", []string{"/c", "start"}
+	case "darwin":
+		cmd = "open"
+	default:
+		// "linux", "freebsd", "openbsd", "netbsd"
+		cmd = "xdg-open"
+	}
+	args = append(args, url)
+	return exec.Command(cmd, args...).Start()
 }
 
 func (b *Bot) handleMessage(messageList []*Message) {
