@@ -88,19 +88,11 @@ func getMessageType(filename string) string {
 }
 
 func scanXml(resp *http.Response, v interface{}) error {
-	var buffer bytes.Buffer
-	if _, err := buffer.ReadFrom(resp.Body); err != nil {
-		return err
-	}
-	return xml.Unmarshal(buffer.Bytes(), v)
+	return xml.NewDecoder(resp.Body).Decode(v)
 }
 
 func scanJson(resp *http.Response, v interface{}) error {
-	var buffer bytes.Buffer
-	if _, err := buffer.ReadFrom(resp.Body); err != nil {
-		return err
-	}
-	return json.Unmarshal(buffer.Bytes(), v)
+	return json.NewDecoder(resp.Body).Decode(v)
 }
 
 func stringToByte(s string) []byte {

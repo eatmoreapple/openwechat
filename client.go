@@ -54,7 +54,7 @@ func NewClient(client *http.Client) *Client {
 // 设置客户端不自动跳转
 func DefaultClient() *Client {
 	jar, _ := cookiejar.New(nil)
-	timeout := time.Duration(30 * time.Second)
+	timeout := 30 * time.Second
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
