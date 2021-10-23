@@ -41,7 +41,7 @@ type Client struct {
 	HttpHooks HttpHooks
 	*http.Client
 	Domain  WechatDomain
-	mode    mode
+	mode    Mode
 	mu      sync.Mutex
 	cookies map[string][]*http.Cookie
 }
@@ -59,7 +59,7 @@ func DefaultClient() *Client {
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
-		Jar: jar,
+		Jar:     jar,
 		Timeout: timeout,
 	}
 	c := NewClient(client)
@@ -113,22 +113,7 @@ func (c *Client) GetCookieMap() map[string][]*http.Cookie {
 
 // GetLoginUUID 获取登录的uuid
 func (c *Client) GetLoginUUID() (*http.Response, error) {
-	path, _ := url.Parse(jslogin)
-	params := url.Values{}
-	redirectUrl, _ := url.Parse(webwxnewloginpage)
-	if c.mode == Desktop {
-		p := url.Values{"mod": {"desktop"}}
-		redirectUrl.RawQuery = p.Encode()
-	}
-	params.Add("redirect_uri", redirectUrl.String())
-	params.Add("appid", appId)
-	params.Add("fun", "new")
-	params.Add("lang", "zh_CN")
-	params.Add("_", strconv.FormatInt(time.Now().UnixNano() / 1e6, 10))
-
-	path.RawQuery = params.Encode()
-	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
-	return c.Do(req)
+	return c.mode.GetLoginUUID(c)
 }
 
 // GetLoginQrcode 获取登录的二维吗
@@ -154,12 +139,7 @@ func (c *Client) CheckLogin(uuid string) (*http.Response, error) {
 
 // GetLoginInfo 请求获取LoginInfo
 func (c *Client) GetLoginInfo(path string) (*http.Response, error) {
-	req, _ := http.NewRequest(http.MethodGet, path, nil)
-	if c.mode == Desktop {
-		req.Header.Add("client-version", uosPatchClientVersion)
-		req.Header.Add("extspam", uosPatchExtspam)
-	}
-	return c.Do(req)
+	return c.mode.GetLoginInfo(c, path)
 }
 
 // WebInit 请求获取初始化信息
@@ -203,12 +183,12 @@ func (c *Client) WebWxStatusNotify(request *BaseRequest, response *WebInitRespon
 func (c *Client) SyncCheck(request *BaseRequest, info *LoginInfo, response *WebInitResponse) (*http.Response, error) {
 	path, _ := url.Parse(c.Domain.SyncHost() + synccheck)
 	params := url.Values{}
-	params.Add("r", strconv.FormatInt(time.Now().UnixNano() / 1e6, 10))
+	params.Add("r", strconv.FormatInt(time.Now().UnixNano()/1e6, 10))
 	params.Add("skey", info.SKey)
 	params.Add("sid", info.WxSid)
 	params.Add("uin", strconv.FormatInt(info.WxUin, 10))
 	params.Add("deviceid", request.DeviceID)
-	params.Add("_", strconv.FormatInt(time.Now().UnixNano() / 1e6, 10))
+	params.Add("_", strconv.FormatInt(time.Now().UnixNano()/1e6, 10))
 	var syncKeyStringSlice = make([]string, response.SyncKey.Count)
 	// 将SyncKey里面的元素按照特定的格式拼接起来
 	for index, item := range response.SyncKey.List {
@@ -226,7 +206,7 @@ func (c *Client) SyncCheck(request *BaseRequest, info *LoginInfo, response *WebI
 func (c *Client) WebWxGetContact(info *LoginInfo) (*http.Response, error) {
 	path, _ := url.Parse(c.Domain.BaseHost() + webwxgetcontact)
 	params := url.Values{}
-	params.Add("r", strconv.FormatInt(time.Now().UnixNano() / 1e6, 10))
+	params.Add("r", strconv.FormatInt(time.Now().UnixNano()/1e6, 10))
 	params.Add("skey", info.SKey)
 	params.Add("req", "0")
 	path.RawQuery = params.Encode()
@@ -239,7 +219,7 @@ func (c *Client) WebWxBatchGetContact(members Members, request *BaseRequest) (*h
 	path, _ := url.Parse(c.Domain.BaseHost() + webwxbatchgetcontact)
 	params := url.Values{}
 	params.Add("type", "ex")
-	params.Add("r", strconv.FormatInt(time.Now().UnixNano() / 1e6, 10))
+	params.Add("r", strconv.FormatInt(time.Now().UnixNano()/1e6, 10))
 	path.RawQuery = params.Encode()
 	list := NewUserDetailItemList(members)
 	content := map[string]interface{}{
@@ -511,7 +491,7 @@ func (c *Client) WebWxVerifyUser(storage *Storage, info RecommendInfo, verifyCon
 	loginInfo := storage.LoginInfo
 	path, _ := url.Parse(c.Domain.BaseHost() + webwxverifyuser)
 	params := url.Values{}
-	params.Add("r", strconv.FormatInt(time.Now().UnixNano() / 1e6, 10))
+	params.Add("r", strconv.FormatInt(time.Now().UnixNano()/1e6, 10))
 	params.Add("lang", "zh_CN")
 	params.Add("pass_ticket", loginInfo.PassTicket)
 	path.RawQuery = params.Encode()

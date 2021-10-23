@@ -402,7 +402,7 @@ func (c *Caller) WebWxRenameChatRoom(request *BaseRequest, info *LoginInfo, newT
 }
 
 // SetMode 设置Client的模式
-func (c *Client) SetMode(mode mode) {
+func (c *Client) SetMode(mode Mode) {
 	c.mode = mode
 }
 

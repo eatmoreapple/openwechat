@@ -360,7 +360,7 @@ func NewBot() *Bot {
 // DefaultBot 默认的Bot的构造方法,
 // mode不传入默认为openwechat.Normal,详情见mode
 //     bot := openwechat.DefaultBot(openwechat.Desktop)
-func DefaultBot(modes ...mode) *Bot {
+func DefaultBot(modes ...Mode) *Bot {
 	bot := NewBot()
 	if len(modes) > 0 {
 		bot.Caller.Client.SetMode(modes[0])

@@ -1,13 +1,13 @@
 package openwechat
 
-// mode 类型限制
-type mode string
-
-// 向外暴露2种模式
-const (
-	Normal  mode = "normal"
-	Desktop mode = "desktop" // 突破网页版登录限制
-)
+//// mode 类型限制
+//type mode string
+//
+//// 向外暴露2种模式
+//const (
+//	Normal  mode = "normal"
+//	Desktop mode = "desktop" // 突破网页版登录限制
+//)
 
 const (
 	webwxinit            = "/cgi-bin/mmwebwx-bin/webwxinit"
