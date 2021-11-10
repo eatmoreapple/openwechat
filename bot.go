@@ -19,7 +19,7 @@ type Bot struct {
 	SyncCheckCallback      func(resp SyncCheckResponse) // 心跳回调
 	MessageHandler         MessageHandler               // 获取消息成功的handle
 	GetMessageErrorHandler func(err error)              // 获取消息发生错误的handle
-	IsHot                  bool                         // 是否为热登录模式
+	isHot                  bool                         // 是否为热登录模式
 	once                   sync.Once
 	err                    error
 	context                context.Context
@@ -62,7 +62,7 @@ func (b *Bot) GetCurrentUser() (*Self, error) {
 //		err := bot.HotLogin(Storage, true)
 //		fmt.Println(err)
 func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
-	b.IsHot = true
+	b.isHot = true
 	b.HotReloadStorage = storage
 
 	var err error
@@ -182,7 +182,7 @@ func (b *Bot) HandleLogin(data []byte) error {
 	b.Storage.Request = request
 
 	// 如果是热登陆,则将当前的重要信息写入hotReloadStorage
-	if b.IsHot {
+	if b.isHot {
 		if err = b.DumpHotReloadStorage(); err != nil {
 			return err
 		}
@@ -420,4 +420,9 @@ func (b *Bot) handleMessage(messageList []*Message) {
 		// 调用自定义的处理方法
 		b.MessageHandler(message)
 	}
+}
+
+// IsHot returns true if is hot login otherwise false
+func (b *Bot) IsHot() bool {
+	return b.isHot
 }
