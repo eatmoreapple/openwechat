@@ -68,7 +68,7 @@ func getFileExt(name string) string {
 	if len(ext) == 0 {
 		ext = "undefined"
 	}
-	return ext
+	return strings.TrimSuffix(ext, ".")
 }
 
 const (
