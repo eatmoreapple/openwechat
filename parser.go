@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"mime/multipart"
 	"net/http"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -63,11 +64,11 @@ func GetFileContentType(file multipart.File) (string, error) {
 }
 
 func getFileExt(name string) string {
-	results := strings.Split(name, ".")
-	if len(results) == 1 {
-		return "undefined"
+	ext := filepath.Ext(name)
+	if len(ext) == 0 {
+		ext = "undefined"
 	}
-	return results[len(results)-1]
+	return ext
 }
 
 const (
