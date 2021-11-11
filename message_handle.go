@@ -1,5 +1,7 @@
 package openwechat
 
+import "strings"
+
 // MessageHandler 消息处理函数
 type MessageHandler func(msg *Message)
 
@@ -38,11 +40,23 @@ func (c *MessageContext) Next() {
 	}
 }
 
-// 消息匹配函数,返回为true则表示匹配
-type matchFunc func(*Message) bool
+// MatchFunc 消息匹配函数,返回为true则表示匹配
+type MatchFunc func(*Message) bool
+
+// MatchFuncList 将多个MatchFunc封装成一个MatchFunc
+func MatchFuncList(matchFuncs ...MatchFunc) MatchFunc {
+	return func(message *Message) bool {
+		for _, matchFunc := range matchFuncs {
+			if !matchFunc(message) {
+				return false
+			}
+		}
+		return true
+	}
+}
 
 type matchNode struct {
-	matchFunc matchFunc
+	matchFunc MatchFunc
 	group     MessageContextHandlerGroup
 }
 
@@ -95,9 +109,9 @@ func (m *MessageMatchDispatcher) do(ctx *MessageContext) {
 
 // RegisterHandler 注册消息处理函数, 根据自己的需求自定义
 // matchFunc返回true则表示处理对应的handlers
-func (m *MessageMatchDispatcher) RegisterHandler(matchFunc matchFunc, handlers ...MessageContextHandler) {
+func (m *MessageMatchDispatcher) RegisterHandler(matchFunc MatchFunc, handlers ...MessageContextHandler) {
 	if matchFunc == nil {
-		panic("matchFunc can not be nil")
+		panic("MatchFunc can not be nil")
 	}
 	node := &matchNode{matchFunc: matchFunc, group: handlers}
 	m.matchNodes = append(m.matchNodes, node)
@@ -186,4 +200,62 @@ func (m *MessageMatchDispatcher) OnGroupByGroupName(groupName string, handlers .
 		return user.IsGroup() && user.NickName == groupName
 	}
 	m.OnUser(f, handlers...)
+}
+
+type MessageSenderMatchFunc func(user *User) bool
+
+// SenderMatchFunc 抽象的匹配发送者特征的处理函数
+//     dispatcher := NewMessageMatchDispatcher()
+//	   matchFuncList := MatchFuncList(SenderFriendRequired(), SenderNickNameContainsMatchFunc("多吃点苹果"))
+//	   dispatcher.RegisterHandler(matchFuncList, func(ctx *MessageContext) {
+//		     do your own business
+//	   })
+func SenderMatchFunc(matchFuncs ...MessageSenderMatchFunc) MatchFunc {
+	return func(message *Message) bool {
+		sender, err := message.Sender()
+		if err != nil {
+			return false
+		}
+		for _, matchFunc := range matchFuncs {
+			if !matchFunc(sender) {
+				return false
+			}
+		}
+		return true
+	}
+}
+
+// SenderFriendRequired 只匹配好友
+func SenderFriendRequired() MatchFunc {
+	return SenderMatchFunc(func(user *User) bool { return user.IsFriend() })
+}
+
+// SenderGroupRequired 只匹配群组
+func SenderGroupRequired() MatchFunc {
+	return SenderMatchFunc(func(user *User) bool { return user.IsGroup() })
+}
+
+// SenderMpRequired 只匹配公众号
+func SenderMpRequired() MatchFunc {
+	return SenderMatchFunc(func(user *User) bool { return user.IsMP() })
+}
+
+// SenderNickNameEqualMatchFunc 根据用户昵称是否等于指定字符串的匹配函数
+func SenderNickNameEqualMatchFunc(nickname string) MatchFunc {
+	return SenderMatchFunc(func(user *User) bool { return user.NickName == nickname })
+}
+
+// SenderRemarkNameEqualMatchFunc 根据用户备注是否等于指定字符串的匹配函数
+func SenderRemarkNameEqualMatchFunc(remarkName string) MatchFunc {
+	return SenderMatchFunc(func(user *User) bool { return user.RemarkName == remarkName })
+}
+
+// SenderNickNameContainsMatchFunc 根据用户昵称是否包含指定字符串的匹配函数
+func SenderNickNameContainsMatchFunc(nickname string) MatchFunc {
+	return SenderMatchFunc(func(user *User) bool { return strings.Contains(user.NickName, nickname) })
+}
+
+// SenderRemakeNameContainsFunc  根据用户备注名是否包含指定字符串的匹配函数
+func SenderRemakeNameContainsFunc(remakeName string) MatchFunc {
+	return SenderMatchFunc(func(user *User) bool { return strings.Contains(user.RemarkName, remakeName) })
 }
