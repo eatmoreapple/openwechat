@@ -128,16 +128,4 @@ func TestSender(t *testing.T) {
 	bot.Block()
 }
 
-func TestHotReloadStorage(t *testing.T) {
-	bot := DefaultBot(Desktop)
-	bot.MessageHandler = func(msg *Message) {
-		if msg.IsText() && msg.Content == "ping" {
-			msg.ReplyText("pong")
-		}
-	}
-	if err := bot.HotLogin(NewJsonFileHotReloadStorage("test.json")); err != nil {
-		t.Error(err)
-		return
-	}
-	bot.Block()
-}
+
