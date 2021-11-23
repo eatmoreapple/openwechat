@@ -99,18 +99,18 @@ func (m *Message) Receiver() (*User, error) {
 		if sender, err := m.Sender(); err != nil {
 			return nil, err
 		} else {
-			users := sender.MemberList.SearchByUserName(1, m.ToUserName)
-			if users == nil {
+			user, exist := sender.MemberList.GetByUserName(m.ToUserName)
+			if !exist {
 				return nil, ErrNoSuchUserFoundError
 			}
-			return users.First(), nil
+			return user, nil
 		}
 	} else {
-		users := m.Bot.self.MemberList.SearchByUserName(1, m.ToUserName)
-		if users == nil {
+		user, exist := m.Bot.self.MemberList.GetByRemarkName(m.ToUserName)
+		if !exist {
 			return nil, ErrNoSuchUserFoundError
 		}
-		return users.First(), nil
+		return user, nil
 	}
 }
 

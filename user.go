@@ -534,6 +534,27 @@ func (m Members) Search(limit int, condFuncList ...func(user *User) bool) (resul
 	return
 }
 
+// GetByUserName 根据username查找用户
+func (m Members) GetByUserName(username string) (*User, bool) {
+	users := m.SearchByUserName(1, username)
+	user := users.First()
+	return user, user != nil
+}
+
+// GetByRemarkName 根据remarkName查找用户
+func (m Members) GetByRemarkName(remarkName string) (*User, bool) {
+	users := m.SearchByRemarkName(1, remarkName)
+	user := users.First()
+	return user, user != nil
+}
+
+// GetByNickName 根据nickname查找用户
+func (m Members) GetByNickName(nickname string) (*User, bool) {
+	users := m.SearchByNickName(1, nickname)
+	user := users.First()
+	return user, user != nil
+}
+
 func (m Members) Friends() Friends {
 	friends := make(Friends, 0)
 	for _, mb := range m {
