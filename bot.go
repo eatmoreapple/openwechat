@@ -12,22 +12,22 @@ import (
 )
 
 type Bot struct {
-	ScanCallBack           func(body []byte)            // 扫码回调,可获取扫码用户的头像
-	LoginCallBack          func(body []byte)            // 登陆回调
-	LogoutCallBack         func(bot *Bot)               // 退出回调
-	UUIDCallback           func(uuid string)            // 获取UUID的回调函数
-	SyncCheckCallback      func(resp SyncCheckResponse) // 心跳回调
-	MessageHandler         MessageHandler               // 获取消息成功的handle
-	GetMessageErrorHandler func(err error)              // 获取消息发生错误的handle
-	isHot                  bool                         // 是否为热登录模式
-	once                   sync.Once
-	err                    error
-	context                context.Context
-	cancel                 context.CancelFunc
-	Caller                 *Caller
-	self                   *Self
-	Storage                *Storage
-	HotReloadStorage       HotReloadStorage
+	ScanCallBack        func(body []byte)            // 扫码回调,可获取扫码用户的头像
+	LoginCallBack       func(body []byte)            // 登陆回调
+	LogoutCallBack      func(bot *Bot)               // 退出回调
+	UUIDCallback        func(uuid string)            // 获取UUID的回调函数
+	SyncCheckCallback   func(resp SyncCheckResponse) // 心跳回调
+	MessageHandler      MessageHandler               // 获取消息成功的handle
+	MessageErrorHandler func(err error) bool         // 获取消息发生错误的handle, 返回true则尝试继续监听
+	isHot               bool                         // 是否为热登录模式
+	once                sync.Once
+	err                 error
+	context             context.Context
+	cancel              context.CancelFunc
+	Caller              *Caller
+	self                *Self
+	Storage             *Storage
+	HotReloadStorage    HotReloadStorage
 }
 
 // Alive 判断当前用户是否正常在线
@@ -154,7 +154,7 @@ func (b *Bot) Logout() error {
 		if err := b.Caller.Logout(info); err != nil {
 			return err
 		}
-		b.stopAsyncCALL(errors.New("logout"))
+		b.stopSyncCheck(errors.New("logout"))
 		return nil
 	}
 	return errors.New("user not login")
@@ -214,11 +214,18 @@ func (b *Bot) WebInit() error {
 
 	// FIX: 当bot在线的情况下执行热登录,会开启多次事件监听
 	go b.once.Do(func() {
-		if b.GetMessageErrorHandler == nil {
-			b.GetMessageErrorHandler = b.stopAsyncCALL
+		if b.MessageErrorHandler == nil {
+			b.MessageErrorHandler = b.stopSyncCheck
 		}
-		if err = b.asyncCall(); err != nil {
-			b.GetMessageErrorHandler(err)
+		for {
+			err := b.syncCheck()
+			if err == nil {
+				continue
+			}
+			// 判断是否继续, 如果不继续则退出
+			if goon := b.MessageErrorHandler(err); !goon {
+				break
+			}
 		}
 	})
 	return nil
@@ -226,7 +233,7 @@ func (b *Bot) WebInit() error {
 
 // 轮询请求
 // 根据状态码判断是否有新的请求
-func (b *Bot) asyncCall() error {
+func (b *Bot) syncCheck() error {
 	var (
 		err  error
 		resp *SyncCheckResponse
@@ -247,8 +254,19 @@ func (b *Bot) asyncCall() error {
 		}
 		// 如果Selector不为0，则获取消息
 		if !resp.NorMal() {
-			if err = b.getNewWechatMessage(); err != nil {
+			messages, err := b.syncMessage()
+			if err != nil {
 				return err
+			}
+			if b.MessageHandler == nil {
+				continue
+			}
+			for _, message := range messages {
+				message.init(b)
+				// 默认同步调用
+				// 如果异步调用则需自行处理
+				// 如配合 openwechat.MessageMatchDispatcher 使用
+				b.MessageHandler(message)
 			}
 		}
 	}
@@ -256,29 +274,27 @@ func (b *Bot) asyncCall() error {
 }
 
 // 当获取消息发生错误时, 默认的错误处理行为
-func (b *Bot) stopAsyncCALL(err error) {
+func (b *Bot) stopSyncCheck(err error) bool {
 	if IsNetworkError(err) {
 		log.Println(err)
-		return
+		// 继续监听
+		return true
 	}
 	b.err = err
 	b.Exit()
 	log.Printf("exit with : %s", err.Error())
+	return false
 }
 
 // 获取新的消息
-func (b *Bot) getNewWechatMessage() error {
+func (b *Bot) syncMessage() ([]*Message, error) {
 	resp, err := b.Caller.WebWxSync(b.Storage.Request, b.Storage.Response, b.Storage.LoginInfo)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// 更新SyncKey并且重新存入storage
 	b.Storage.Response.SyncKey = resp.SyncKey
-	// 避免单个消息处理函数阻塞，让其他的消息得不到处理
-	if b.MessageHandler != nil {
-		b.handleMessage(resp.AddMsgList)
-	}
-	return nil
+	return resp.AddMsgList, nil
 }
 
 // Block 当消息同步发生了错误或者用户主动在手机上退出，该方法会立即返回，否则会一直阻塞
@@ -307,8 +323,8 @@ func (b *Bot) MessageOnSuccess(h func(msg *Message)) {
 }
 
 // MessageOnError setter for Bot.GetMessageErrorHandler
-func (b *Bot) MessageOnError(h func(err error)) {
-	b.GetMessageErrorHandler = h
+func (b *Bot) MessageOnError(h func(err error) bool) {
+	b.MessageErrorHandler = h
 }
 
 // DumpHotReloadStorage 写入HotReloadStorage
@@ -349,29 +365,35 @@ func (b *Bot) OnLogout(f func(bot *Bot)) {
 	b.LogoutCallBack = f
 }
 
-// NewBot Bot的构造方法，需要自己传入Caller
+// NewBot Bot的构造方法
 func NewBot() *Bot {
 	caller := DefaultCaller()
+	// 默认行为为桌面模式
 	caller.Client.SetMode(Desktop)
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Bot{Caller: caller, Storage: &Storage{}, context: ctx, cancel: cancel}
 }
 
 // DefaultBot 默认的Bot的构造方法,
-// mode不传入默认为openwechat.Normal,详情见mode
+// mode不传入默认为 openwechat.Desktop,详情见mode
 //     bot := openwechat.DefaultBot(openwechat.Desktop)
 func DefaultBot(modes ...Mode) *Bot {
 	bot := NewBot()
 	if len(modes) > 0 {
 		bot.Caller.Client.SetMode(modes[0])
 	}
+	// 获取二维码回调
 	bot.UUIDCallback = PrintlnQrcodeUrl
+	// 扫码回调
 	bot.ScanCallBack = func(body []byte) {
 		log.Println("扫码成功,请在手机上确认登录")
 	}
+	// 登录回调
 	bot.LoginCallBack = func(body []byte) {
 		log.Println("登录成功")
 	}
+	// 心跳回调函数
+	// 默认的行为打印SyncCheckResponse
 	bot.SyncCheckCallback = func(resp SyncCheckResponse) {
 		log.Printf("RetCode:%s  Selector:%s", resp.RetCode, resp.Selector)
 	}
@@ -411,15 +433,6 @@ func open(url string) error {
 	}
 	args = append(args, url)
 	return exec.Command(cmd, args...).Start()
-}
-
-func (b *Bot) handleMessage(messageList []*Message) {
-	for _, message := range messageList {
-		// 根据不同的消息类型来进行处理，方便后续统一调用
-		message.init(b)
-		// 调用自定义的处理方法
-		b.MessageHandler(message)
-	}
 }
 
 // IsHot returns true if is hot login otherwise false
