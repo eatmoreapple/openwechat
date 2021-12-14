@@ -1,8 +1,7 @@
 package openwechat
 
 import (
-	"errors"
-	"fmt"
+	"strconv"
 )
 
 /*
@@ -12,35 +11,13 @@ import (
 // LoginInfo 登录信息
 type LoginInfo struct {
 	Ret         int    `xml:"ret"`
-	WxUin       int64    `xml:"wxuin"`
+	WxUin       int64  `xml:"wxuin"`
 	IsGrayScale int    `xml:"isgrayscale"`
 	Message     string `xml:"message"`
 	SKey        string `xml:"skey"`
 	WxSid       string `xml:"wxsid"`
 	PassTicket  string `xml:"pass_ticket"`
 }
-
-// errors
-const (
-	errParamError         = "param error"
-	errTicketError        = "ticket error"
-	errLoginEnvError      = "login env error"
-	errLoginFailedWarn    = "failed login warn"
-	errLoginFailedCheck   = "failed login check"
-	errCookieInvalidError = "cookie invalid error"
-	errOptTooOften        = "opt too often"
-)
-
-var (
-	ErrParamError         = errors.New(errParamError)
-	ErrTicketError        = errors.New(errTicketError)
-	ErrLoginEnvError      = errors.New(errLoginEnvError)
-	ErrLoginFailedWarn    = errors.New(errLoginFailedWarn)
-	ErrLoginFailedCheck   = errors.New(errLoginFailedCheck)
-	ErrCookieInvalidError = errors.New(errCookieInvalidError)
-	ErrOptTooOften        = errors.New(errOptTooOften)
-	ErrBaseResponseError  error
-)
 
 func (l LoginInfo) Ok() bool {
 	return l.Ret == 0
@@ -55,47 +32,6 @@ func (l LoginInfo) Error() string {
 type BaseRequest struct {
 	Uin                 int64
 	Sid, Skey, DeviceID string
-}
-
-// BaseResponse 大部分返回对象都携带该信息
-type BaseResponse struct {
-	Ret    int
-	ErrMsg string
-}
-
-func (b BaseResponse) Ok() bool {
-	return b.Ret == 0
-}
-
-func (b BaseResponse) Error() string {
-	if err := getResponseErrorWithRetCode(b.Ret); err != nil {
-		return err.Error()
-	}
-	return ""
-}
-
-func getResponseErrorWithRetCode(code int) error {
-	switch code {
-	case 0:
-		return nil
-	case 1:
-		return ErrParamError
-	case -14:
-		return ErrTicketError
-	case 1100:
-		return ErrLoginFailedWarn
-	case 1101:
-		return ErrLoginFailedCheck
-	case 1102:
-		return ErrCookieInvalidError
-	case 1203:
-		return ErrLoginEnvError
-	case 1205:
-		return ErrOptTooOften
-	default:
-		ErrBaseResponseError = fmt.Errorf("base response ret code %d", code)
-		return ErrBaseResponseError
-	}
 }
 
 type SyncKey struct {
@@ -156,36 +92,21 @@ type SyncCheckResponse struct {
 	Selector string
 }
 
-func (s *SyncCheckResponse) Success() bool {
+func (s SyncCheckResponse) Success() bool {
 	return s.RetCode == "0"
 }
 
-func (s *SyncCheckResponse) NorMal() bool {
+func (s SyncCheckResponse) NorMal() bool {
 	return s.Success() && s.Selector == "0"
 }
 
 // 实现error接口
-func (s *SyncCheckResponse) Error() string {
-	switch s.RetCode {
-	case "0":
+func (s SyncCheckResponse) Error() string {
+	i, err := strconv.ParseInt(s.RetCode, 16, 10)
+	if err != nil {
 		return ""
-	case "1":
-		return errParamError
-	case "-14":
-		return errTicketError
-	case "1100":
-		return errLoginFailedWarn
-	case "1101":
-		return errLoginFailedCheck
-	case "1102":
-		return errCookieInvalidError
-	case "1203":
-		return errLoginEnvError
-	case "1205":
-		return errOptTooOften
-	default:
-		return fmt.Sprintf("sync check response error code %s", s.RetCode)
 	}
+	return Ret(i).String()
 }
 
 type WebWxSyncResponse struct {

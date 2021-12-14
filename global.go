@@ -38,15 +38,12 @@ const (
 	AppMessage = 6
 )
 
-// MessageType以Go惯用形式定义了PC微信所有的官方消息类型。
+// MessageType 以Go惯用形式定义了PC微信所有的官方消息类型。
 // 详见 message_test.go
 type MessageType int
 
-// AppMessageType以Go惯用形式定义了PC微信所有的官方App消息类型。
+// AppMessageType 以Go惯用形式定义了PC微信所有的官方App消息类型。
 type AppMessageType int
-
-//go:generate stringer -type=MessageType -linecomment=true
-//go:generate stringer -type=AppMessageType -linecomment=true
 
 // https://res.wx.qq.com/a/wx_fed/webwx/res/static/js/index_c7d281c.js
 // MSGTYPE_TEXT
@@ -103,7 +100,6 @@ const (
 	AppMsgTypeTransfers             AppMessageType = 2000   // 转账消息
 	AppMsgTypeRedEnvelopes          AppMessageType = 2001   // 红包消息
 	AppMsgTypeReaderType            AppMessageType = 100001 //自定义的消息
-
 )
 
 // 登录状态
