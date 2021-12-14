@@ -75,8 +75,6 @@ func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
 		return b.Login()
 	}
 
-	defer storage.Close()
-
 	if err = b.hotLoginInit(*item); err != nil {
 		return err
 	}
@@ -340,14 +338,7 @@ func (b *Bot) DumpHotReloadStorage() error {
 		WechatDomain: b.Caller.Client.Domain,
 	}
 
-	data, err := json.Marshal(item)
-	if err != nil {
-		return err
-	}
-	if _, err = b.HotReloadStorage.Write(data); err != nil {
-		return err
-	}
-	return b.HotReloadStorage.Close()
+	return json.NewEncoder(b.HotReloadStorage).Encode(item)
 }
 
 // OnLogin is a setter for LoginCallBack
