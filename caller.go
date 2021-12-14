@@ -84,10 +84,6 @@ func (c *Caller) GetLoginInfo(body []byte) (*LoginInfo, error) {
 	c.Client.Domain = WechatDomain(path.Host)
 	resp, err := c.Client.GetLoginInfo(path.String())
 	if err != nil {
-		uErr, ok := err.(*url.Error)
-		if ok && (uErr.Err.Error() == ErrMissLocationHeader.Error()) {
-			return nil, ErrLoginForbiddenError
-		}
 		return nil, err
 	}
 	defer resp.Body.Close()
