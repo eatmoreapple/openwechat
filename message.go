@@ -388,7 +388,7 @@ func (m *Message) init(bot *Bot) {
 	m.Raw = raw
 	// 如果是群消息
 	if m.IsSendByGroup() {
-		if m.MsgType == MsgTypeText {
+		if m.IsText() {
 			// 将Username和正文分开
 			data := strings.Split(m.Content, ":<br/>")
 			m.Content = strings.Join(data[1:], "")
@@ -693,4 +693,10 @@ func (m *Message) String() string {
 // IsAt 判断消息是否为@消息
 func (m *Message) IsAt() bool {
 	return m.isAt
+}
+
+// IsPaiYiPai 判断消息是否为拍一拍
+// 不要问我为什么取名为PaiYiPai，因为我也不知道取啥名字好
+func (m *Message) IsPaiYiPai() bool {
+	return m.IsSystem() && strings.Contains(m.Content, "拍了拍")
 }
