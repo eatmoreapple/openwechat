@@ -388,21 +388,23 @@ func (m *Message) init(bot *Bot) {
 	m.Raw = raw
 	// 如果是群消息
 	if m.IsSendByGroup() {
-		// 将Username和正文分开
-		data := strings.Split(m.Content, ":<br/>")
-		m.Content = strings.Join(data[1:], "")
-		m.senderInGroupUserName = data[0]
-		receiver, err := m.Receiver()
-		if err == nil {
-			displayName := receiver.DisplayName
-			if displayName == "" {
-				displayName = receiver.NickName
-			}
-			// 判断是不是@消息
-			atFlag := "@" + displayName + "\u2005"
-			if strings.Contains(m.Content, atFlag) {
-				m.isAt = true
-				m.Content = strings.Replace(m.Content, atFlag, "", -1)
+		if m.MsgType == MsgTypeText {
+			// 将Username和正文分开
+			data := strings.Split(m.Content, ":<br/>")
+			m.Content = strings.Join(data[1:], "")
+			m.senderInGroupUserName = data[0]
+			receiver, err := m.Receiver()
+			if err == nil {
+				displayName := receiver.DisplayName
+				if displayName == "" {
+					displayName = receiver.NickName
+				}
+				// 判断是不是@消息
+				atFlag := "@" + displayName + "\u2005"
+				if strings.Contains(m.Content, atFlag) {
+					m.isAt = true
+					m.Content = strings.Replace(m.Content, atFlag, "", -1)
+				}
 			}
 		}
 	}
