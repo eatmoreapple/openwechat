@@ -48,9 +48,9 @@ type Message struct {
 	Url                   string
 	senderInGroupUserName string
 	RecommendInfo         RecommendInfo
-	Bot                   *Bot
+	Bot                   *Bot `json:"-"`
 	mu                    sync.RWMutex
-	Context               context.Context
+	Context               context.Context `json:"-"`
 	item                  map[string]interface{}
 }
 

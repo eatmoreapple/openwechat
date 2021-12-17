@@ -46,25 +46,25 @@ type Client struct {
 	cookies map[string][]*http.Cookie
 }
 
-func NewClient(client *http.Client) *Client {
-	return &Client{Client: client}
+func NewClient() *Client {
+	jar, _ := cookiejar.New(nil)
+	timeout := 30 * time.Second
+	return &Client{
+		Client: &http.Client{
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
+			Jar:     jar,
+			Timeout: timeout,
+		}}
 }
 
 // DefaultClient 自动存储cookie
 // 设置客户端不自动跳转
 func DefaultClient() *Client {
-	jar, _ := cookiejar.New(nil)
-	timeout := 30 * time.Second
-	client := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-		Jar:     jar,
-		Timeout: timeout,
-	}
-	c := NewClient(client)
-	c.AddHttpHook(UserAgentHook{})
-	return c
+	client := NewClient()
+	client.AddHttpHook(UserAgentHook{})
+	return client
 }
 
 func (c *Client) AddHttpHook(hooks ...HttpHook) {
