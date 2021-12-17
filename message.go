@@ -2,6 +2,7 @@ package openwechat
 
 import (
 	"context"
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -52,6 +53,7 @@ type Message struct {
 	mu                    sync.RWMutex
 	Context               context.Context `json:"-"`
 	item                  map[string]interface{}
+	Raw                   []byte `json:"-"`
 }
 
 // Sender 获取消息的发送者
@@ -382,7 +384,8 @@ func (m *Message) Get(key string) (value interface{}, exist bool) {
 // 消息初始化,根据不同的消息作出不同的处理
 func (m *Message) init(bot *Bot) {
 	m.Bot = bot
-
+	raw, _ := json.Marshal(m)
+	m.Raw = raw
 	// 如果是群消息
 	if m.IsSendByGroup() {
 		// 将Username和正文分开
