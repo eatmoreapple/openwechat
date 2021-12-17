@@ -700,3 +700,8 @@ func (m *Message) IsAt() bool {
 func (m *Message) IsPaiYiPai() bool {
 	return m.IsSystem() && strings.Contains(m.Content, "拍了拍")
 }
+
+// IsJoinGroup 判断是否有人加入了群聊
+func (m *Message) IsJoinGroup() bool {
+	return m.IsSystem() && strings.Contains(m.Content, "加入了群聊") && m.IsSendByGroup()
+}
