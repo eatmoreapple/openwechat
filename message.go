@@ -87,6 +87,9 @@ func (m *Message) SenderInGroup() (*User, error) {
 	if err := group.Detail(); err != nil {
 		return nil, err
 	}
+	if group.IsFriend() {
+		return group, nil
+	}
 	users := group.MemberList.SearchByUserName(1, m.senderInGroupUserName)
 	if users == nil {
 		return nil, ErrNoSuchUserFoundError
@@ -388,7 +391,7 @@ func (m *Message) init(bot *Bot) {
 	m.Raw = raw
 	// 如果是群消息
 	if m.IsSendByGroup() {
-		if m.IsText() {
+		if !m.IsSystem() {
 			// 将Username和正文分开
 			data := strings.Split(m.Content, ":<br/>")
 			m.Content = strings.Join(data[1:], "")
@@ -683,7 +686,7 @@ func (a AppMessageData) IsFile() bool {
 // IsComeFromGroup 判断消息是否来自群组
 // 可能是自己或者别的群员发送
 func (m *Message) IsComeFromGroup() bool {
-	return m.IsSendByGroup() || strings.HasPrefix(m.ToUserName, "@@")
+	return m.IsSendByGroup() || (strings.HasPrefix(m.ToUserName, "@@") && m.IsSendBySelf())
 }
 
 func (m *Message) String() string {
