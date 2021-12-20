@@ -26,6 +26,7 @@ type MessageContextHandlerGroup []MessageContextHandler
 // MessageContext 消息处理上下文对象
 type MessageContext struct {
 	index           int
+	abortIndex      int
 	messageHandlers MessageContextHandlerGroup
 	*Message
 }
@@ -34,10 +35,23 @@ type MessageContext struct {
 func (c *MessageContext) Next() {
 	c.index++
 	for c.index <= len(c.messageHandlers) {
+		if c.IsAbort() {
+			return
+		}
 		handle := c.messageHandlers[c.index-1]
 		handle(c)
 		c.index++
 	}
+}
+
+// IsAbort 判断是否被中断
+func (c *MessageContext) IsAbort() bool {
+	return c.abortIndex > 0
+}
+
+// Abort 中断当前消息处理, 不会调用下一个消息处理函数, 但是不会中断当前的处理函数
+func (c *MessageContext) Abort() {
+	c.abortIndex = c.index
 }
 
 // MatchFunc 消息匹配函数,返回为true则表示匹配
