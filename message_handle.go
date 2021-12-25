@@ -54,6 +54,14 @@ func (c *MessageContext) Abort() {
 	c.abortIndex = c.index
 }
 
+// AbortHandler 获取当前中断的消息处理函数
+func (c *MessageContext) AbortHandler() MessageContextHandler {
+	if c.abortIndex > 0 {
+		return c.messageHandlers[c.abortIndex-1]
+	}
+	return nil
+}
+
 // MatchFunc 消息匹配函数,返回为true则表示匹配
 type MatchFunc func(*Message) bool
 

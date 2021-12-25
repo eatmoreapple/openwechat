@@ -287,6 +287,8 @@ func (c *Client) WebWxGetHeadImg(user *User) (*http.Response, error) {
 		params.Add("username", user.UserName)
 		params.Add("skey", user.Self.Bot.Storage.Request.Skey)
 		params.Add("type", "big")
+		params.Add("chatroomid", user.EncryChatRoomId)
+		params.Add("seq", "0")
 		URL, _ := url.Parse(c.Domain.BaseHost() + webwxgeticon)
 		URL.RawQuery = params.Encode()
 		path = URL.String()
