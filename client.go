@@ -292,6 +292,7 @@ func (c *Client) WebWxGetHeadImg(user *User) (*http.Response, error) {
 		path = URL.String()
 	}
 	req, _ := http.NewRequest(http.MethodGet, path, nil)
+	req.Header.Set("Content-Type", "image/jpeg")
 	return c.Do(req)
 }
 

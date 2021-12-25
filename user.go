@@ -66,6 +66,9 @@ func (u *User) SaveAvatar(filename string) error {
 		return err
 	}
 	defer resp.Body.Close()
+	if resp.ContentLength == 0 {
+		return fmt.Errorf("get avatar err, response content length is 0")
+	}
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
