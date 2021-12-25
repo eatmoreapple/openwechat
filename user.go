@@ -65,6 +65,15 @@ func (u *User) SaveAvatar(filename string) error {
 	if err != nil {
 		return err
 	}
+	// 这里获取头像的响应有时可能会异常
+	// 一般为网路原因
+	// 再去请求一次即可解决
+	if resp.ContentLength == 0 && resp.Header.Get("Content-Type") == "image/jpeg" {
+		resp, err = u.GetAvatarResponse()
+		if err != nil {
+			return err
+		}
+	}
 	defer resp.Body.Close()
 	file, err := os.Create(filename)
 	if err != nil {
