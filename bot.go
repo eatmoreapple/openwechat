@@ -28,6 +28,7 @@ type Bot struct {
 	self                *Self
 	Storage             *Storage
 	HotReloadStorage    HotReloadStorage
+	uuid                string
 }
 
 // Alive 判断当前用户是否正常在线
@@ -81,10 +82,8 @@ func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
 
 	// 如果webInit出错,则说明可能身份信息已经失效
 	// 如果retry为True的话,则进行正常登陆
-	if err = b.WebInit(); err != nil {
-		if len(retry) > 0 && retry[0] {
-			return b.Login()
-		}
+	if err = b.WebInit(); err != nil && (len(retry) > 0 && retry[0]) {
+		err = b.Login()
 	}
 	return err
 }
@@ -102,6 +101,7 @@ func (b *Bot) hotLoginInit(item HotReloadStorageItem) error {
 	b.Storage.LoginInfo = item.LoginInfo
 	b.Storage.Request = item.BaseRequest
 	b.Caller.Client.Domain = item.WechatDomain
+	b.uuid = item.UUID
 	return nil
 }
 
@@ -109,6 +109,7 @@ func (b *Bot) hotLoginInit(item HotReloadStorageItem) error {
 // 该方法会一直阻塞，直到用户扫码登录，或者二维码过期
 func (b *Bot) Login() error {
 	uuid, err := b.Caller.GetLoginUUID()
+	b.uuid = uuid
 	if err != nil {
 		return err
 	}
@@ -336,6 +337,7 @@ func (b *Bot) DumpHotReloadStorage() error {
 		Cookies:      cookies,
 		LoginInfo:    b.Storage.LoginInfo,
 		WechatDomain: b.Caller.Client.Domain,
+		UUID:         b.uuid,
 	}
 
 	return json.NewEncoder(b.HotReloadStorage).Encode(item)
@@ -429,4 +431,9 @@ func open(url string) error {
 // IsHot returns true if is hot login otherwise false
 func (b *Bot) IsHot() bool {
 	return b.isHot
+}
+
+// UUID returns current uuid of bot
+func (b *Bot) UUID() string {
+	return b.uuid
 }

@@ -20,6 +20,7 @@ type HotReloadStorageItem struct {
 	BaseRequest  *BaseRequest
 	LoginInfo    *LoginInfo
 	WechatDomain WechatDomain
+	UUID         string
 }
 
 // HotReloadStorage 热登陆存储接口
