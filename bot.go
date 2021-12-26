@@ -106,13 +106,19 @@ func (b *Bot) hotLoginInit(item HotReloadStorageItem) error {
 }
 
 // Login 用户登录
-// 该方法会一直阻塞，直到用户扫码登录，或者二维码过期
 func (b *Bot) Login() error {
 	uuid, err := b.Caller.GetLoginUUID()
 	b.uuid = uuid
 	if err != nil {
 		return err
 	}
+	return b.LoginWithUUID(uuid)
+}
+
+// LoginWithUUID 用户登录
+// 该方法会一直阻塞，直到用户扫码登录，或者二维码过期
+func (b *Bot) LoginWithUUID(uuid string) error {
+	b.uuid = uuid
 	// 二维码获取回调
 	if b.UUIDCallback != nil {
 		b.UUIDCallback(uuid)
