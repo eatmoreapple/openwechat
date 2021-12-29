@@ -404,7 +404,9 @@ func (m *Message) init(bot *Bot) {
 				}
 				// 判断是不是@消息
 				atFlag := "@" + displayName + "\u2005"
-				if strings.Contains(m.Content, atFlag) {
+				// mac客户端的@是空格非\u2005
+				mac_atFlag := "@" + displayName + " "
+				if strings.Contains(m.Content, atFlag) || strings.Contains(m.Content, mac_atFlag) {
 					m.isAt = true
 					m.Content = strings.Replace(m.Content, atFlag, "", -1)
 				}
