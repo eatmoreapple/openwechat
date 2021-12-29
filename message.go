@@ -54,6 +54,7 @@ type Message struct {
 	Context               context.Context `json:"-"`
 	item                  map[string]interface{}
 	Raw                   []byte `json:"-"`
+	RowContent            string `json:"-"` // 消息原始内容
 }
 
 // Sender 获取消息的发送者
@@ -389,6 +390,7 @@ func (m *Message) init(bot *Bot) {
 	m.Bot = bot
 	raw, _ := json.Marshal(m)
 	m.Raw = raw
+	m.RowContent = m.Content
 	// 如果是群消息
 	if m.IsSendByGroup() {
 		if !m.IsSystem() {
@@ -405,10 +407,11 @@ func (m *Message) init(bot *Bot) {
 				// 判断是不是@消息
 				atFlag := "@" + displayName + "\u2005"
 				// mac客户端的@是空格非\u2005
-				mac_atFlag := "@" + displayName + " "
-				if strings.Contains(m.Content, atFlag) || strings.Contains(m.Content, mac_atFlag) {
+				macAtFlag := "@" + displayName + " "
+				if strings.Contains(m.Content, atFlag) || strings.Contains(m.Content, macAtFlag) {
 					m.isAt = true
 					m.Content = strings.Replace(m.Content, atFlag, "", -1)
+					m.Content = strings.Replace(m.Content, macAtFlag, "", -1)
 				}
 			}
 		}
