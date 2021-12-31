@@ -61,6 +61,15 @@ func (u *User) GetAvatarResponse() (*http.Response, error) {
 
 // SaveAvatar 下载用户头像
 func (u *User) SaveAvatar(filename string) error {
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	return u.SaveAvatarWithWriter(file)
+}
+
+func (u *User) SaveAvatarWithWriter(writer io.Writer) error {
 	resp, err := u.GetAvatarResponse()
 	if err != nil {
 		return err
@@ -74,18 +83,13 @@ func (u *User) SaveAvatar(filename string) error {
 			return err
 		}
 	}
-	defer resp.Body.Close()
 	// 写文件前判断下 content length 是否是 0，不然保存的头像会出现
 	// image not loaded  try to open it externally to fix format problem 问题
 	if resp.ContentLength == 0 {
 		return fmt.Errorf("get avatar response content length is 0")
 	}
-	file, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	_, err = io.Copy(file, resp.Body)
+	defer resp.Body.Close()
+	_, err = io.Copy(writer, resp.Body)
 	return err
 }
 
