@@ -368,7 +368,7 @@ func (b *Bot) OnLogout(f func(bot *Bot)) {
 func NewBot() *Bot {
 	caller := DefaultCaller()
 	// 默认行为为桌面模式
-	caller.Client.SetMode(Desktop)
+	caller.Client.SetMode(Normal)
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Bot{Caller: caller, Storage: &Storage{}, context: ctx, cancel: cancel}
 }

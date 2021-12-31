@@ -13,7 +13,10 @@ type Mode interface {
 }
 
 var (
-	Normal  Mode = normalMode{}
+	Normal Mode = normalMode{}
+
+	// Desktop
+	// Deprecated
 	Desktop Mode = desktopMode{}
 )
 
