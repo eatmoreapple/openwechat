@@ -389,18 +389,16 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 	// 分块上传
 	for chunk := 0; int64(chunk) < chunks; chunk++ {
 
-		var isLastTime bool
-		if int64(chunk)+1 == chunks {
-			isLastTime = true
-		}
+		isLastTime := int64(chunk)+1 == chunks
 
 		if chunks > 1 {
 			content["chunk"] = strconv.Itoa(chunk)
 		}
 
-		var formBuffer bytes.Buffer
+		var formBuffer = bytes.NewBuffer(nil)
 
-		writer := multipart.NewWriter(&formBuffer)
+		writer := multipart.NewWriter(formBuffer)
+
 		if err = writer.WriteField("uploadmediarequest", string(uploadMediaRequestByte)); err != nil {
 			return nil, err
 		}
@@ -411,22 +409,29 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 			}
 		}
 
-		if w, err := writer.CreateFormFile("filename", file.Name()); err != nil {
+		w, err := writer.CreateFormFile("filename", file.Name())
+
+		if err != nil {
 			return nil, err
-		} else {
-			chunkData := make([]byte, chunkSize)
-			if _, err := file.Read(chunkData); err != nil && err != io.EOF {
-				return nil, err
-			}
-			if _, err = w.Write(chunkData); err != nil {
-				return nil, err
-			}
 		}
+
+		chunkData := make([]byte, chunkSize)
+
+		n, err := file.Read(chunkData)
+
+		if err != nil && err != io.EOF {
+			return nil, err
+		}
+
+		if _, err = w.Write(chunkData[:n]); err != nil {
+			return nil, err
+		}
+
 		ct := writer.FormDataContentType()
 		if err = writer.Close(); err != nil {
 			return nil, err
 		}
-		req, _ := http.NewRequest(http.MethodPost, path.String(), &formBuffer)
+		req, _ := http.NewRequest(http.MethodPost, path.String(), formBuffer)
 		req.Header.Set("Content-Type", ct)
 		// 发送数据
 		resp, err = c.Do(req)
