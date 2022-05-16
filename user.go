@@ -442,25 +442,22 @@ func (s *Self) forwardMessage(msg *SentMessage, users ...*User) error {
 		for _, user := range users {
 			msg.FromUserName = s.UserName
 			msg.ToUserName = user.UserName
-			if _, err := s.Self.Bot.Caller.WebWxSendMsg(msg.SendMessage, info, req); err != nil {
-				return err
-			}
+			_, err := s.Self.Bot.Caller.WebWxSendMsg(msg.SendMessage, info, req)
+			return err
 		}
 	case MsgTypeImage:
 		for _, user := range users {
 			msg.FromUserName = s.UserName
 			msg.ToUserName = user.UserName
-			if _, err := s.Self.Bot.Caller.Client.WebWxSendMsgImg(msg.SendMessage, req, info); err != nil {
-				return err
-			}
+			_, err := s.Self.Bot.Caller.Client.WebWxSendMsgImg(msg.SendMessage, req, info)
+			return err
 		}
 	case AppMessage:
 		for _, user := range users {
 			msg.FromUserName = s.UserName
 			msg.ToUserName = user.UserName
-			if _, err := s.Self.Bot.Caller.Client.WebWxSendAppMsg(msg.SendMessage, req); err != nil {
-				return err
-			}
+			_, err := s.Self.Bot.Caller.Client.WebWxSendAppMsg(msg.SendMessage, req)
+			return err
 		}
 	}
 	return errors.New("unsupport message")
