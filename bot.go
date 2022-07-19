@@ -152,9 +152,6 @@ func (b *Bot) LoginWithUUID(uuid string) error {
 // Logout 用户退出
 func (b *Bot) Logout() error {
 	if b.Alive() {
-		if b.LogoutCallBack != nil {
-			b.LogoutCallBack(b)
-		}
 		info := b.Storage.LoginInfo
 		if err := b.Caller.Logout(info); err != nil {
 			return err
@@ -287,7 +284,6 @@ func (b *Bot) stopSyncCheck(err error) bool {
 	}
 	b.err = err
 	b.Exit()
-	log.Printf("exit with : %s", err.Error())
 	return false
 }
 
@@ -313,6 +309,9 @@ func (b *Bot) Block() error {
 
 // Exit 主动退出，让 Block 不在阻塞
 func (b *Bot) Exit() {
+	if b.LogoutCallBack != nil {
+		b.LogoutCallBack(b)
+	}
 	b.self = nil
 	b.cancel()
 }
