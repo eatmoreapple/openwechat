@@ -135,43 +135,37 @@ func (m *Message) IsSendByGroup() bool {
 	return strings.HasPrefix(m.FromUserName, "@@")
 }
 
-// Reply 回复消息
-func (m *Message) Reply(msgType MessageType, content, mediaId string) (*SentMessage, error) {
-	msg := NewSendMessage(msgType, content, m.Bot.self.User.UserName, m.FromUserName, mediaId)
+// ReplyText 回复文本消息
+func (m *Message) ReplyText(content string) (*SentMessage, error) {
+	msg := NewSendMessage(MsgTypeText, content, m.Bot.self.User.UserName, m.FromUserName, "")
 	info := m.Bot.Storage.LoginInfo
 	request := m.Bot.Storage.Request
 	sentMessage, err := m.Bot.Caller.WebWxSendMsg(msg, info, request)
-	if err != nil {
-		return nil, err
-	}
-	sentMessage.Self = m.Bot.self
-	return sentMessage, nil
-}
-
-// ReplyText 回复文本消息
-func (m *Message) ReplyText(content string) (*SentMessage, error) {
-	return m.Reply(MsgTypeText, content, "")
+	return m.Bot.self.sendMessageWrapper(sentMessage, err)
 }
 
 // ReplyImage 回复图片消息
 func (m *Message) ReplyImage(file *os.File) (*SentMessage, error) {
 	info := m.Bot.Storage.LoginInfo
 	request := m.Bot.Storage.Request
-	return m.Bot.Caller.WebWxSendImageMsg(file, request, info, m.Bot.self.UserName, m.FromUserName)
+	sentMessage, err := m.Bot.Caller.WebWxSendImageMsg(file, request, info, m.Bot.self.UserName, m.FromUserName)
+	return m.Bot.self.sendMessageWrapper(sentMessage, err)
 }
 
 // ReplyVideo 回复视频消息
 func (m *Message) ReplyVideo(file *os.File) (*SentMessage, error) {
 	info := m.Bot.Storage.LoginInfo
 	request := m.Bot.Storage.Request
-	return m.Bot.Caller.WebWxSendVideoMsg(file, request, info, m.Bot.self.UserName, m.FromUserName)
+	sentMessage, err := m.Bot.Caller.WebWxSendVideoMsg(file, request, info, m.Bot.self.UserName, m.FromUserName)
+	return m.Bot.self.sendMessageWrapper(sentMessage, err)
 }
 
 // ReplyFile 回复文件消息
 func (m *Message) ReplyFile(file *os.File) (*SentMessage, error) {
 	info := m.Bot.Storage.LoginInfo
 	request := m.Bot.Storage.Request
-	return m.Bot.Caller.WebWxSendFile(file, request, info, m.Bot.self.UserName, m.FromUserName)
+	sentMessage, err := m.Bot.Caller.WebWxSendFile(file, request, info, m.Bot.self.UserName, m.FromUserName)
+	return m.Bot.self.sendMessageWrapper(sentMessage, err)
 }
 
 func (m *Message) IsText() bool {

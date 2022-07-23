@@ -18,11 +18,6 @@ func (f *Friend) SetRemarkName(name string) error {
 	return f.Self.SetRemarkNameToFriend(f, name)
 }
 
-// SendMsg 发送自定义消息
-func (f *Friend) SendMsg(msg *SendMessage) (*SentMessage, error) {
-	return f.Self.SendMessageToFriend(f, msg)
-}
-
 // SendText  发送文本消息
 func (f *Friend) SendText(content string) (*SentMessage, error) {
 	return f.Self.SendTextToFriend(f, content)
@@ -111,28 +106,6 @@ func (f Friends) Search(limit int, condFuncList ...func(friend *Friend) bool) (r
 	return
 }
 
-// SendMsg 向slice的好友依次发送消息
-func (f Friends) SendMsg(msg *SendMessage, delay ...time.Duration) error {
-	total := getTotalDuration(delay...)
-	var (
-		sentMessage *SentMessage
-		err         error
-		self        *Self
-	)
-	for _, friend := range f {
-		self = friend.Self
-		time.Sleep(total)
-		if sentMessage != nil {
-			err = self.ForwardMessageToFriends(sentMessage, f...)
-			return err
-		}
-		if sentMessage, err = friend.SendMsg(msg); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // SendText 向slice的好友依次发送文本消息
 func (f Friends) SendText(text string, delay ...time.Duration) error {
 	total := getTotalDuration(delay...)
@@ -206,11 +179,6 @@ func (g Group) String() string {
 	return fmt.Sprintf("<Group:%s>", g.NickName)
 }
 
-// SendMsg 发行消息给当前的群组
-func (g *Group) SendMsg(msg *SendMessage) (*SentMessage, error) {
-	return g.Self.SendMessageToGroup(g, msg)
-}
-
 // SendText 发行文本消息给当前的群组
 func (g *Group) SendText(content string) (*SentMessage, error) {
 	return g.Self.SendTextToGroup(g, content)
@@ -276,28 +244,6 @@ func (g Groups) First() *Group {
 func (g Groups) Last() *Group {
 	if g.Count() > 0 {
 		return g[g.Count()-1]
-	}
-	return nil
-}
-
-// SendMsg 向群组依次发送消息, 支持发送延迟
-func (g Groups) SendMsg(msg *SendMessage, delay ...time.Duration) error {
-	total := getTotalDuration(delay...)
-	var (
-		sentMessage *SentMessage
-		err         error
-		self        *Self
-	)
-	for _, group := range g {
-		self = group.Self
-		time.Sleep(total)
-		if sentMessage != nil {
-			err = self.ForwardMessageToGroups(sentMessage, g...)
-			return err
-		}
-		if sentMessage, err = group.SendMsg(msg); err != nil {
-			return err
-		}
 	}
 	return nil
 }
