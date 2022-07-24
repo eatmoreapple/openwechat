@@ -132,7 +132,7 @@ func (m *Message) IsSendByFriend() bool {
 
 // IsSendByGroup 判断消息是否由群组发送
 func (m *Message) IsSendByGroup() bool {
-	return strings.HasPrefix(m.FromUserName, "@@")
+	return strings.HasPrefix(m.FromUserName, "@@") || (m.FromUserName == m.Bot.self.User.UserName && strings.HasPrefix(m.ToUserName, "@@"))
 }
 
 // ReplyText 回复文本消息
