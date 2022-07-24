@@ -100,17 +100,29 @@ func (m *Message) SenderInGroup() (*User, error) {
 }
 
 // Receiver 获取消息的接收者
+// 如果消息是群组消息，则返回群组
+// 如果消息是好友消息，则返回好友
+// 如果消息是系统消息，则返回当前用户
 func (m *Message) Receiver() (*User, error) {
+	if m.IsSystem() {
+		return m.Bot.self.User, nil
+	}
 	if m.IsSendByGroup() {
-		if sender, err := m.Sender(); err != nil {
+		groups, err := m.Bot.self.Groups()
+		if err != nil {
 			return nil, err
-		} else {
-			user, exist := sender.MemberList.GetByUserName(m.ToUserName)
-			if !exist {
-				return nil, ErrNoSuchUserFoundError
-			}
-			return user, nil
 		}
+		username := m.FromUserName
+		if m.IsSendBySelf() {
+			username = m.ToUserName
+		}
+		users := groups.SearchByUserName(1, username)
+		if users.Count() == 0 {
+			return nil, ErrNoSuchUserFoundError
+		}
+		return users.First().User, nil
+	} else if m.ToUserName == m.Bot.self.UserName {
+		return m.Bot.self.User, nil
 	} else {
 		user, exist := m.Bot.self.MemberList.GetByRemarkName(m.ToUserName)
 		if !exist {
@@ -132,7 +144,7 @@ func (m *Message) IsSendByFriend() bool {
 
 // IsSendByGroup 判断消息是否由群组发送
 func (m *Message) IsSendByGroup() bool {
-	return strings.HasPrefix(m.FromUserName, "@@") || (m.FromUserName == m.Bot.self.User.UserName && strings.HasPrefix(m.ToUserName, "@@"))
+	return strings.HasPrefix(m.FromUserName, "@@") || (m.IsSendBySelf() && strings.HasPrefix(m.ToUserName, "@@"))
 }
 
 // ReplyText 回复文本消息
@@ -389,24 +401,32 @@ func (m *Message) init(bot *Bot) {
 	if m.IsSendByGroup() {
 		if !m.IsSystem() {
 			// 将Username和正文分开
-			data := strings.Split(m.Content, ":<br/>")
-			m.Content = strings.Join(data[1:], "")
-			m.senderInGroupUserName = data[0]
-			receiver, err := m.Receiver()
-			if err == nil {
-				displayName := receiver.DisplayName
-				if displayName == "" {
-					displayName = receiver.NickName
+			if !m.IsSendBySelf() {
+				data := strings.Split(m.Content, ":<br/>")
+				m.Content = strings.Join(data[1:], "")
+				m.senderInGroupUserName = data[0]
+				if strings.Contains(m.Content, "@") {
+					sender, err := m.Sender()
+					if err == nil {
+						receiver := sender.MemberList.SearchByUserName(1, m.ToUserName)
+						if receiver != nil {
+							displayName := receiver.First().DisplayName
+							if displayName == "" {
+								displayName = receiver.First().NickName
+							}
+							var atFlag string
+							if strings.Contains(m.Content, "\u2005") {
+								atFlag = "@" + displayName + "\u2005"
+							} else {
+								atFlag = "@" + displayName + " "
+							}
+							m.isAt = strings.Contains(m.Content, atFlag) || strings.HasSuffix(m.Content, atFlag)
+						}
+					}
 				}
-				// 判断是不是@消息
-				atFlag := "@" + displayName + "\u2005"
-				// mac客户端的@是空格非\u2005
-				macAtFlag := "@" + displayName + " "
-				if strings.Contains(m.Content, atFlag) || strings.Contains(m.Content, macAtFlag) {
-					m.isAt = true
-					m.Content = strings.Replace(m.Content, atFlag, "", -1)
-					m.Content = strings.Replace(m.Content, macAtFlag, "", -1)
-				}
+			} else {
+				// 这块不严谨，但是只能这么干了
+				m.isAt = strings.Contains(m.Content, "@") || strings.Contains(m.Content, "\u2005")
 			}
 		}
 	}
