@@ -405,11 +405,16 @@ func GetQrcodeUrl(uuid string) string {
 	return qrcode + uuid
 }
 
+// GetQrcodeInfo 通过uuid获取登录二维码
+func GetQrcodeInfo(uuid string) string {
+	return qrcodeinfo + uuid
+}
+
 // PrintlnQrcodeUrl 打印登录二维码
 func PrintlnQrcodeUrl(mode Mode, uuid string) {
 	if mode.IsTerminal() {
 		println("扫描二维码登录")
-		qrcodeUrl := GetQrcodeUrl(uuid)
+		qrcodeInfoUrl := GetQrcodeInfo(uuid)
 		config := qrterminal.Config{
 			Level:     qrterminal.L,
 			Writer:    os.Stdout,
@@ -417,7 +422,7 @@ func PrintlnQrcodeUrl(mode Mode, uuid string) {
 			WhiteChar: qrterminal.BLACK,
 			QuietZone: 1,
 		}
-		qrterminal.GenerateWithConfig(qrcodeUrl, config)
+		qrterminal.GenerateWithConfig(qrcodeInfoUrl, config)
 	} else {
 		println("访问下面网址扫描二维码登录")
 		qrcodeUrl := GetQrcodeUrl(uuid)

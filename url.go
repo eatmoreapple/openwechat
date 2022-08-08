@@ -39,6 +39,7 @@ const (
 	jslogin           = "https://login.wx.qq.com/jslogin"
 	login             = "https://login.wx.qq.com/cgi-bin/mmwebwx-bin/login"
 	qrcode            = "https://login.weixin.qq.com/qrcode/"
+	qrcodeinfo        = "https://login.weixin.qq.com/l/"
 )
 
 type WechatDomain string
