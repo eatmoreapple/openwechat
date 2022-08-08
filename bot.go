@@ -1,25 +1,27 @@
 package openwechat
 
 import (
+	"github.com/mdp/qrterminal/v3"
 	"context"
 	"encoding/json"
 	"errors"
 	"log"
 	"net/url"
+	"os"
 	"os/exec"
 	"runtime"
 	"sync"
 )
 
 type Bot struct {
-	ScanCallBack        func(body []byte)            // 扫码回调,可获取扫码用户的头像
-	LoginCallBack       func(body []byte)            // 登陆回调
-	LogoutCallBack      func(bot *Bot)               // 退出回调
-	UUIDCallback        func(uuid string)            // 获取UUID的回调函数
-	SyncCheckCallback   func(resp SyncCheckResponse) // 心跳回调
-	MessageHandler      MessageHandler               // 获取消息成功的handle
-	MessageErrorHandler func(err error) bool         // 获取消息发生错误的handle, 返回true则尝试继续监听
-	isHot               bool                         // 是否为热登录模式
+	ScanCallBack        func(body []byte)             // 扫码回调,可获取扫码用户的头像
+	LoginCallBack       func(body []byte)             // 登陆回调
+	LogoutCallBack      func(bot *Bot)                // 退出回调
+	UUIDCallback        func(model Mode, uuid string) // 获取UUID的回调函数
+	SyncCheckCallback   func(resp SyncCheckResponse)  // 心跳回调
+	MessageHandler      MessageHandler                // 获取消息成功的handle
+	MessageErrorHandler func(err error) bool          // 获取消息发生错误的handle, 返回true则尝试继续监听
+	isHot               bool                          // 是否为热登录模式
 	once                sync.Once
 	err                 error
 	context             context.Context
@@ -121,7 +123,7 @@ func (b *Bot) LoginWithUUID(uuid string) error {
 	b.uuid = uuid
 	// 二维码获取回调
 	if b.UUIDCallback != nil {
-		b.UUIDCallback(uuid)
+		b.UUIDCallback(b.Caller.Client.mode, uuid)
 	}
 	for {
 		// 长轮询检查是否扫码登录
@@ -404,13 +406,26 @@ func GetQrcodeUrl(uuid string) string {
 }
 
 // PrintlnQrcodeUrl 打印登录二维码
-func PrintlnQrcodeUrl(uuid string) {
-	println("访问下面网址扫描二维码登录")
-	qrcodeUrl := GetQrcodeUrl(uuid)
-	println(qrcodeUrl)
+func PrintlnQrcodeUrl(mode Mode, uuid string) {
+	if mode.IsTerminal() {
+		println("扫描二维码登录")
+		qrcodeUrl := GetQrcodeUrl(uuid)
+		config := qrterminal.Config{
+			Level:     qrterminal.L,
+			Writer:    os.Stdout,
+			BlackChar: qrterminal.WHITE,
+			WhiteChar: qrterminal.BLACK,
+			QuietZone: 1,
+		}
+		qrterminal.GenerateWithConfig(qrcodeUrl, config)
+	} else {
+		println("访问下面网址扫描二维码登录")
+		qrcodeUrl := GetQrcodeUrl(uuid)
+		println(qrcodeUrl)
 
-	// browser open the login url
-	_ = open(qrcodeUrl)
+		// browser open the login url
+		_ = open(qrcodeUrl)
+	}
 }
 
 // open opens the specified URL in the default browser of the user.

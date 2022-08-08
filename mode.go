@@ -10,15 +10,20 @@ import (
 type Mode interface {
 	GetLoginUUID(client *Client) (*http.Response, error)
 	GetLoginInfo(client *Client, path string) (*http.Response, error)
+	IsTerminal() bool
 }
 
 var (
-	Normal Mode = normalMode{}
+	Normal           Mode = normalMode{}
+	NormalInTerminal Mode = normalMode{true}
 
-	Desktop Mode = desktopMode{}
+	Desktop           Mode = desktopMode{}
+	DesktopInTerminal Mode = desktopMode{true}
 )
 
-type normalMode struct{}
+type normalMode struct {
+	Terminal bool
+}
 
 func (n normalMode) GetLoginUUID(client *Client) (*http.Response, error) {
 	path, _ := url.Parse(jslogin)
@@ -40,7 +45,13 @@ func (n normalMode) GetLoginInfo(client *Client, path string) (*http.Response, e
 	return client.Do(req)
 }
 
-type desktopMode struct{}
+func (n normalMode) IsTerminal() bool {
+	return n.Terminal
+}
+
+type desktopMode struct {
+	Terminal bool
+}
 
 func (n desktopMode) GetLoginUUID(client *Client) (*http.Response, error) {
 	path, _ := url.Parse(jslogin)
@@ -64,4 +75,8 @@ func (n desktopMode) GetLoginInfo(client *Client, path string) (*http.Response, 
 	req.Header.Add("client-version", uosPatchClientVersion)
 	req.Header.Add("extspam", uosPatchExtspam)
 	return client.Do(req)
+}
+
+func (n desktopMode) IsTerminal() bool {
+	return n.Terminal
 }
