@@ -413,7 +413,7 @@ func GetQrcodeInfo(uuid string) string {
 // PrintlnQrcodeUrl 打印登录二维码
 func PrintlnQrcodeUrl(mode Mode, uuid string) {
 	if mode.IsTerminal() {
-		println("扫描二维码登录")
+		println("扫描下面二维码登录")
 		qrcodeInfoUrl := GetQrcodeInfo(uuid)
 		config := qrterminal.Config{
 			Level:     qrterminal.L,
