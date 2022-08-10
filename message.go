@@ -732,3 +732,8 @@ func (m *Message) IsJoinGroup() bool {
 func (m *Message) IsTickled() bool {
 	return m.IsPaiYiPai()
 }
+
+// IsVoipInvite 判断消息是否为语音或视频通话邀请
+func (m *Message) IsVoipInvite() bool {
+	return m.MsgType == MsgTypeVoipInvite
+}
