@@ -28,7 +28,7 @@ msg.Content  // 获取消息内容
 
 通过访问`Content`属性可直接获取消息内容
 
-由于消息分为很多种类型，它们都共用`Content`属性。一般当消息类型问文本类型的时候，我们才会去访问`Content`属性。
+由于消息分为很多种类型，它们都共用`Content`属性。一般当消息类型为文本类型的时候，我们才会去访问`Content`属性。
 
 
 
@@ -60,7 +60,7 @@ msg.IsMap()
 msg.IsVoice()
 ```
 
-##### 添加好友请求
+##### 是否为好友添加请求
 
 ```go
 msg.IsFriendAdd()
@@ -106,6 +106,18 @@ msg.IsSendRedPacket()
 
 ```go
 msg.IsReceiveRedPacket()
+```
+
+##### 判断是否为拍一拍
+
+```go
+msg.IsIsPaiYiPai() // 拍一拍消息
+msg.IsTickled()
+```
+
+##### 判断是否有新人加入群聊
+```go
+msg.IsJoinGroup()
 ```
 
 但是不能领取！

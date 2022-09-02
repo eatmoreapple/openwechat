@@ -188,7 +188,7 @@ self.SendImageToFriend(friend, img)
 
 ```go
 file, _ := os.Open("your file path")
-defer img.Close()
+defer file.Close()
 self.SendFileToFriend(friend, file)
 // 或者
 // friend.SendFile(img)
