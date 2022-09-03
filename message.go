@@ -54,7 +54,7 @@ type Message struct {
 	Context               context.Context `json:"-"`
 	item                  map[string]interface{}
 	Raw                   []byte `json:"-"`
-	RowContent            string `json:"-"` // 消息原始内容
+	RawContent            string `json:"-"` // 消息原始内容
 }
 
 // Sender 获取消息的发送者
@@ -396,7 +396,7 @@ func (m *Message) init(bot *Bot) {
 	m.Bot = bot
 	raw, _ := json.Marshal(m)
 	m.Raw = raw
-	m.RowContent = m.Content
+	m.RawContent = m.Content
 	// 如果是群消息
 	if m.IsSendByGroup() {
 		if !m.IsSystem() {
