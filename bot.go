@@ -29,6 +29,7 @@ type Bot struct {
 	Storage             *Storage
 	HotReloadStorage    HotReloadStorage
 	uuid                string
+	deviceId            string // 设备Id
 }
 
 // Alive 判断当前用户是否正常在线
@@ -44,12 +45,21 @@ func (b *Bot) Alive() bool {
 	}
 }
 
+// SetDeviceId
+// @description: 设置设备Id
+// @receiver b
+// @param deviceId
+func (b *Bot) SetDeviceId(deviceId string) {
+	b.deviceId = deviceId
+}
+
 // GetCurrentUser 获取当前的用户
-//		self, err := bot.GetCurrentUser()
-//		if err != nil {
-//			return
-//		}
-//		fmt.Println(self.NickName)
+//
+//	self, err := bot.GetCurrentUser()
+//	if err != nil {
+//		return
+//	}
+//	fmt.Println(self.NickName)
 func (b *Bot) GetCurrentUser() (*Self, error) {
 	if b.self == nil {
 		return nil, errors.New("user not login")
@@ -59,9 +69,10 @@ func (b *Bot) GetCurrentUser() (*Self, error) {
 
 // HotLogin 热登录,可实现重复登录,
 // retry设置为true可在热登录失效后进行普通登录行为
-//		Storage := NewJsonFileHotReloadStorage("Storage.json")
-//		err := bot.HotLogin(Storage, true)
-//		fmt.Println(err)
+//
+//	Storage := NewJsonFileHotReloadStorage("Storage.json")
+//	err := bot.HotLogin(Storage, true)
+//	fmt.Println(err)
 func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
 	b.isHot = true
 	b.HotReloadStorage = storage
@@ -172,12 +183,17 @@ func (b *Bot) HandleLogin(data []byte) error {
 	// 将LoginInfo存到storage里面
 	b.Storage.LoginInfo = info
 
+	// 处理设备Id
+	if b.deviceId == "" {
+		b.deviceId = GetRandomDeviceId()
+	}
+
 	// 构建BaseRequest
 	request := &BaseRequest{
 		Uin:      info.WxUin,
 		Sid:      info.WxSid,
 		Skey:     info.SKey,
-		DeviceID: GetRandomDeviceId(),
+		DeviceID: b.deviceId,
 	}
 
 	// 将BaseRequest存到storage里面方便后续调用
@@ -374,7 +390,8 @@ func NewBot() *Bot {
 
 // DefaultBot 默认的Bot的构造方法,
 // mode不传入默认为 openwechat.Desktop,详情见mode
-//     bot := openwechat.DefaultBot(openwechat.Desktop)
+//
+//	bot := openwechat.DefaultBot(openwechat.Desktop)
 func DefaultBot(modes ...Mode) *Bot {
 	bot := NewBot()
 	if len(modes) > 0 {
