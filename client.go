@@ -77,7 +77,7 @@ func (c *Client) do(req *http.Request) (*http.Response, error) {
 	}
 	resp, err := c.Client.Do(req)
 	if err != nil {
-		err = NetworkErr{error: err}
+		err = ErrorWrapper(NetworkErr, err.Error())
 	}
 	for _, hook := range c.HttpHooks {
 		hook.AfterRequest(resp, err)
