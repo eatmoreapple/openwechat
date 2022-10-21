@@ -71,11 +71,22 @@ func (c *Client) AddHttpHook(hooks ...HttpHook) {
 	c.HttpHooks = append(c.HttpHooks, hooks...)
 }
 
+const maxRetry = 2
+
 func (c *Client) do(req *http.Request) (*http.Response, error) {
 	for _, hook := range c.HttpHooks {
 		hook.BeforeRequest(req)
 	}
-	resp, err := c.Client.Do(req)
+	var (
+		resp *http.Response
+		err  error
+	)
+	for i := 0; i < maxRetry; i++ {
+		resp, err = c.Client.Do(req)
+		if err == nil {
+			break
+		}
+	}
 	if err != nil {
 		err = ErrorWrapper(NetworkErr, err.Error())
 	}
