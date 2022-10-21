@@ -153,8 +153,9 @@ func (c *Caller) SyncCheck(request *BaseRequest, info *LoginInfo, response *WebI
 // WebWxGetContact 获取所有的联系人
 func (c *Caller) WebWxGetContact(info *LoginInfo) (Members, error) {
 	var members Members
+	var reqs int64
 	for {
-		resp, err := c.Client.WebWxGetContact(info)
+		resp, err := c.Client.WebWxGetContact(info, reqs)
 		if err != nil {
 			return nil, err
 		}
@@ -172,6 +173,7 @@ func (c *Caller) WebWxGetContact(info *LoginInfo) (Members, error) {
 		if item.Seq == 0 {
 			break
 		}
+		reqs = item.Seq
 	}
 	return members, nil
 }
