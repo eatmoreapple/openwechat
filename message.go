@@ -518,7 +518,7 @@ type Card struct {
 // FriendAddMessage 好友添加消息信息内容
 type FriendAddMessage struct {
 	XMLName           xml.Name `xml:"msg"`
-	Shortpy           int      `xml:"shortpy,attr"`
+	Shortpy           string   `xml:"shortpy,attr"`
 	ImageStatus       int      `xml:"imagestatus,attr"`
 	Scene             int      `xml:"scene,attr"`
 	PerCard           int      `xml:"percard,attr"`
