@@ -186,7 +186,8 @@ func (s *Self) updateMembers() error {
 }
 
 // FileHelper 获取文件传输助手对象，封装成Friend返回
-//      fh, err := self.FileHelper() // or fh := openwechat.NewFriendHelper(self)
+//
+//	fh, err := self.FileHelper() // or fh := openwechat.NewFriendHelper(self)
 func (s *Self) FileHelper() (*Friend, error) {
 	// 如果缓存里有，直接返回，否则去联系人里面找
 	if s.fileHelper != nil {
@@ -300,7 +301,8 @@ func (s *Self) SendFileToFriend(friend *Friend, file *os.File) (*SentMessage, er
 }
 
 // SetRemarkNameToFriend 设置好友备注
-//      self.SetRemarkNameToFriend(friend, "remark") // or friend.SetRemarkName("remark")
+//
+//	self.SetRemarkNameToFriend(friend, "remark") // or friend.SetRemarkName("remark")
 func (s *Self) SetRemarkNameToFriend(friend *Friend, remarkName string) error {
 	req := s.Bot.Storage.Request
 	return s.Bot.Caller.WebWxOplog(req, remarkName, friend.UserName)
@@ -418,10 +420,11 @@ func (s *Self) SendFileToGroup(group *Group, file *os.File) (*SentMessage, error
 }
 
 // RevokeMessage 撤回消息
-//      sentMessage, err := friend.SendText("message")
-//      if err == nil {
-//          self.RevokeMessage(sentMessage) // or sentMessage.Revoke()
-//      }
+//
+//	sentMessage, err := friend.SendText("message")
+//	if err == nil {
+//	    self.RevokeMessage(sentMessage) // or sentMessage.Revoke()
+//	}
 func (s *Self) RevokeMessage(msg *SentMessage) error {
 	return s.Bot.Caller.WebWxRevokeMsg(msg, s.Bot.Storage.Request)
 }
@@ -517,29 +520,14 @@ func (m Members) SearchByRemarkName(limit int, remarkName string) (results Membe
 
 // Search 根据自定义条件查找
 func (m Members) Search(limit int, condFuncList ...func(user *User) bool) (results Members) {
-	if condFuncList == nil {
-		return m
-	}
-	if limit <= 0 {
-		limit = m.Count()
-	}
-	for _, member := range m {
-		if count := len(results); count == limit {
-			break
-		}
-		var passCount int
+	return search(m, limit, func(group *User) bool {
 		for _, condFunc := range condFuncList {
-			if condFunc(member) {
-				passCount++
-			} else {
-				break
+			if !condFunc(group) {
+				return false
 			}
 		}
-		if passCount == len(condFuncList) {
-			results = append(results, member)
-		}
-	}
-	return
+		return true
+	})
 }
 
 // GetByUserName 根据username查找用户
