@@ -160,7 +160,8 @@ func (c *Caller) WebWxGetContact(info *LoginInfo) (Members, error) {
 			return nil, err
 		}
 		var item WebWxContactResponse
-		if err := scanJson(resp, &item); err != nil {
+		if err = scanJson(resp, &item); err != nil {
+			_ = resp.Body.Close()
 			return nil, err
 		}
 		if err = resp.Body.Close(); err != nil {
@@ -170,7 +171,9 @@ func (c *Caller) WebWxGetContact(info *LoginInfo) (Members, error) {
 			return nil, item.BaseResponse
 		}
 		members = append(members, item.MemberList...)
-		if item.Seq == 0 {
+
+		// FIXME: 这里的逻辑有点问题，部分微信号Seq每次都一致，会导致死循环。但是为什么会一致呢？
+		if item.Seq == 0 || item.Seq == reqs {
 			break
 		}
 		reqs = item.Seq
