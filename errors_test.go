@@ -2,12 +2,13 @@ package openwechat
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 )
 
 func TestIsNetworkError(t *testing.T) {
 	var err = errors.New("test error")
-	err = ErrorWrapper(NetworkErr, err.Error())
+	err = fmt.Errorf("%w: %s", NetworkErr, err.Error())
 	if !IsNetworkError(err) {
 		t.Error("err is not network error")
 	}

@@ -88,7 +88,7 @@ func (c *Client) do(req *http.Request) (*http.Response, error) {
 		}
 	}
 	if err != nil {
-		err = ErrorWrapper(NetworkErr, err.Error())
+		err = fmt.Errorf("%w: %s", NetworkErr, err.Error())
 	}
 	for _, hook := range c.HttpHooks {
 		hook.AfterRequest(resp, err)
