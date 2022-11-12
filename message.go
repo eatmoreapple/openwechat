@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"html"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -309,6 +310,27 @@ func (m *Message) GetMedia() (*http.Response, error) {
 		return nil, errors.New("media message required")
 	}
 	return m.Bot.Caller.Client.WebWxGetMedia(m, m.Bot.Storage.LoginInfo)
+}
+
+// SaveFile 保存文件到指定的 io.Writer
+func (m *Message) SaveFile(writer io.Writer) error {
+	resp, err := m.GetFile()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = resp.Body.Close() }()
+	_, err = io.Copy(writer, resp.Body)
+	return err
+}
+
+// SaveFileToLocal 保存文件到本地
+func (m *Message) SaveFileToLocal(filename string) error {
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = file.Close() }()
+	return m.SaveFile(file)
 }
 
 // Card 获取card类型
