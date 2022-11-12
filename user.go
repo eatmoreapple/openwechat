@@ -519,10 +519,10 @@ func (m Members) SearchByRemarkName(limit int, remarkName string) (results Membe
 }
 
 // Search 根据自定义条件查找
-func (m Members) Search(limit int, condFuncList ...func(user *User) bool) (results Members) {
+func (m Members) Search(limit int, searchFuncList ...func(user *User) bool) (results Members) {
 	return search(m, limit, func(group *User) bool {
-		for _, condFunc := range condFuncList {
-			if !condFunc(group) {
+		for _, searchFunc := range searchFuncList {
+			if !searchFunc(group) {
 				return false
 			}
 		}
