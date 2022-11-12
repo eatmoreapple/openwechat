@@ -342,11 +342,19 @@ func (m *Message) RevokeMsg() (*RevokeMsg, error) {
 }
 
 // Agree 同意好友的请求
-func (m *Message) Agree(verifyContents ...string) error {
+func (m *Message) Agree(verifyContents ...string) (*Friend, error) {
 	if !m.IsFriendAdd() {
-		return fmt.Errorf("friend add message required")
+		return nil, errors.New("friend add message required")
 	}
-	return m.Bot.Caller.WebWxVerifyUser(m.Bot.Storage, m.RecommendInfo, strings.Join(verifyContents, ""))
+	err := m.Bot.Caller.WebWxVerifyUser(m.Bot.Storage, m.RecommendInfo, strings.Join(verifyContents, ""))
+	if err != nil {
+		return nil, err
+	}
+	friend := newFriend(m.RecommendInfo.UserName, m.Bot.self)
+	if err = friend.Detail(); err != nil {
+		return nil, err
+	}
+	return friend, nil
 }
 
 // AsRead 将消息设置为已读
