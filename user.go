@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 // User 抽象的用户结构: 好友 群组 公众号
@@ -430,7 +431,7 @@ func (s *Self) RevokeMessage(msg *SentMessage) error {
 }
 
 // 转发消息接口
-func (s *Self) forwardMessage(msg *SentMessage, users ...*User) error {
+func (s *Self) forwardMessage(msg *SentMessage, delay time.Duration, users ...*User) error {
 	info := s.Bot.Storage.LoginInfo
 	req := s.Bot.Storage.Request
 	switch msg.Type {
@@ -438,43 +439,148 @@ func (s *Self) forwardMessage(msg *SentMessage, users ...*User) error {
 		for _, user := range users {
 			msg.FromUserName = s.UserName
 			msg.ToUserName = user.UserName
-			_, err := s.Self.Bot.Caller.WebWxSendMsg(msg.SendMessage, info, req)
-			return err
+			if _, err := s.Self.Bot.Caller.WebWxSendMsg(msg.SendMessage, info, req); err != nil {
+				return err
+			}
+			time.Sleep(delay)
 		}
 	case MsgTypeImage:
 		for _, user := range users {
 			msg.FromUserName = s.UserName
 			msg.ToUserName = user.UserName
-			_, err := s.Self.Bot.Caller.Client.WebWxSendMsgImg(msg.SendMessage, req, info)
-			return err
+			if _, err := s.Self.Bot.Caller.Client.WebWxSendMsgImg(msg.SendMessage, req, info); err != nil {
+				return err
+			}
+			time.Sleep(delay)
 		}
 	case AppMessage:
 		for _, user := range users {
 			msg.FromUserName = s.UserName
 			msg.ToUserName = user.UserName
-			_, err := s.Self.Bot.Caller.Client.WebWxSendAppMsg(msg.SendMessage, req)
-			return err
+			if _, err := s.Self.Bot.Caller.Client.WebWxSendAppMsg(msg.SendMessage, req); err != nil {
+				return err
+			}
+			time.Sleep(delay)
 		}
+	default:
+		return fmt.Errorf("unsupported message type: %s", msg.Type)
 	}
-	return errors.New("unsupport message")
+	return nil
 }
 
 // ForwardMessageToFriends 转发给好友
-func (s *Self) ForwardMessageToFriends(msg *SentMessage, friends ...*Friend) error {
-	var users = make([]*User, len(friends))
-	for index, friend := range friends {
-		users[index] = friend.User
-	}
-	return s.forwardMessage(msg, users...)
+func (s *Self) ForwardMessageToFriends(msg *SentMessage, delay time.Duration, friends ...*Friend) error {
+	members := Friends(friends).AsMembers()
+	return s.forwardMessage(msg, delay, members...)
 }
 
 // ForwardMessageToGroups 转发给群组
-func (s *Self) ForwardMessageToGroups(msg *SentMessage, groups ...*Group) error {
-	var users = make([]*User, len(groups))
-	for index, group := range groups {
-		users[index] = group.User
+func (s *Self) ForwardMessageToGroups(msg *SentMessage, delay time.Duration, groups ...*Group) error {
+	members := Groups(groups).AsMembers()
+	return s.forwardMessage(msg, delay, members...)
+}
+
+// sendTextToMembers 发送文本消息给群组或者好友
+func (s *Self) sendTextToMembers(text string, delay time.Duration, members ...*User) error {
+	if len(members) == 0 {
+		return nil
 	}
-	return s.forwardMessage(msg, users...)
+	user := members[0]
+	msg, err := s.sendTextToUser(user, text)
+	if err != nil {
+		return err
+	}
+	time.Sleep(delay)
+	return s.forwardMessage(msg, delay, members[1:]...)
+}
+
+// sendImageToMembers 发送图片消息给群组或者好友
+func (s *Self) sendImageToMembers(img *os.File, delay time.Duration, members ...*User) error {
+	if len(members) == 0 {
+		return nil
+	}
+	user := members[0]
+	msg, err := s.sendImageToUser(user, img)
+	if err != nil {
+		return err
+	}
+	time.Sleep(delay)
+	return s.forwardMessage(msg, delay, members[1:]...)
+}
+
+// sendVideoToMembers 发送视频消息给群组或者好友
+func (s *Self) sendVideoToMembers(video *os.File, delay time.Duration, members ...*User) error {
+	if len(members) == 0 {
+		return nil
+	}
+	user := members[0]
+	msg, err := s.sendVideoToUser(user, video)
+	if err != nil {
+		return err
+	}
+	time.Sleep(delay)
+	return s.forwardMessage(msg, delay, members[1:]...)
+}
+
+func (s *Self) sendFileToMembers(file *os.File, delay time.Duration, members ...*User) error {
+	if len(members) == 0 {
+		return nil
+	}
+	user := members[0]
+	msg, err := s.sendFileToUser(user, file)
+	if err != nil {
+		return err
+	}
+	time.Sleep(delay)
+	return s.forwardMessage(msg, delay, members[1:]...)
+}
+
+// SendTextToFriends 发送文本消息给好友
+func (s *Self) SendTextToFriends(text string, delay time.Duration, friends ...*Friend) error {
+	members := Friends(friends).AsMembers()
+	return s.sendTextToMembers(text, delay, members...)
+}
+
+// SendImageToFriends 发送图片消息给好友
+func (s *Self) SendImageToFriends(img *os.File, delay time.Duration, friends ...*Friend) error {
+	members := Friends(friends).AsMembers()
+	return s.sendImageToMembers(img, delay, members...)
+}
+
+// SendFileToFriends 发送文件给好友
+func (s *Self) SendFileToFriends(file *os.File, delay time.Duration, friends ...*Friend) error {
+	members := Friends(friends).AsMembers()
+	return s.sendFileToMembers(file, delay, members...)
+}
+
+// SendVideoToFriends 发送视频给好友
+func (s *Self) SendVideoToFriends(video *os.File, delay time.Duration, friends ...*Friend) error {
+	members := Friends(friends).AsMembers()
+	return s.sendVideoToMembers(video, delay, members...)
+}
+
+// SendTextToGroups 发送文本消息给群组
+func (s *Self) SendTextToGroups(text string, delay time.Duration, groups ...*Group) error {
+	members := Groups(groups).AsMembers()
+	return s.sendTextToMembers(text, delay, members...)
+}
+
+// SendImageToGroups 发送图片消息给群组
+func (s *Self) SendImageToGroups(img *os.File, delay time.Duration, groups ...*Group) error {
+	members := Groups(groups).AsMembers()
+	return s.sendImageToMembers(img, delay, members...)
+}
+
+// SendFileToGroups 发送文件给群组
+func (s *Self) SendFileToGroups(file *os.File, delay time.Duration, groups ...*Group) error {
+	members := Groups(groups).AsMembers()
+	return s.sendFileToMembers(file, delay, members...)
+}
+
+// SendVideoToGroups 发送视频给群组
+func (s *Self) SendVideoToGroups(video *os.File, delay time.Duration, groups ...*Group) error {
+	members := Groups(groups).AsMembers()
+	return s.sendVideoToMembers(video, delay, members...)
 }
 
 // Members 抽象的用户组

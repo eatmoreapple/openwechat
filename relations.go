@@ -104,69 +104,42 @@ func (f Friends) AsMembers() Members {
 }
 
 // SendText 向slice的好友依次发送文本消息
-func (f Friends) SendText(text string, delay ...time.Duration) error {
-	total := getTotalDuration(delay...)
-	var (
-		sentMessage *SentMessage
-		err         error
-		self        *Self
-	)
-	for _, friend := range f {
-		self = friend.Self
-		time.Sleep(total)
-		if sentMessage != nil {
-			err = self.ForwardMessageToFriends(sentMessage, f...)
-			return err
-		}
-		if sentMessage, err = friend.SendText(text); err != nil {
-			return err
-		}
+func (f Friends) SendText(text string, delays ...time.Duration) error {
+	if f.Count() == 0 {
+		return nil
 	}
-	return nil
+	var delay time.Duration
+	if len(delays) > 0 {
+		delay = delays[0]
+	}
+	self := f.First().Self
+	return self.SendTextToFriends(text, delay, f...)
 }
 
 // SendImage 向slice的好友依次发送图片消息
-func (f Friends) SendImage(file *os.File, delay ...time.Duration) error {
-	total := getTotalDuration(delay...)
-	var (
-		sentMessage *SentMessage
-		err         error
-		self        *Self
-	)
-	for _, friend := range f {
-		self = friend.Self
-		time.Sleep(total)
-		if sentMessage != nil {
-			err = self.ForwardMessageToFriends(sentMessage, f...)
-			return err
-		}
-		if sentMessage, err = friend.SendImage(file); err != nil {
-			return err
-		}
+func (f Friends) SendImage(file *os.File, delays ...time.Duration) error {
+	if f.Count() == 0 {
+		return nil
 	}
-	return nil
+	var delay time.Duration
+	if len(delays) > 0 {
+		delay = delays[0]
+	}
+	self := f.First().Self
+	return self.SendImageToFriends(file, delay, f...)
 }
 
 // SendFile 群发文件
 func (f Friends) SendFile(file *os.File, delay ...time.Duration) error {
-	total := getTotalDuration(delay...)
-	var (
-		sentMessage *SentMessage
-		err         error
-		self        *Self
-	)
-	for _, friend := range f {
-		self = friend.Self
-		time.Sleep(total)
-		if sentMessage != nil {
-			err = self.ForwardMessageToFriends(sentMessage, f...)
-			return err
-		}
-		if sentMessage, err = friend.SendFile(file); err != nil {
-			return err
-		}
+	if f.Count() == 0 {
+		return nil
 	}
-	return nil
+	var d time.Duration
+	if len(delay) > 0 {
+		d = delay[0]
+	}
+	self := f.First().Self
+	return self.SendFileToFriends(file, d, f...)
 }
 
 type Group struct{ *User }
@@ -247,46 +220,41 @@ func (g Groups) Last() *Group {
 
 // SendText 向群组依次发送文本消息, 支持发送延迟
 func (g Groups) SendText(text string, delay ...time.Duration) error {
-	total := getTotalDuration(delay...)
-	var (
-		sentMessage *SentMessage
-		err         error
-		self        *Self
-	)
-	for _, group := range g {
-		self = group.Self
-		time.Sleep(total)
-		if sentMessage != nil {
-			err = self.ForwardMessageToGroups(sentMessage, g...)
-			return err
-		}
-		if sentMessage, err = group.SendText(text); err != nil {
-			return err
-		}
+	if g.Count() == 0 {
+		return nil
 	}
-	return nil
+	var d time.Duration
+	if len(delay) > 0 {
+		d = delay[0]
+	}
+	self := g.First().Self
+	return self.SendTextToGroups(text, d, g...)
 }
 
 // SendImage 向群组依次发送图片消息, 支持发送延迟
 func (g Groups) SendImage(file *os.File, delay ...time.Duration) error {
-	total := getTotalDuration(delay...)
-	var (
-		sentMessage *SentMessage
-		err         error
-		self        *Self
-	)
-	for _, group := range g {
-		self = group.Self
-		time.Sleep(total)
-		if sentMessage != nil {
-			err = self.ForwardMessageToGroups(sentMessage, g...)
-			return err
-		}
-		if sentMessage, err = group.SendImage(file); err != nil {
-			return err
-		}
+	if g.Count() == 0 {
+		return nil
 	}
-	return nil
+	var d time.Duration
+	if len(delay) > 0 {
+		d = delay[0]
+	}
+	self := g.First().Self
+	return self.SendImageToGroups(file, d, g...)
+}
+
+// SendFile 向群组依次发送文件消息, 支持发送延迟
+func (g Groups) SendFile(file *os.File, delay ...time.Duration) error {
+	if g.Count() == 0 {
+		return nil
+	}
+	var d time.Duration
+	if len(delay) > 0 {
+		d = delay[0]
+	}
+	self := g.First().Self
+	return self.SendFileToGroups(file, d, g...)
 }
 
 // SearchByUserName 根据用户名查找群组

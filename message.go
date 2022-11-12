@@ -601,13 +601,27 @@ func (s *SentMessage) CanRevoke() bool {
 }
 
 // ForwardToFriends 转发该消息给好友
+// 该方法会阻塞直到所有好友都接收到消息
+// 这里为了兼容以前的版本，默认休眠0.5秒，如果需要更快的速度，可以使用 SentMessage.ForwardToFriendsWithDelay
 func (s *SentMessage) ForwardToFriends(friends ...*Friend) error {
-	return s.Self.ForwardMessageToFriends(s, friends...)
+	return s.ForwardToFriendsWithDelay(time.Second/2, friends...)
+}
+
+// ForwardToFriendsWithDelay 转发该消息给好友，延迟指定时间
+func (s *SentMessage) ForwardToFriendsWithDelay(delay time.Duration, friends ...*Friend) error {
+	return s.Self.ForwardMessageToFriends(s, delay, friends...)
 }
 
 // ForwardToGroups 转发该消息给群组
+// 该方法会阻塞直到所有群组都接收到消息
+// 这里为了兼容以前的版本，默认休眠0.5秒，如果需要更快的速度，可以使用 SentMessage.ForwardToGroupsDelay
 func (s *SentMessage) ForwardToGroups(groups ...*Group) error {
-	return s.Self.ForwardMessageToGroups(s, groups...)
+	return s.ForwardToGroupsWithDelay(time.Second/2, groups...)
+}
+
+// ForwardToGroupsWithDelay 转发该消息给群组， 延迟指定时间
+func (s *SentMessage) ForwardToGroupsWithDelay(delay time.Duration, groups ...*Group) error {
+	return s.Self.ForwardMessageToGroups(s, delay, groups...)
 }
 
 type appmsg struct {
