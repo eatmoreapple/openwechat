@@ -641,12 +641,16 @@ func (m Members) init(self *Self) {
 	}
 }
 
+func newFriend(username string, self *Self) *Friend {
+	return &Friend{&User{UserName: username, Self: self}}
+}
+
 // NewFriendHelper 这里为了兼容Desktop版本找不到文件传输助手的问题
 // 文件传输助手的微信身份标识符永远是filehelper
 // 这种形式的对象可能缺少一些其他属性
 // 但是不影响发送信息的功能
 func NewFriendHelper(self *Self) *Friend {
-	return &Friend{&User{UserName: "filehelper", Self: self}}
+	return newFriend("filehelper", self)
 }
 
 // SendTextToMp 发送文本消息给公众号
