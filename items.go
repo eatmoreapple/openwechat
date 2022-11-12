@@ -1,6 +1,7 @@
 package openwechat
 
 import (
+	"errors"
 	"strconv"
 )
 
@@ -23,8 +24,11 @@ func (l LoginInfo) Ok() bool {
 	return l.Ret == 0
 }
 
-func (l LoginInfo) Error() string {
-	return l.Message
+func (l LoginInfo) Err() error {
+	if l.Ok() {
+		return nil
+	}
+	return errors.New(l.Message)
 }
 
 // BaseRequest 初始的请求信息
@@ -100,13 +104,15 @@ func (s SyncCheckResponse) NorMal() bool {
 	return s.Success() && s.Selector == "0"
 }
 
-// 实现error接口
-func (s SyncCheckResponse) Error() string {
+func (s SyncCheckResponse) Err() error {
+	if s.Success() {
+		return nil
+	}
 	i, err := strconv.ParseInt(s.RetCode, 16, 10)
 	if err != nil {
-		return ""
+		return errors.New("sync check unknown error")
 	}
-	return Ret(i).String()
+	return errors.New(Ret(i).String())
 }
 
 type WebWxSyncResponse struct {

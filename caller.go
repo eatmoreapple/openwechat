@@ -94,7 +94,7 @@ func (c *Caller) GetLoginInfo(body []byte) (*LoginInfo, error) {
 		return nil, err
 	}
 	if !loginInfo.Ok() {
-		return nil, loginInfo
+		return nil, loginInfo.Err()
 	}
 	return &loginInfo, nil
 }
