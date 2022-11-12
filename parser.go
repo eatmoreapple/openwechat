@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"io"
 	"math/rand"
 	"mime/multipart"
 	"net/http"
@@ -88,12 +89,12 @@ func getMessageType(filename string) string {
 	return doc
 }
 
-func scanXml(resp *http.Response, v interface{}) error {
-	return xml.NewDecoder(resp.Body).Decode(v)
+func scanXml(reader io.Reader, v interface{}) error {
+	return xml.NewDecoder(reader).Decode(v)
 }
 
-func scanJson(resp *http.Response, v interface{}) error {
-	return json.NewDecoder(resp.Body).Decode(v)
+func scanJson(reader io.Reader, v interface{}) error {
+	return json.NewDecoder(reader).Decode(v)
 }
 
 func stringToByte(s string) []byte {

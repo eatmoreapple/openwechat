@@ -451,7 +451,12 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 		}
 		// 如果不是最后一次, 解析有没有错误
 		if !isLastTime {
-			if err := parseBaseResponseError(resp); err != nil {
+			parser := MessageResponseParser{Reader: resp.Body}
+			if err = parser.Err(); err != nil {
+				_ = resp.Body.Close()
+				return nil, err
+			}
+			if err = resp.Body.Close(); err != nil {
 				return nil, err
 			}
 		}
