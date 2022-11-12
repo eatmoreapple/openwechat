@@ -246,6 +246,11 @@ func (m *Message) IsReceiveRedPacket() bool {
 	return m.IsSystem() && m.Content == "收到红包，请在手机上查看"
 }
 
+// IsRenameGroup 判断当前是否是群组重命名
+func (m *Message) IsRenameGroup() bool {
+	return m.IsSystem() && strings.Contains(m.Content, "修改群名为")
+}
+
 func (m *Message) IsSysNotice() bool {
 	return m.MsgType == 9999
 }
