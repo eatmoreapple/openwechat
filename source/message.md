@@ -51,7 +51,7 @@ msg.IsPicture()
 ##### 位置消息
 
 ```go
-msg.IsMap()
+msg.IsLocation()
 ```
 
 ##### 语音消息

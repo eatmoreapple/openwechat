@@ -185,8 +185,20 @@ func (m *Message) IsText() bool {
 	return m.MsgType == MsgTypeText && m.Url == ""
 }
 
-func (m *Message) IsMap() bool {
-	return m.MsgType == MsgTypeText && m.Url != ""
+func (m *Message) IsLocation() bool {
+	return m.MsgType == MsgTypeText && strings.Contains(m.Url, "api.map.qq.com") && strings.Contains(m.Content, "pictype=location")
+}
+
+func (m *Message) IsRealtimeLocation() bool {
+	return m.IsRealtimeLocationStart() || m.IsRealtimeLocationStop()
+}
+
+func (m *Message) IsRealtimeLocationStart() bool {
+	return m.MsgType == MsgTypeApp && m.AppMsgType == AppMsgTypeRealtimeShareLocation
+}
+
+func (m *Message) IsRealtimeLocationStop() bool {
+	return m.MsgType == MsgTypeSys && m.Content == "位置共享已经结束"
 }
 
 func (m *Message) IsPicture() bool {
