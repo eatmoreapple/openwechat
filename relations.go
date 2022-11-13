@@ -82,94 +82,64 @@ func (f Friends) SearchByRemarkName(limit int, remarkName string) (results Frien
 }
 
 // Search 根据自定义条件查找好友
-func (f Friends) Search(limit int, condFuncList ...func(friend *Friend) bool) (results Friends) {
-	if condFuncList == nil {
-		return f
-	}
-	if limit <= 0 {
-		limit = f.Count()
-	}
-	for _, member := range f {
-		if results.Count() == limit {
-			break
-		}
-		var passCount int
-		for _, condFunc := range condFuncList {
-			if condFunc(member) {
-				passCount++
+func (f Friends) Search(limit int, searchFuncList ...func(friend *Friend) bool) (results Friends) {
+	return f.AsMembers().Search(limit, func(user *User) bool {
+		var friend = &Friend{user}
+		for _, searchFunc := range searchFuncList {
+			if !searchFunc(friend) {
+				return false
 			}
 		}
-		if passCount == len(condFuncList) {
-			results = append(results, member)
-		}
+		return true
+	}).Friends()
+}
+
+// AsMembers 将群组转换为用户列表
+func (f Friends) AsMembers() Members {
+	var members = make(Members, 0, f.Count())
+	for _, friend := range f {
+		members = append(members, friend.User)
 	}
-	return
+	return members
 }
 
 // SendText 向slice的好友依次发送文本消息
-func (f Friends) SendText(text string, delay ...time.Duration) error {
-	total := getTotalDuration(delay...)
-	var (
-		sentMessage *SentMessage
-		err         error
-		self        *Self
-	)
-	for _, friend := range f {
-		self = friend.Self
-		time.Sleep(total)
-		if sentMessage != nil {
-			err = self.ForwardMessageToFriends(sentMessage, f...)
-			return err
-		}
-		if sentMessage, err = friend.SendText(text); err != nil {
-			return err
-		}
+func (f Friends) SendText(text string, delays ...time.Duration) error {
+	if f.Count() == 0 {
+		return nil
 	}
-	return nil
+	var delay time.Duration
+	if len(delays) > 0 {
+		delay = delays[0]
+	}
+	self := f.First().Self
+	return self.SendTextToFriends(text, delay, f...)
 }
 
 // SendImage 向slice的好友依次发送图片消息
-func (f Friends) SendImage(file *os.File, delay ...time.Duration) error {
-	total := getTotalDuration(delay...)
-	var (
-		sentMessage *SentMessage
-		err         error
-		self        *Self
-	)
-	for _, friend := range f {
-		self = friend.Self
-		time.Sleep(total)
-		if sentMessage != nil {
-			err = self.ForwardMessageToFriends(sentMessage, f...)
-			return err
-		}
-		if sentMessage, err = friend.SendImage(file); err != nil {
-			return err
-		}
+func (f Friends) SendImage(file *os.File, delays ...time.Duration) error {
+	if f.Count() == 0 {
+		return nil
 	}
-	return nil
+	var delay time.Duration
+	if len(delays) > 0 {
+		delay = delays[0]
+	}
+	self := f.First().Self
+	return self.SendImageToFriends(file, delay, f...)
 }
 
 // SendFile 群发文件
 func (f Friends) SendFile(file *os.File, delay ...time.Duration) error {
-	total := getTotalDuration(delay...)
-	var (
-		sentMessage *SentMessage
-		err         error
-		self        *Self
-	)
-	for _, friend := range f {
-		self = friend.Self
-		time.Sleep(total)
-		if sentMessage != nil {
-			err = self.ForwardMessageToFriends(sentMessage, f...)
-			return err
-		}
-		if sentMessage, err = friend.SendFile(file); err != nil {
-			return err
-		}
+	if f.Count() == 0 {
+		return nil
 	}
-	return nil
+	var d time.Duration
+	if len(delay) > 0 {
+		d = delay[0]
+	}
+	self := f.First().Self
+	return self.SendFileToFriends(file, d, f...)
 }
 
 type Group struct{ *User }
@@ -250,46 +220,41 @@ func (g Groups) Last() *Group {
 
 // SendText 向群组依次发送文本消息, 支持发送延迟
 func (g Groups) SendText(text string, delay ...time.Duration) error {
-	total := getTotalDuration(delay...)
-	var (
-		sentMessage *SentMessage
-		err         error
-		self        *Self
-	)
-	for _, group := range g {
-		self = group.Self
-		time.Sleep(total)
-		if sentMessage != nil {
-			err = self.ForwardMessageToGroups(sentMessage, g...)
-			return err
-		}
-		if sentMessage, err = group.SendText(text); err != nil {
-			return err
-		}
+	if g.Count() == 0 {
+		return nil
 	}
-	return nil
+	var d time.Duration
+	if len(delay) > 0 {
+		d = delay[0]
+	}
+	self := g.First().Self
+	return self.SendTextToGroups(text, d, g...)
 }
 
 // SendImage 向群组依次发送图片消息, 支持发送延迟
 func (g Groups) SendImage(file *os.File, delay ...time.Duration) error {
-	total := getTotalDuration(delay...)
-	var (
-		sentMessage *SentMessage
-		err         error
-		self        *Self
-	)
-	for _, group := range g {
-		self = group.Self
-		time.Sleep(total)
-		if sentMessage != nil {
-			err = self.ForwardMessageToGroups(sentMessage, g...)
-			return err
-		}
-		if sentMessage, err = group.SendImage(file); err != nil {
-			return err
-		}
+	if g.Count() == 0 {
+		return nil
 	}
-	return nil
+	var d time.Duration
+	if len(delay) > 0 {
+		d = delay[0]
+	}
+	self := g.First().Self
+	return self.SendImageToGroups(file, d, g...)
+}
+
+// SendFile 向群组依次发送文件消息, 支持发送延迟
+func (g Groups) SendFile(file *os.File, delay ...time.Duration) error {
+	if g.Count() == 0 {
+		return nil
+	}
+	var d time.Duration
+	if len(delay) > 0 {
+		d = delay[0]
+	}
+	self := g.First().Self
+	return self.SendFileToGroups(file, d, g...)
 }
 
 // SearchByUserName 根据用户名查找群组
@@ -308,28 +273,25 @@ func (g Groups) SearchByRemarkName(limit int, remarkName string) (results Groups
 }
 
 // Search 根据自定义条件查找群组
-func (g Groups) Search(limit int, condFuncList ...func(group *Group) bool) (results Groups) {
-	if condFuncList == nil {
-		return g
-	}
-	if limit <= 0 {
-		limit = g.Count()
-	}
-	for _, member := range g {
-		if results.Count() == limit {
-			break
-		}
-		var passCount int
-		for _, condFunc := range condFuncList {
-			if condFunc(member) {
-				passCount++
+func (g Groups) Search(limit int, searchFuncList ...func(group *Group) bool) (results Groups) {
+	return g.AsMembers().Search(limit, func(user *User) bool {
+		var group = &Group{user}
+		for _, searchFunc := range searchFuncList {
+			if !searchFunc(group) {
+				return false
 			}
 		}
-		if passCount == len(condFuncList) {
-			results = append(results, member)
-		}
+		return true
+	}).Groups()
+}
+
+// AsMembers 将群组列表转换为用户列表
+func (g Groups) AsMembers() Members {
+	var members = make(Members, 0, g.Count())
+	for _, group := range g {
+		members = append(members, group.User)
 	}
-	return
+	return members
 }
 
 // Mp 公众号对象
@@ -364,28 +326,25 @@ func (m Mps) Last() *Mp {
 }
 
 // Search 根据自定义条件查找
-func (m Mps) Search(limit int, condFuncList ...func(group *Mp) bool) (results Mps) {
-	if condFuncList == nil {
-		return m
-	}
-	if limit <= 0 {
-		limit = m.Count()
-	}
-	for _, member := range m {
-		if results.Count() == limit {
-			break
-		}
-		var passCount int
-		for _, condFunc := range condFuncList {
-			if condFunc(member) {
-				passCount++
+func (m Mps) Search(limit int, searchFuncList ...func(group *Mp) bool) (results Mps) {
+	return m.AsMembers().Search(limit, func(user *User) bool {
+		var mp = &Mp{user}
+		for _, searchFunc := range searchFuncList {
+			if !searchFunc(mp) {
+				return false
 			}
 		}
-		if passCount == len(condFuncList) {
-			results = append(results, member)
-		}
+		return true
+	}).MPs()
+}
+
+// AsMembers 将公众号列表转换为用户列表
+func (m Mps) AsMembers() Members {
+	var members = make(Members, 0, m.Count())
+	for _, mp := range m {
+		members = append(members, mp.User)
 	}
-	return
+	return members
 }
 
 // SearchByUserName 根据用户名查找
@@ -451,4 +410,20 @@ func (m Mps) GetByNickName(nickname string) *Mp {
 // GetByUserName 根据username查询一个Mp
 func (m Mps) GetByUserName(username string) *Mp {
 	return m.SearchByUserName(1, username).First()
+}
+
+// search 根据自定义条件查找
+func search(searchList Members, limit int, searchFunc func(group *User) bool) (results Members) {
+	if limit <= 0 {
+		limit = searchList.Count()
+	}
+	for _, member := range searchList {
+		if results.Count() == limit {
+			break
+		}
+		if searchFunc(member) {
+			results = append(results, member)
+		}
+	}
+	return
 }

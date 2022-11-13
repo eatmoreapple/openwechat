@@ -71,13 +71,24 @@ func (c *Client) AddHttpHook(hooks ...HttpHook) {
 	c.HttpHooks = append(c.HttpHooks, hooks...)
 }
 
+const maxRetry = 2
+
 func (c *Client) do(req *http.Request) (*http.Response, error) {
 	for _, hook := range c.HttpHooks {
 		hook.BeforeRequest(req)
 	}
-	resp, err := c.Client.Do(req)
+	var (
+		resp *http.Response
+		err  error
+	)
+	for i := 0; i < maxRetry; i++ {
+		resp, err = c.Client.Do(req)
+		if err == nil {
+			break
+		}
+	}
 	if err != nil {
-		err = ErrorWrapper(NetworkErr, err.Error())
+		err = fmt.Errorf("%w: %s", NetworkErr, err.Error())
 	}
 	for _, hook := range c.HttpHooks {
 		hook.AfterRequest(resp, err)
@@ -440,7 +451,12 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 		}
 		// 如果不是最后一次, 解析有没有错误
 		if !isLastTime {
-			if err := parseBaseResponseError(resp); err != nil {
+			parser := MessageResponseParser{Reader: resp.Body}
+			if err = parser.Err(); err != nil {
+				_ = resp.Body.Close()
+				return nil, err
+			}
+			if err = resp.Body.Close(); err != nil {
 				return nil, err
 			}
 		}

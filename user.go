@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 // User 抽象的用户结构: 好友 群组 公众号
@@ -186,7 +187,8 @@ func (s *Self) updateMembers() error {
 }
 
 // FileHelper 获取文件传输助手对象，封装成Friend返回
-//      fh, err := self.FileHelper() // or fh := openwechat.NewFriendHelper(self)
+//
+//	fh, err := self.FileHelper() // or fh := openwechat.NewFriendHelper(self)
 func (s *Self) FileHelper() (*Friend, error) {
 	// 如果缓存里有，直接返回，否则去联系人里面找
 	if s.fileHelper != nil {
@@ -300,7 +302,8 @@ func (s *Self) SendFileToFriend(friend *Friend, file *os.File) (*SentMessage, er
 }
 
 // SetRemarkNameToFriend 设置好友备注
-//      self.SetRemarkNameToFriend(friend, "remark") // or friend.SetRemarkName("remark")
+//
+//	self.SetRemarkNameToFriend(friend, "remark") // or friend.SetRemarkName("remark")
 func (s *Self) SetRemarkNameToFriend(friend *Friend, remarkName string) error {
 	req := s.Bot.Storage.Request
 	return s.Bot.Caller.WebWxOplog(req, remarkName, friend.UserName)
@@ -418,16 +421,17 @@ func (s *Self) SendFileToGroup(group *Group, file *os.File) (*SentMessage, error
 }
 
 // RevokeMessage 撤回消息
-//      sentMessage, err := friend.SendText("message")
-//      if err == nil {
-//          self.RevokeMessage(sentMessage) // or sentMessage.Revoke()
-//      }
+//
+//	sentMessage, err := friend.SendText("message")
+//	if err == nil {
+//	    self.RevokeMessage(sentMessage) // or sentMessage.Revoke()
+//	}
 func (s *Self) RevokeMessage(msg *SentMessage) error {
 	return s.Bot.Caller.WebWxRevokeMsg(msg, s.Bot.Storage.Request)
 }
 
 // 转发消息接口
-func (s *Self) forwardMessage(msg *SentMessage, users ...*User) error {
+func (s *Self) forwardMessage(msg *SentMessage, delay time.Duration, users ...*User) error {
 	info := s.Bot.Storage.LoginInfo
 	req := s.Bot.Storage.Request
 	switch msg.Type {
@@ -435,43 +439,148 @@ func (s *Self) forwardMessage(msg *SentMessage, users ...*User) error {
 		for _, user := range users {
 			msg.FromUserName = s.UserName
 			msg.ToUserName = user.UserName
-			_, err := s.Self.Bot.Caller.WebWxSendMsg(msg.SendMessage, info, req)
-			return err
+			if _, err := s.Self.Bot.Caller.WebWxSendMsg(msg.SendMessage, info, req); err != nil {
+				return err
+			}
+			time.Sleep(delay)
 		}
 	case MsgTypeImage:
 		for _, user := range users {
 			msg.FromUserName = s.UserName
 			msg.ToUserName = user.UserName
-			_, err := s.Self.Bot.Caller.Client.WebWxSendMsgImg(msg.SendMessage, req, info)
-			return err
+			if _, err := s.Self.Bot.Caller.Client.WebWxSendMsgImg(msg.SendMessage, req, info); err != nil {
+				return err
+			}
+			time.Sleep(delay)
 		}
 	case AppMessage:
 		for _, user := range users {
 			msg.FromUserName = s.UserName
 			msg.ToUserName = user.UserName
-			_, err := s.Self.Bot.Caller.Client.WebWxSendAppMsg(msg.SendMessage, req)
-			return err
+			if _, err := s.Self.Bot.Caller.Client.WebWxSendAppMsg(msg.SendMessage, req); err != nil {
+				return err
+			}
+			time.Sleep(delay)
 		}
+	default:
+		return fmt.Errorf("unsupported message type: %s", msg.Type)
 	}
-	return errors.New("unsupport message")
+	return nil
 }
 
 // ForwardMessageToFriends 转发给好友
-func (s *Self) ForwardMessageToFriends(msg *SentMessage, friends ...*Friend) error {
-	var users = make([]*User, len(friends))
-	for index, friend := range friends {
-		users[index] = friend.User
-	}
-	return s.forwardMessage(msg, users...)
+func (s *Self) ForwardMessageToFriends(msg *SentMessage, delay time.Duration, friends ...*Friend) error {
+	members := Friends(friends).AsMembers()
+	return s.forwardMessage(msg, delay, members...)
 }
 
 // ForwardMessageToGroups 转发给群组
-func (s *Self) ForwardMessageToGroups(msg *SentMessage, groups ...*Group) error {
-	var users = make([]*User, len(groups))
-	for index, group := range groups {
-		users[index] = group.User
+func (s *Self) ForwardMessageToGroups(msg *SentMessage, delay time.Duration, groups ...*Group) error {
+	members := Groups(groups).AsMembers()
+	return s.forwardMessage(msg, delay, members...)
+}
+
+// sendTextToMembers 发送文本消息给群组或者好友
+func (s *Self) sendTextToMembers(text string, delay time.Duration, members ...*User) error {
+	if len(members) == 0 {
+		return nil
 	}
-	return s.forwardMessage(msg, users...)
+	user := members[0]
+	msg, err := s.sendTextToUser(user, text)
+	if err != nil {
+		return err
+	}
+	time.Sleep(delay)
+	return s.forwardMessage(msg, delay, members[1:]...)
+}
+
+// sendImageToMembers 发送图片消息给群组或者好友
+func (s *Self) sendImageToMembers(img *os.File, delay time.Duration, members ...*User) error {
+	if len(members) == 0 {
+		return nil
+	}
+	user := members[0]
+	msg, err := s.sendImageToUser(user, img)
+	if err != nil {
+		return err
+	}
+	time.Sleep(delay)
+	return s.forwardMessage(msg, delay, members[1:]...)
+}
+
+// sendVideoToMembers 发送视频消息给群组或者好友
+func (s *Self) sendVideoToMembers(video *os.File, delay time.Duration, members ...*User) error {
+	if len(members) == 0 {
+		return nil
+	}
+	user := members[0]
+	msg, err := s.sendVideoToUser(user, video)
+	if err != nil {
+		return err
+	}
+	time.Sleep(delay)
+	return s.forwardMessage(msg, delay, members[1:]...)
+}
+
+func (s *Self) sendFileToMembers(file *os.File, delay time.Duration, members ...*User) error {
+	if len(members) == 0 {
+		return nil
+	}
+	user := members[0]
+	msg, err := s.sendFileToUser(user, file)
+	if err != nil {
+		return err
+	}
+	time.Sleep(delay)
+	return s.forwardMessage(msg, delay, members[1:]...)
+}
+
+// SendTextToFriends 发送文本消息给好友
+func (s *Self) SendTextToFriends(text string, delay time.Duration, friends ...*Friend) error {
+	members := Friends(friends).AsMembers()
+	return s.sendTextToMembers(text, delay, members...)
+}
+
+// SendImageToFriends 发送图片消息给好友
+func (s *Self) SendImageToFriends(img *os.File, delay time.Duration, friends ...*Friend) error {
+	members := Friends(friends).AsMembers()
+	return s.sendImageToMembers(img, delay, members...)
+}
+
+// SendFileToFriends 发送文件给好友
+func (s *Self) SendFileToFriends(file *os.File, delay time.Duration, friends ...*Friend) error {
+	members := Friends(friends).AsMembers()
+	return s.sendFileToMembers(file, delay, members...)
+}
+
+// SendVideoToFriends 发送视频给好友
+func (s *Self) SendVideoToFriends(video *os.File, delay time.Duration, friends ...*Friend) error {
+	members := Friends(friends).AsMembers()
+	return s.sendVideoToMembers(video, delay, members...)
+}
+
+// SendTextToGroups 发送文本消息给群组
+func (s *Self) SendTextToGroups(text string, delay time.Duration, groups ...*Group) error {
+	members := Groups(groups).AsMembers()
+	return s.sendTextToMembers(text, delay, members...)
+}
+
+// SendImageToGroups 发送图片消息给群组
+func (s *Self) SendImageToGroups(img *os.File, delay time.Duration, groups ...*Group) error {
+	members := Groups(groups).AsMembers()
+	return s.sendImageToMembers(img, delay, members...)
+}
+
+// SendFileToGroups 发送文件给群组
+func (s *Self) SendFileToGroups(file *os.File, delay time.Duration, groups ...*Group) error {
+	members := Groups(groups).AsMembers()
+	return s.sendFileToMembers(file, delay, members...)
+}
+
+// SendVideoToGroups 发送视频给群组
+func (s *Self) SendVideoToGroups(video *os.File, delay time.Duration, groups ...*Group) error {
+	members := Groups(groups).AsMembers()
+	return s.sendVideoToMembers(video, delay, members...)
 }
 
 // Members 抽象的用户组
@@ -516,30 +625,15 @@ func (m Members) SearchByRemarkName(limit int, remarkName string) (results Membe
 }
 
 // Search 根据自定义条件查找
-func (m Members) Search(limit int, condFuncList ...func(user *User) bool) (results Members) {
-	if condFuncList == nil {
-		return m
-	}
-	if limit <= 0 {
-		limit = m.Count()
-	}
-	for _, member := range m {
-		if count := len(results); count == limit {
-			break
-		}
-		var passCount int
-		for _, condFunc := range condFuncList {
-			if condFunc(member) {
-				passCount++
-			} else {
-				break
+func (m Members) Search(limit int, searchFuncList ...func(user *User) bool) (results Members) {
+	return search(m, limit, func(group *User) bool {
+		for _, searchFunc := range searchFuncList {
+			if !searchFunc(group) {
+				return false
 			}
 		}
-		if passCount == len(condFuncList) {
-			results = append(results, member)
-		}
-	}
-	return
+		return true
+	})
 }
 
 // GetByUserName 根据username查找用户
@@ -653,12 +747,16 @@ func (m Members) init(self *Self) {
 	}
 }
 
+func newFriend(username string, self *Self) *Friend {
+	return &Friend{&User{UserName: username, Self: self}}
+}
+
 // NewFriendHelper 这里为了兼容Desktop版本找不到文件传输助手的问题
 // 文件传输助手的微信身份标识符永远是filehelper
 // 这种形式的对象可能缺少一些其他属性
 // 但是不影响发送信息的功能
 func NewFriendHelper(self *Self) *Friend {
-	return &Friend{&User{UserName: "filehelper", Self: self}}
+	return newFriend("filehelper", self)
 }
 
 // SendTextToMp 发送文本消息给公众号

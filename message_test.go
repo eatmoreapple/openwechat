@@ -3,6 +3,7 @@ package openwechat
 import (
 	"fmt"
 	"regexp"
+	"testing"
 )
 
 func ExampleMessageType_output() {
@@ -42,4 +43,20 @@ func ExampleMessageType_output() {
 	// 收到一条系统消息(type 10000): 系统消息
 	// 收到一条未知消息(type 6): MessageType(6)
 	// 收到一条未知消息(type 51): MessageType(51)
+}
+
+func TestMessage_FriendAddMessageContent(t *testing.T) {
+	m := &Message{
+		MsgType:      37,
+		FromUserName: "fmessage",
+		Content:      "<msg fromusername=\"user1\" encryptusername=\"123123131@stranger\" fromnickname=\"nickname1\" content=\"test11111\"  shortpy=\"MMHDNLXX\" imagestatus=\"3\" scene=\"3\" country=\"CN\" province=\"Zhejiang\" city=\"Hangzhou\" sign=\"Life is a struggle.\" percard=\"1\" sex=\"1\" alias=\"1111\" weibo=\"\" albumflag=\"0\" albumstyle=\"0\" albumbgimgid=\"\" snsflag=\"273\" snsbgimgid=\"http://shmmsns.qpic.cn/mbsFs/0\" snsbgobjectid=\"123123131\" mhash=\"1231231\" mfullhash=\"1231231\" bigheadimgurl=\"http://wx.qlogo.cn/mmhead/ver_1/1231231/0\" smallheadimgurl=\"http://wx.qlogo.cn/mmhead/ver_1/1231231/132\" ticket=\"1231231@stranger\" opcode=\"2\" googlecontact=\"\" qrticket=\"\" chatroomusername=\"123@chatroom\" sourceusername=\"\" sourcenickname=\"\" sharecardusername=\"\" sharecardnickname=\"\" cardversion=\"\" extflag=\"0\"><brandlist count=\"0\" ver=\"759291380\"></brandlist></msg>",
+	}
+	fm, err := m.FriendAddMessageContent()
+	if err != nil {
+		t.Error(err)
+	}
+
+	if fm.Shortpy != "MMHDNLXX" {
+		t.Error("unexpected shorty:", fm.Shortpy)
+	}
 }

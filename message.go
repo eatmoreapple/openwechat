@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"html"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -245,6 +246,11 @@ func (m *Message) IsReceiveRedPacket() bool {
 	return m.IsSystem() && m.Content == "收到红包，请在手机上查看"
 }
 
+// IsRenameGroup 判断当前是否是群组重命名
+func (m *Message) IsRenameGroup() bool {
+	return m.IsSystem() && strings.Contains(m.Content, "修改群名为")
+}
+
 func (m *Message) IsSysNotice() bool {
 	return m.MsgType == 9999
 }
@@ -311,6 +317,27 @@ func (m *Message) GetMedia() (*http.Response, error) {
 	return m.Bot.Caller.Client.WebWxGetMedia(m, m.Bot.Storage.LoginInfo)
 }
 
+// SaveFile 保存文件到指定的 io.Writer
+func (m *Message) SaveFile(writer io.Writer) error {
+	resp, err := m.GetFile()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = resp.Body.Close() }()
+	_, err = io.Copy(writer, resp.Body)
+	return err
+}
+
+// SaveFileToLocal 保存文件到本地
+func (m *Message) SaveFileToLocal(filename string) error {
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = file.Close() }()
+	return m.SaveFile(file)
+}
+
 // Card 获取card类型
 func (m *Message) Card() (*Card, error) {
 	if !m.IsCard() {
@@ -342,11 +369,19 @@ func (m *Message) RevokeMsg() (*RevokeMsg, error) {
 }
 
 // Agree 同意好友的请求
-func (m *Message) Agree(verifyContents ...string) error {
+func (m *Message) Agree(verifyContents ...string) (*Friend, error) {
 	if !m.IsFriendAdd() {
-		return fmt.Errorf("friend add message required")
+		return nil, errors.New("friend add message required")
 	}
-	return m.Bot.Caller.WebWxVerifyUser(m.Bot.Storage, m.RecommendInfo, strings.Join(verifyContents, ""))
+	err := m.Bot.Caller.WebWxVerifyUser(m.Bot.Storage, m.RecommendInfo, strings.Join(verifyContents, ""))
+	if err != nil {
+		return nil, err
+	}
+	friend := newFriend(m.RecommendInfo.UserName, m.Bot.self)
+	if err = friend.Detail(); err != nil {
+		return nil, err
+	}
+	return friend, nil
 }
 
 // AsRead 将消息设置为已读
@@ -518,7 +553,7 @@ type Card struct {
 // FriendAddMessage 好友添加消息信息内容
 type FriendAddMessage struct {
 	XMLName           xml.Name `xml:"msg"`
-	Shortpy           int      `xml:"shortpy,attr"`
+	Shortpy           string   `xml:"shortpy,attr"`
 	ImageStatus       int      `xml:"imagestatus,attr"`
 	Scene             int      `xml:"scene,attr"`
 	PerCard           int      `xml:"percard,attr"`
@@ -593,13 +628,27 @@ func (s *SentMessage) CanRevoke() bool {
 }
 
 // ForwardToFriends 转发该消息给好友
+// 该方法会阻塞直到所有好友都接收到消息
+// 这里为了兼容以前的版本，默认休眠0.5秒，如果需要更快的速度，可以使用 SentMessage.ForwardToFriendsWithDelay
 func (s *SentMessage) ForwardToFriends(friends ...*Friend) error {
-	return s.Self.ForwardMessageToFriends(s, friends...)
+	return s.ForwardToFriendsWithDelay(time.Second/2, friends...)
+}
+
+// ForwardToFriendsWithDelay 转发该消息给好友，延迟指定时间
+func (s *SentMessage) ForwardToFriendsWithDelay(delay time.Duration, friends ...*Friend) error {
+	return s.Self.ForwardMessageToFriends(s, delay, friends...)
 }
 
 // ForwardToGroups 转发该消息给群组
+// 该方法会阻塞直到所有群组都接收到消息
+// 这里为了兼容以前的版本，默认休眠0.5秒，如果需要更快的速度，可以使用 SentMessage.ForwardToGroupsDelay
 func (s *SentMessage) ForwardToGroups(groups ...*Group) error {
-	return s.Self.ForwardMessageToGroups(s, groups...)
+	return s.ForwardToGroupsWithDelay(time.Second/2, groups...)
+}
+
+// ForwardToGroupsWithDelay 转发该消息给群组， 延迟指定时间
+func (s *SentMessage) ForwardToGroupsWithDelay(delay time.Duration, groups ...*Group) error {
+	return s.Self.ForwardMessageToGroups(s, delay, groups...)
 }
 
 type appmsg struct {

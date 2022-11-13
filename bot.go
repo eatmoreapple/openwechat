@@ -268,7 +268,7 @@ func (b *Bot) syncCheck() error {
 		}
 		// 如果不是正常的状态码返回，发生了错误，直接退出
 		if !resp.Success() {
-			return resp
+			return resp.Err()
 		}
 		// 如果Selector不为0，则获取消息
 		if !resp.NorMal() {
