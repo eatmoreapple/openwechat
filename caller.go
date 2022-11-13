@@ -119,15 +119,9 @@ func (c *Caller) WebWxStatusNotify(request *BaseRequest, response *WebInitRespon
 	if err != nil {
 		return err
 	}
-	var item struct{ BaseResponse BaseResponse }
 	defer func() { _ = resp.Body.Close() }()
-	if err := scanJson(resp.Body, &item); err != nil {
-		return err
-	}
-	if !item.BaseResponse.Ok() {
-		return item.BaseResponse.Err()
-	}
-	return nil
+	parser := MessageResponseParser{resp.Body}
+	return parser.Err()
 }
 
 // SyncCheck 异步获取是否有新的消息
