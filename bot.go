@@ -85,7 +85,7 @@ func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
 		return b.Login()
 	}
 
-	if err = b.hotLoginInit(*item); err != nil {
+	if err = b.hotLoginInit(item); err != nil {
 		return err
 	}
 
@@ -98,7 +98,7 @@ func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
 }
 
 // 热登陆初始化
-func (b *Bot) hotLoginInit(item HotReloadStorageItem) error {
+func (b *Bot) hotLoginInit(item *HotReloadStorageItem) error {
 	cookies := item.Cookies
 	for u, ck := range cookies {
 		path, err := url.Parse(u)
