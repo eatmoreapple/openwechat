@@ -256,6 +256,7 @@ func (c *Caller) WebWxSendImageMsg(file *os.File, request *BaseRequest, info *Lo
 	if err != nil {
 		return nil, err
 	}
+	defer func() { _ = resp.Body.Close() }()
 	parser := MessageResponseParser{resp.Body}
 	return parser.SentMessage(msg)
 }
@@ -291,6 +292,7 @@ func (c *Caller) WebWxSendVideoMsg(file *os.File, request *BaseRequest, info *Lo
 	if err != nil {
 		return nil, err
 	}
+	defer func() { _ = resp.Body.Close() }()
 	parser := MessageResponseParser{resp.Body}
 	return parser.SentMessage(msg)
 }
