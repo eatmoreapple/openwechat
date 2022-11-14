@@ -19,7 +19,6 @@ type Bot struct {
 	SyncCheckCallback   func(resp SyncCheckResponse) // 心跳回调
 	MessageHandler      MessageHandler               // 获取消息成功的handle
 	MessageErrorHandler func(err error) bool         // 获取消息发生错误的handle, 返回true则尝试继续监听
-	isHot               bool                         // 是否为热登录模式
 	once                sync.Once
 	err                 error
 	context             context.Context
@@ -27,7 +26,7 @@ type Bot struct {
 	Caller              *Caller
 	self                *Self
 	Storage             *Storage
-	HotReloadStorage    HotReloadStorage
+	hotReloadStorage    HotReloadStorage
 	uuid                string
 	deviceId            string // 设备Id
 }
@@ -74,8 +73,7 @@ func (b *Bot) GetCurrentUser() (*Self, error) {
 //	err := bot.HotLogin(Storage, true)
 //	fmt.Println(err)
 func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
-	b.isHot = true
-	b.HotReloadStorage = storage
+	b.hotReloadStorage = storage
 
 	var err error
 
@@ -200,7 +198,7 @@ func (b *Bot) HandleLogin(data []byte) error {
 	b.Storage.Request = request
 
 	// 如果是热登陆,则将当前的重要信息写入hotReloadStorage
-	if b.isHot {
+	if b.hotReloadStorage != nil {
 		if err = b.DumpHotReloadStorage(); err != nil {
 			return err
 		}
@@ -349,7 +347,7 @@ func (b *Bot) MessageOnError(h func(err error) bool) {
 
 // DumpHotReloadStorage 写入HotReloadStorage
 func (b *Bot) DumpHotReloadStorage() error {
-	if b.HotReloadStorage == nil {
+	if b.hotReloadStorage == nil {
 		return errors.New("HotReloadStorage can not be nil")
 	}
 	cookies := b.Caller.Client.GetCookieMap()
@@ -361,7 +359,7 @@ func (b *Bot) DumpHotReloadStorage() error {
 		UUID:         b.uuid,
 	}
 
-	return json.NewEncoder(b.HotReloadStorage).Encode(item)
+	return json.NewEncoder(b.hotReloadStorage).Encode(item)
 }
 
 // OnLogin is a setter for LoginCallBack
@@ -452,7 +450,7 @@ func open(url string) error {
 
 // IsHot returns true if is hot login otherwise false
 func (b *Bot) IsHot() bool {
-	return b.isHot
+	return b.hotReloadStorage != nil
 }
 
 // UUID returns current uuid of bot
