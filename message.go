@@ -105,8 +105,12 @@ func (m *Message) SenderInGroup() (*User, error) {
 // 如果消息是好友消息，则返回好友
 // 如果消息是系统消息，则返回当前用户
 func (m *Message) Receiver() (*User, error) {
-	if m.IsSystem() {
+	if m.IsSystem() || m.ToUserName == m.Bot.self.UserName {
 		return m.Bot.self.User, nil
+	}
+	// https://github.com/eatmoreapple/openwechat/issues/113
+	if m.ToUserName == m.Bot.self.fileHelper.UserName {
+		return m.Bot.self.fileHelper.User, nil
 	}
 	if m.IsSendByGroup() {
 		groups, err := m.Bot.self.Groups()
@@ -122,8 +126,6 @@ func (m *Message) Receiver() (*User, error) {
 			return nil, ErrNoSuchUserFoundError
 		}
 		return users.First().User, nil
-	} else if m.ToUserName == m.Bot.self.UserName {
-		return m.Bot.self.User, nil
 	} else {
 		user, exist := m.Bot.self.MemberList.GetByRemarkName(m.ToUserName)
 		if !exist {
