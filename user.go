@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -142,6 +144,29 @@ func (u *User) UnPin() error {
 // IsPin 判断当前联系人(好友、群组、公众号)是否为置顶状态
 func (u *User) IsPin() bool {
 	return u.ContactFlag == 2051
+}
+
+// ID 获取用户的唯一标识 只对当前登录的用户有效
+// ID 和 UserName 的区别是 ID 多次登录不会变化，而 UserName 只针对当前登录会话有效
+func (u *User) ID() string {
+	// 首先尝试获取uid
+	if u.Uin != 0 {
+		return strconv.FormatInt(u.Uin, 10)
+	}
+	// 如果uid不存在，尝试从头像url中获取
+	if u.HeadImgUrl != "" {
+		index := strings.Index(u.HeadImgUrl, "?") + 1
+		if len(u.HeadImgUrl) > index {
+			query := u.HeadImgUrl[index:]
+			params, err := url.ParseQuery(query)
+			if err != nil {
+				return ""
+			}
+			return params.Get("seq")
+
+		}
+	}
+	return ""
 }
 
 // 格式化emoji表情
