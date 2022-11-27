@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"os"
 )
@@ -85,6 +87,10 @@ func (c *Caller) GetLoginInfo(body []byte) (*LoginInfo, error) {
 	resp, err := c.Client.GetLoginInfo(path.String())
 	if err != nil {
 		return nil, err
+	}
+	// 判断是否重定向
+	if resp.StatusCode != http.StatusMovedPermanently {
+		return nil, fmt.Errorf("%w: try to login with Desktop Mode", ErrForbidden)
 	}
 	defer func() { _ = resp.Body.Close() }()
 

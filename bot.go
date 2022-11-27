@@ -141,10 +141,13 @@ func (b *Bot) LoginWithUUID(uuid string) error {
 		switch resp.Code {
 		case StatusSuccess:
 			// 判断是否有登录回调，如果有执行它
+			if err = b.HandleLogin(resp.Raw); err != nil {
+				return err
+			}
 			if b.LoginCallBack != nil {
 				b.LoginCallBack(resp.Raw)
 			}
-			return b.HandleLogin(resp.Raw)
+			return nil
 		case StatusScanned:
 			// 执行扫码回调
 			if b.ScanCallBack != nil {
