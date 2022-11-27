@@ -18,3 +18,6 @@ func IgnoreNetworkError(errHandler func(err error)) func(error) {
 		}
 	}
 }
+
+// ErrForbidden 禁止当前账号登录
+var ErrForbidden = errors.New("login forbidden")
