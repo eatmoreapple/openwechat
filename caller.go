@@ -110,6 +110,9 @@ func (c *Caller) WebInit(request *BaseRequest) (*WebInitResponse, error) {
 	if err := scanJson(resp.Body, &webInitResponse); err != nil {
 		return nil, err
 	}
+	if !webInitResponse.BaseResponse.Ok() {
+		return nil, webInitResponse.BaseResponse.Err()
+	}
 	return &webInitResponse, nil
 }
 
