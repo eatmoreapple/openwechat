@@ -52,7 +52,13 @@ type User struct {
 不同用户的`UserName`的值是不一样的，可以通过该字段来区分不同的用户。
 
 
+#### 获取用户唯一标识
 
+不同于`UserName`，`ID`是用户的唯一标识，且不会随着登录而改变。
+
+```go
+func (u *User) ID() string
+```
 
 
 #### 获取头像
