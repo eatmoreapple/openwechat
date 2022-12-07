@@ -63,8 +63,17 @@ func (m *Message) Sender() (*User, error) {
 	if m.FromUserName == m.Bot.self.User.UserName {
 		return m.Bot.self.User, nil
 	}
-	user := &User{Self: m.Bot.self, UserName: m.FromUserName}
-	err := user.Detail()
+	// 首先尝试从缓存里面查找, 如果没有找到则从服务器获取
+	members, err := m.Bot.self.Members()
+	if err != nil {
+		return nil, err
+	}
+	user, exist := members.GetByRemarkName(m.FromUserName)
+	if !exist {
+		// 找不到, 从服务器获取
+		user = &User{Self: m.Bot.self, UserName: m.FromUserName}
+		err = user.Detail()
+	}
 	return user, err
 }
 
@@ -84,9 +93,6 @@ func (m *Message) SenderInGroup() (*User, error) {
 	}
 	group, err := m.Sender()
 	if err != nil {
-		return nil, err
-	}
-	if err := group.Detail(); err != nil {
 		return nil, err
 	}
 	if group.IsFriend() {
