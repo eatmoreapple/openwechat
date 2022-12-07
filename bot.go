@@ -117,7 +117,6 @@ func (b *Bot) hotLoginInit(item *HotReloadStorageItem) error {
 // Login 用户登录
 func (b *Bot) Login() error {
 	uuid, err := b.Caller.GetLoginUUID()
-	b.uuid = uuid
 	if err != nil {
 		return err
 	}
