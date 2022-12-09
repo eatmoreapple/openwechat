@@ -109,8 +109,6 @@ const (
 // errors
 var (
 	ErrNoSuchUserFoundError = errors.New("no such user found")
-	ErrMissLocationHeader   = errors.New("301 response missing Location header")
-	ErrLoginForbiddenError  = errors.New("login forbidden")
 	ErrLoginTimeout         = errors.New("login timeout")
 )
 
