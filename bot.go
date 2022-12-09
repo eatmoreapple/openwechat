@@ -294,11 +294,6 @@ func (b *Bot) syncCheck() error {
 
 // 当获取消息发生错误时, 默认的错误处理行为
 func (b *Bot) stopSyncCheck(err error) bool {
-	if IsNetworkError(err) {
-		log.Println(err)
-		// 继续监听
-		return true
-	}
 	b.err = err
 	b.Exit()
 	return false
