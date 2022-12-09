@@ -473,7 +473,7 @@ func (m *Message) init(bot *Bot) {
 							if strings.Contains(m.Content, "\u2005") {
 								atFlag = "@" + displayName + "\u2005"
 							} else {
-								atFlag = "@" + displayName + " "
+								atFlag = "@" + displayName
 							}
 							m.isAt = strings.Contains(m.Content, atFlag) || strings.HasSuffix(m.Content, atFlag)
 						}
