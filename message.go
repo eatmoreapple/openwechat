@@ -68,7 +68,7 @@ func (m *Message) Sender() (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-	user, exist := members.GetByRemarkName(m.FromUserName)
+	user, exist := members.GetByUserName(m.FromUserName)
 	if !exist {
 		// 找不到, 从服务器获取
 		user = &User{Self: m.Bot.self, UserName: m.FromUserName}
@@ -133,7 +133,7 @@ func (m *Message) Receiver() (*User, error) {
 		}
 		return users.First().User, nil
 	} else {
-		user, exist := m.Bot.self.MemberList.GetByRemarkName(m.ToUserName)
+		user, exist := m.Bot.self.MemberList.GetByUserName(m.ToUserName)
 		if !exist {
 			return nil, ErrNoSuchUserFoundError
 		}
