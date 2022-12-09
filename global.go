@@ -115,7 +115,8 @@ var (
 )
 
 // ALL 跟search函数搭配
-//      friends.Search(openwechat.ALL, )
+//
+//	friends.Search(openwechat.ALL, )
 const ALL = 0
 
 // 性别
@@ -137,11 +138,11 @@ const (
 
 const TimeFormat = "Mon Jan 02 2006 15:04:05 GMT+0800 (中国标准时间)"
 
-var imageType = map[string]bool{
-	"bmp":  true,
-	"png":  true,
-	"jpeg": true,
-	"jpg":  true,
+var imageType = map[string]struct{}{
+	"bmp":  {},
+	"png":  {},
+	"jpeg": {},
+	"jpg":  {},
 }
 
 var videoType = "mp4"

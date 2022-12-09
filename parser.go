@@ -81,9 +81,10 @@ const (
 // 微信匹配文件类型策略
 func getMessageType(filename string) string {
 	ext := getFileExt(filename)
-	if imageType[ext] {
+	if _, ok := imageType[ext]; ok {
 		return pic
-	} else if ext == videoType {
+	}
+	if ext == videoType {
 		return video
 	}
 	return doc
