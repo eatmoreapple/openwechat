@@ -386,11 +386,12 @@ func (b *Bot) OnLogout(f func(bot *Bot)) {
 }
 
 // NewBot Bot的构造方法
-func NewBot() *Bot {
+// 接收外部的 context.Context，用于控制Bot的存活
+func NewBot(c context.Context) *Bot {
 	caller := DefaultCaller()
 	// 默认行为为桌面模式
 	caller.Client.SetMode(Normal)
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(c)
 	return &Bot{Caller: caller, Storage: &Storage{}, context: ctx, cancel: cancel}
 }
 
@@ -399,7 +400,7 @@ func NewBot() *Bot {
 //
 //	bot := openwechat.DefaultBot(openwechat.Desktop)
 func DefaultBot(modes ...Mode) *Bot {
-	bot := NewBot()
+	bot := NewBot(context.Background())
 	if len(modes) > 0 {
 		bot.Caller.Client.SetMode(modes[0])
 	}
