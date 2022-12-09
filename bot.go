@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"log"
 	"net/url"
 	"os/exec"
@@ -352,6 +353,12 @@ func (b *Bot) DumpHotReloadStorage() error {
 	if b.hotReloadStorage == nil {
 		return errors.New("HotReloadStorage can not be nil")
 	}
+	return b.DumpTo(b.hotReloadStorage)
+}
+
+// DumpTo 将热登录需要的数据写入到指定的 io.Writer 中
+// 注: 写之前最好先清空之前的数据
+func (b *Bot) DumpTo(writer io.Writer) error {
 	cookies := b.Caller.Client.GetCookieMap()
 	item := HotReloadStorageItem{
 		BaseRequest:  b.Storage.Request,
@@ -360,8 +367,7 @@ func (b *Bot) DumpHotReloadStorage() error {
 		WechatDomain: b.Caller.Client.Domain,
 		UUID:         b.uuid,
 	}
-
-	return json.NewEncoder(b.hotReloadStorage).Encode(item)
+	return json.NewEncoder(writer).Encode(item)
 }
 
 // OnLogin is a setter for LoginCallBack
