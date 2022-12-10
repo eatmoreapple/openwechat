@@ -217,9 +217,9 @@ func (c *Client) SyncCheck(request *BaseRequest, info *LoginInfo, response *WebI
 func (c *Client) WebWxGetContact(info *LoginInfo, reqs int64) (*http.Response, error) {
 	path, _ := url.Parse(c.Domain.BaseHost() + webwxgetcontact)
 	params := url.Values{}
-	params.Add("r", strconv.FormatInt(time.Now().Unix(), 10))
+	params.Add("r", strconv.FormatInt(time.Now().UnixNano()/1e6, 10))
 	params.Add("skey", info.SKey)
-	params.Add("req", strconv.FormatInt(reqs, 10))
+	params.Add("seq", strconv.FormatInt(reqs, 10))
 	path.RawQuery = params.Encode()
 	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
 	return c.Do(req)

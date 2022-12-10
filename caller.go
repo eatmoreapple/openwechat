@@ -175,7 +175,6 @@ func (c *Caller) WebWxGetContact(info *LoginInfo) (Members, error) {
 		}
 		members = append(members, item.MemberList...)
 
-		// FIXME: 这里的逻辑有点问题，部分微信号Seq每次都一致，会导致死循环。但是为什么会一致呢？
 		if item.Seq == 0 || item.Seq == reqs {
 			break
 		}
