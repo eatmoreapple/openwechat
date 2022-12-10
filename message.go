@@ -98,6 +98,13 @@ func (m *Message) SenderInGroup() (*User, error) {
 	if group.IsFriend() {
 		return group, nil
 	}
+	// 如果群聊的群成员是空的, 则从服务器获取
+	if group.MemberList.Count() == 0 {
+		// 更新群详情
+		if err = group.Detail(); err != nil {
+			return nil, err
+		}
+	}
 	users := group.MemberList.SearchByUserName(1, m.senderInGroupUserName)
 	if users == nil {
 		return nil, ErrNoSuchUserFoundError
