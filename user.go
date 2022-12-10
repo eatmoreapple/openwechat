@@ -47,9 +47,9 @@ type User struct {
 	RemarkPYQuanPin   string
 	Signature         string
 
-	MemberList Members
+	MemberList Members `json:"-"`
 
-	Self *Self
+	Self *Self `json:"-"`
 }
 
 // implement fmt.Stringer
