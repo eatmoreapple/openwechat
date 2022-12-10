@@ -214,23 +214,12 @@ func (s *Self) updateMembers() error {
 
 // FileHelper 获取文件传输助手对象，封装成Friend返回
 //
-//	fh, err := self.FileHelper() // or fh := openwechat.NewFriendHelper(self)
-func (s *Self) FileHelper() (*Friend, error) {
-	// 如果缓存里有，直接返回，否则去联系人里面找
-	if s.fileHelper != nil {
-		return s.fileHelper, nil
-	}
-	members, err := s.Members()
-	if err != nil {
-		return nil, err
-	}
-	users := members.SearchByUserName(1, "filehelper")
-	if users == nil {
+//	fh := self.FileHelper() // or fh := openwechat.NewFriendHelper(self)
+func (s *Self) FileHelper() *Friend {
+	if s.fileHelper == nil {
 		s.fileHelper = NewFriendHelper(s)
-	} else {
-		s.fileHelper = &Friend{users.First()}
 	}
-	return s.fileHelper, nil
+	return s.fileHelper
 }
 
 // Friends 获取所有的好友
@@ -777,10 +766,8 @@ func newFriend(username string, self *Self) *Friend {
 	return &Friend{&User{UserName: username, Self: self}}
 }
 
-// NewFriendHelper 这里为了兼容Desktop版本找不到文件传输助手的问题
+// NewFriendHelper 创建一个文件传输助手
 // 文件传输助手的微信身份标识符永远是filehelper
-// 这种形式的对象可能缺少一些其他属性
-// 但是不影响发送信息的功能
 func NewFriendHelper(self *Self) *Friend {
 	return newFriend("filehelper", self)
 }
