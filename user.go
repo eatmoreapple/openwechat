@@ -47,7 +47,7 @@ type User struct {
 	RemarkPYQuanPin   string
 	Signature         string
 
-	MemberList Members `json:"-"`
+	MemberList Members
 
 	Self *Self `json:"-"`
 }
