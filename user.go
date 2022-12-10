@@ -49,7 +49,7 @@ type User struct {
 
 	MemberList Members
 
-	Self *Self
+	Self *Self `json:"-"`
 }
 
 // implement fmt.Stringer
