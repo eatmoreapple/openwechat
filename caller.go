@@ -155,19 +155,32 @@ func (c *Caller) SyncCheck(request *BaseRequest, info *LoginInfo, response *WebI
 
 // WebWxGetContact 获取所有的联系人
 func (c *Caller) WebWxGetContact(info *LoginInfo) (Members, error) {
-	resp, err := c.Client.WebWxGetContact(info)
-	if err != nil {
-		return nil, err
+	var members Members
+	var reqs int64
+	for {
+		resp, err := c.Client.WebWxGetContact(info, reqs)
+		if err != nil {
+			return nil, err
+		}
+		var item WebWxContactResponse
+		if err = scanJson(resp.Body, &item); err != nil {
+			_ = resp.Body.Close()
+			return nil, err
+		}
+		if err = resp.Body.Close(); err != nil {
+			return nil, err
+		}
+		if !item.BaseResponse.Ok() {
+			return nil, item.BaseResponse.Err()
+		}
+		members = append(members, item.MemberList...)
+
+		if item.Seq == 0 || item.Seq == reqs {
+			break
+		}
+		reqs = item.Seq
 	}
-	defer func() { _ = resp.Body.Close() }()
-	var item WebWxContactResponse
-	if err := scanJson(resp.Body, &item); err != nil {
-		return nil, err
-	}
-	if !item.BaseResponse.Ok() {
-		return nil, item.BaseResponse.Err()
-	}
-	return item.MemberList, nil
+	return members, nil
 }
 
 // WebWxBatchGetContact 获取联系人的详情
