@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"os"
 )
@@ -86,6 +88,10 @@ func (c *Caller) GetLoginInfo(body []byte) (*LoginInfo, error) {
 	if err != nil {
 		return nil, err
 	}
+	// 判断是否重定向
+	if resp.StatusCode != http.StatusMovedPermanently {
+		return nil, fmt.Errorf("%w: try to login with Desktop Mode", ErrForbidden)
+	}
 	defer func() { _ = resp.Body.Close() }()
 
 	var loginInfo LoginInfo
@@ -109,6 +115,9 @@ func (c *Caller) WebInit(request *BaseRequest) (*WebInitResponse, error) {
 	defer func() { _ = resp.Body.Close() }()
 	if err := scanJson(resp.Body, &webInitResponse); err != nil {
 		return nil, err
+	}
+	if !webInitResponse.BaseResponse.Ok() {
+		return nil, webInitResponse.BaseResponse.Err()
 	}
 	return &webInitResponse, nil
 }
@@ -270,6 +279,7 @@ func (c *Caller) WebWxSendImageMsg(file *os.File, request *BaseRequest, info *Lo
 	if err != nil {
 		return nil, err
 	}
+	defer func() { _ = resp.Body.Close() }()
 	parser := MessageResponseParser{resp.Body}
 	return parser.SentMessage(msg)
 }
@@ -305,6 +315,7 @@ func (c *Caller) WebWxSendVideoMsg(file *os.File, request *BaseRequest, info *Lo
 	if err != nil {
 		return nil, err
 	}
+	defer func() { _ = resp.Body.Close() }()
 	parser := MessageResponseParser{resp.Body}
 	return parser.SentMessage(msg)
 }

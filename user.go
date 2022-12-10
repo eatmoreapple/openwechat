@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -56,8 +58,18 @@ func (u *User) String() string {
 }
 
 // GetAvatarResponse 获取用户头像
-func (u *User) GetAvatarResponse() (*http.Response, error) {
-	return u.Self.Bot.Caller.Client.WebWxGetHeadImg(u)
+func (u *User) GetAvatarResponse() (resp *http.Response, err error) {
+	for i := 0; i < 3; i++ {
+		resp, err = u.Self.Bot.Caller.Client.WebWxGetHeadImg(u)
+		if err != nil {
+			return nil, err
+		}
+		// 这里存在 ContentLength 为0的情况，需要重试
+		if resp.ContentLength > 0 {
+			break
+		}
+	}
+	return resp, err
 }
 
 // SaveAvatar 下载用户头像
@@ -66,7 +78,7 @@ func (u *User) SaveAvatar(filename string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 	return u.SaveAvatarWithWriter(file)
 }
 
@@ -75,21 +87,12 @@ func (u *User) SaveAvatarWithWriter(writer io.Writer) error {
 	if err != nil {
 		return err
 	}
-	// 这里获取头像的响应有时可能会异常
-	// 一般为网路原因
-	// 再去请求一次即可解决
-	if resp.ContentLength == 0 && resp.Header.Get("Content-Type") == "image/jpeg" {
-		resp, err = u.GetAvatarResponse()
-		if err != nil {
-			return err
-		}
-	}
 	// 写文件前判断下 content length 是否是 0，不然保存的头像会出现
 	// image not loaded  try to open it externally to fix format problem 问题
 	if resp.ContentLength == 0 {
-		return fmt.Errorf("get avatar response content length is 0")
+		return errors.New("get avatar response content length is 0")
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	_, err = io.Copy(writer, resp.Body)
 	return err
 }
@@ -142,6 +145,29 @@ func (u *User) UnPin() error {
 // IsPin 判断当前联系人(好友、群组、公众号)是否为置顶状态
 func (u *User) IsPin() bool {
 	return u.ContactFlag == 2051
+}
+
+// ID 获取用户的唯一标识 只对当前登录的用户有效
+// ID 和 UserName 的区别是 ID 多次登录不会变化，而 UserName 只针对当前登录会话有效
+func (u *User) ID() string {
+	// 首先尝试获取uid
+	if u.Uin != 0 {
+		return strconv.FormatInt(u.Uin, 10)
+	}
+	// 如果uid不存在，尝试从头像url中获取
+	if u.HeadImgUrl != "" {
+		index := strings.Index(u.HeadImgUrl, "?") + 1
+		if len(u.HeadImgUrl) > index {
+			query := u.HeadImgUrl[index:]
+			params, err := url.ParseQuery(query)
+			if err != nil {
+				return ""
+			}
+			return params.Get("seq")
+
+		}
+	}
+	return ""
 }
 
 // 格式化emoji表情

@@ -51,7 +51,7 @@ msg.IsPicture()
 ##### 位置消息
 
 ```go
-msg.IsMap()
+msg.IsLocation()
 ```
 
 ##### 语音消息
@@ -108,6 +108,8 @@ msg.IsSendRedPacket()
 msg.IsReceiveRedPacket()
 ```
 
+但是不能领取！
+
 ##### 判断是否为拍一拍
 
 ```go
@@ -119,8 +121,6 @@ msg.IsTickled()
 ```go
 msg.IsJoinGroup()
 ```
-
-但是不能领取！
 
 
 
@@ -278,9 +278,11 @@ type RevokeMsg struct {
 #### 同意好友请求
 
 ```go
-msg.Agree()
+friend, err := msg.Agree()
 // msg.Agree("我同意了")
 ```
+
+返回的friend即刚添加的好友对象
 
 该方法调用成功的前提是`msg.IsFriendAdd()`返回为`true`
 

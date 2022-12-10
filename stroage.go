@@ -28,7 +28,6 @@ type HotReloadStorage io.ReadWriter
 
 // JsonFileHotReloadStorage 实现HotReloadStorage接口
 // 默认以json文件的形式存储
-// Deprecated
 type JsonFileHotReloadStorage struct {
 	FileName string
 	file     *os.File
@@ -45,21 +44,21 @@ func (j *JsonFileHotReloadStorage) Read(p []byte) (n int, err error) {
 }
 
 func (j *JsonFileHotReloadStorage) Write(p []byte) (n int, err error) {
-	j.file, err = os.Create(j.FileName)
-	if err != nil {
-		return 0, err
+	if j.file == nil {
+		j.file, err = os.Create(j.FileName)
+		if err != nil {
+			return 0, err
+		}
 	}
 	return j.file.Write(p)
 }
 
 // NewJsonFileHotReloadStorage 创建JsonFileHotReloadStorage
-// Deprecated
-// use os.File instead
 func NewJsonFileHotReloadStorage(filename string) HotReloadStorage {
 	return &JsonFileHotReloadStorage{FileName: filename}
 }
 
-var _ HotReloadStorage = &JsonFileHotReloadStorage{}
+var _ HotReloadStorage = (*JsonFileHotReloadStorage)(nil)
 
 func NewHotReloadStorageItem(storage HotReloadStorage) (*HotReloadStorageItem, error) {
 	if storage == nil {

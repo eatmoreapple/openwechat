@@ -25,8 +25,8 @@ func (b BaseResponse) Ok() bool {
 }
 
 func (b BaseResponse) Err() error {
-	if b.Ok() || len(b.ErrMsg) == 0 {
+	if b.Ok() {
 		return nil
 	}
-	return errors.New(b.ErrMsg)
+	return errors.New(b.Ret.String())
 }

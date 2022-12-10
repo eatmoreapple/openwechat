@@ -63,8 +63,17 @@ func (m *Message) Sender() (*User, error) {
 	if m.FromUserName == m.Bot.self.User.UserName {
 		return m.Bot.self.User, nil
 	}
-	user := &User{Self: m.Bot.self, UserName: m.FromUserName}
-	err := user.Detail()
+	// 首先尝试从缓存里面查找, 如果没有找到则从服务器获取
+	members, err := m.Bot.self.Members()
+	if err != nil {
+		return nil, err
+	}
+	user, exist := members.GetByUserName(m.FromUserName)
+	if !exist {
+		// 找不到, 从服务器获取
+		user = &User{Self: m.Bot.self, UserName: m.FromUserName}
+		err = user.Detail()
+	}
 	return user, err
 }
 
@@ -82,22 +91,15 @@ func (m *Message) SenderInGroup() (*User, error) {
 		}
 		return nil, errors.New("can not found sender from system message")
 	}
-	group, err := m.Sender()
+	user, err := m.Sender()
 	if err != nil {
 		return nil, err
 	}
-	if err := group.Detail(); err != nil {
-		return nil, err
+	if user.IsFriend() {
+		return user, nil
 	}
-	if group.IsFriend() {
-		return group, nil
-	}
-	users := group.MemberList.SearchByUserName(1, m.senderInGroupUserName)
-	if users == nil {
-		return nil, ErrNoSuchUserFoundError
-	}
-	users.init(m.Bot.self)
-	return users.First(), nil
+	group := &Group{user}
+	return group.SearchMemberByUsername(m.senderInGroupUserName)
 }
 
 // Receiver 获取消息的接收者
@@ -105,8 +107,12 @@ func (m *Message) SenderInGroup() (*User, error) {
 // 如果消息是好友消息，则返回好友
 // 如果消息是系统消息，则返回当前用户
 func (m *Message) Receiver() (*User, error) {
-	if m.IsSystem() {
+	if m.IsSystem() || m.ToUserName == m.Bot.self.UserName {
 		return m.Bot.self.User, nil
+	}
+	// https://github.com/eatmoreapple/openwechat/issues/113
+	if m.ToUserName == m.Bot.self.fileHelper.UserName {
+		return m.Bot.self.fileHelper.User, nil
 	}
 	if m.IsSendByGroup() {
 		groups, err := m.Bot.self.Groups()
@@ -122,10 +128,8 @@ func (m *Message) Receiver() (*User, error) {
 			return nil, ErrNoSuchUserFoundError
 		}
 		return users.First().User, nil
-	} else if m.ToUserName == m.Bot.self.UserName {
-		return m.Bot.self.User, nil
 	} else {
-		user, exist := m.Bot.self.MemberList.GetByRemarkName(m.ToUserName)
+		user, exist := m.Bot.self.MemberList.GetByUserName(m.ToUserName)
 		if !exist {
 			return nil, ErrNoSuchUserFoundError
 		}
@@ -185,8 +189,20 @@ func (m *Message) IsText() bool {
 	return m.MsgType == MsgTypeText && m.Url == ""
 }
 
-func (m *Message) IsMap() bool {
-	return m.MsgType == MsgTypeText && m.Url != ""
+func (m *Message) IsLocation() bool {
+	return m.MsgType == MsgTypeText && strings.Contains(m.Url, "api.map.qq.com") && strings.Contains(m.Content, "pictype=location")
+}
+
+func (m *Message) IsRealtimeLocation() bool {
+	return m.IsRealtimeLocationStart() || m.IsRealtimeLocationStop()
+}
+
+func (m *Message) IsRealtimeLocationStart() bool {
+	return m.MsgType == MsgTypeApp && m.AppMsgType == AppMsgTypeRealtimeShareLocation
+}
+
+func (m *Message) IsRealtimeLocationStop() bool {
+	return m.MsgType == MsgTypeSys && m.Content == "位置共享已经结束"
 }
 
 func (m *Message) IsPicture() bool {
@@ -453,7 +469,7 @@ func (m *Message) init(bot *Bot) {
 							if strings.Contains(m.Content, "\u2005") {
 								atFlag = "@" + displayName + "\u2005"
 							} else {
-								atFlag = "@" + displayName + " "
+								atFlag = "@" + displayName
 							}
 							m.isAt = strings.Contains(m.Content, atFlag) || strings.HasSuffix(m.Content, atFlag)
 						}

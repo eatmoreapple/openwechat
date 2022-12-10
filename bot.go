@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"log"
 	"net/url"
 	"os/exec"
@@ -19,7 +20,6 @@ type Bot struct {
 	SyncCheckCallback   func(resp SyncCheckResponse) // 心跳回调
 	MessageHandler      MessageHandler               // 获取消息成功的handle
 	MessageErrorHandler func(err error) bool         // 获取消息发生错误的handle, 返回true则尝试继续监听
-	isHot               bool                         // 是否为热登录模式
 	once                sync.Once
 	err                 error
 	context             context.Context
@@ -27,7 +27,7 @@ type Bot struct {
 	Caller              *Caller
 	self                *Self
 	Storage             *Storage
-	HotReloadStorage    HotReloadStorage
+	hotReloadStorage    HotReloadStorage
 	uuid                string
 	deviceId            string // 设备Id
 }
@@ -74,8 +74,7 @@ func (b *Bot) GetCurrentUser() (*Self, error) {
 //	err := bot.HotLogin(Storage, true)
 //	fmt.Println(err)
 func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
-	b.isHot = true
-	b.HotReloadStorage = storage
+	b.hotReloadStorage = storage
 
 	var err error
 
@@ -87,7 +86,7 @@ func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
 		return b.Login()
 	}
 
-	if err = b.hotLoginInit(*item); err != nil {
+	if err = b.hotLoginInit(item); err != nil {
 		return err
 	}
 
@@ -100,7 +99,7 @@ func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
 }
 
 // 热登陆初始化
-func (b *Bot) hotLoginInit(item HotReloadStorageItem) error {
+func (b *Bot) hotLoginInit(item *HotReloadStorageItem) error {
 	cookies := item.Cookies
 	for u, ck := range cookies {
 		path, err := url.Parse(u)
@@ -119,7 +118,6 @@ func (b *Bot) hotLoginInit(item HotReloadStorageItem) error {
 // Login 用户登录
 func (b *Bot) Login() error {
 	uuid, err := b.Caller.GetLoginUUID()
-	b.uuid = uuid
 	if err != nil {
 		return err
 	}
@@ -143,10 +141,13 @@ func (b *Bot) LoginWithUUID(uuid string) error {
 		switch resp.Code {
 		case StatusSuccess:
 			// 判断是否有登录回调，如果有执行它
+			if err = b.HandleLogin(resp.Raw); err != nil {
+				return err
+			}
 			if b.LoginCallBack != nil {
 				b.LoginCallBack(resp.Raw)
 			}
-			return b.HandleLogin(resp.Raw)
+			return nil
 		case StatusScanned:
 			// 执行扫码回调
 			if b.ScanCallBack != nil {
@@ -200,7 +201,7 @@ func (b *Bot) HandleLogin(data []byte) error {
 	b.Storage.Request = request
 
 	// 如果是热登陆,则将当前的重要信息写入hotReloadStorage
-	if b.isHot {
+	if b.hotReloadStorage != nil {
 		if err = b.DumpHotReloadStorage(); err != nil {
 			return err
 		}
@@ -293,11 +294,6 @@ func (b *Bot) syncCheck() error {
 
 // 当获取消息发生错误时, 默认的错误处理行为
 func (b *Bot) stopSyncCheck(err error) bool {
-	if IsNetworkError(err) {
-		log.Println(err)
-		// 继续监听
-		return true
-	}
 	b.err = err
 	b.Exit()
 	return false
@@ -349,9 +345,15 @@ func (b *Bot) MessageOnError(h func(err error) bool) {
 
 // DumpHotReloadStorage 写入HotReloadStorage
 func (b *Bot) DumpHotReloadStorage() error {
-	if b.HotReloadStorage == nil {
+	if b.hotReloadStorage == nil {
 		return errors.New("HotReloadStorage can not be nil")
 	}
+	return b.DumpTo(b.hotReloadStorage)
+}
+
+// DumpTo 将热登录需要的数据写入到指定的 io.Writer 中
+// 注: 写之前最好先清空之前的数据
+func (b *Bot) DumpTo(writer io.Writer) error {
 	cookies := b.Caller.Client.GetCookieMap()
 	item := HotReloadStorageItem{
 		BaseRequest:  b.Storage.Request,
@@ -360,8 +362,7 @@ func (b *Bot) DumpHotReloadStorage() error {
 		WechatDomain: b.Caller.Client.Domain,
 		UUID:         b.uuid,
 	}
-
-	return json.NewEncoder(b.HotReloadStorage).Encode(item)
+	return json.NewEncoder(writer).Encode(item)
 }
 
 // OnLogin is a setter for LoginCallBack
@@ -380,11 +381,12 @@ func (b *Bot) OnLogout(f func(bot *Bot)) {
 }
 
 // NewBot Bot的构造方法
-func NewBot() *Bot {
+// 接收外部的 context.Context，用于控制Bot的存活
+func NewBot(c context.Context) *Bot {
 	caller := DefaultCaller()
 	// 默认行为为桌面模式
 	caller.Client.SetMode(Normal)
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(c)
 	return &Bot{Caller: caller, Storage: &Storage{}, context: ctx, cancel: cancel}
 }
 
@@ -393,7 +395,7 @@ func NewBot() *Bot {
 //
 //	bot := openwechat.DefaultBot(openwechat.Desktop)
 func DefaultBot(modes ...Mode) *Bot {
-	bot := NewBot()
+	bot := NewBot(context.Background())
 	if len(modes) > 0 {
 		bot.Caller.Client.SetMode(modes[0])
 	}
@@ -452,7 +454,7 @@ func open(url string) error {
 
 // IsHot returns true if is hot login otherwise false
 func (b *Bot) IsHot() bool {
-	return b.isHot
+	return b.hotReloadStorage != nil
 }
 
 // UUID returns current uuid of bot
