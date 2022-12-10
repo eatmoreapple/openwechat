@@ -195,6 +195,28 @@ func (g *Group) Rename(name string) error {
 	return g.Self.RenameGroup(g, name)
 }
 
+// SearchMemberByUsername 根据用户名查找群成员
+func (g *Group) SearchMemberByUsername(username string) (*User, error) {
+	if g.MemberList.Count() == 0 {
+		if _, err := g.Members(); err != nil {
+			return nil, err
+		}
+	}
+	members := g.MemberList.SearchByUserName(1, username)
+	// 如果此时本地查不到, 那么该成员可能是新加入的
+	if members.Count() == 0 {
+		if _, err := g.Members(); err != nil {
+			return nil, err
+		}
+	}
+	// 再次尝试获取
+	members = g.MemberList.SearchByUserName(1, username)
+	if members.Count() == 0 {
+		return nil, ErrNoSuchUserFoundError
+	}
+	return members.First(), nil
+}
+
 type Groups []*Group
 
 // Count 获取群组数量

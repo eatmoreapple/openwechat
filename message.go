@@ -91,26 +91,15 @@ func (m *Message) SenderInGroup() (*User, error) {
 		}
 		return nil, errors.New("can not found sender from system message")
 	}
-	group, err := m.Sender()
+	user, err := m.Sender()
 	if err != nil {
 		return nil, err
 	}
-	if group.IsFriend() {
-		return group, nil
+	if user.IsFriend() {
+		return user, nil
 	}
-	// 如果群聊的群成员是空的, 则从服务器获取
-	if group.MemberList.Count() == 0 {
-		// 更新群详情
-		if err = group.Detail(); err != nil {
-			return nil, err
-		}
-	}
-	users := group.MemberList.SearchByUserName(1, m.senderInGroupUserName)
-	if users == nil {
-		return nil, ErrNoSuchUserFoundError
-	}
-	users.init(m.Bot.self)
-	return users.First(), nil
+	group := &Group{user}
+	return group.SearchMemberByUsername(m.senderInGroupUserName)
 }
 
 // Receiver 获取消息的接收者
