@@ -15,7 +15,6 @@ import (
 // 上层模块可以直接获取封装后的请求结果
 type Caller struct {
 	Client *Client
-	path   *url.URL
 }
 
 // NewCaller Constructor for Caller
