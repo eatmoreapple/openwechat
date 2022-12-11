@@ -470,12 +470,14 @@ func (m *Message) init(bot *Bot) {
 								displayName = receiver.First().NickName
 							}
 							var atFlag string
-							if strings.Contains(m.Content, "\u2005") {
-								atFlag = "@" + displayName + "\u2005"
+							msgContent := UnicodeEmojiCode(m.Content)
+							atName := UnicodeEmojiCode(displayName)
+							if strings.Contains(msgContent, "\u2005") {
+								atFlag = "@" + atName + "\u2005"
 							} else {
-								atFlag = "@" + displayName
+								atFlag = "@" + atName
 							}
-							m.isAt = strings.Contains(m.Content, atFlag) || strings.HasSuffix(m.Content, atFlag)
+							m.isAt = strings.Contains(msgContent, atFlag) || strings.HasSuffix(msgContent, atFlag)
 						}
 					}
 				}
@@ -805,4 +807,16 @@ func (m *Message) IsTickled() bool {
 // IsVoipInvite 判断消息是否为语音或视频通话邀请
 func (m *Message) IsVoipInvite() bool {
 	return m.MsgType == MsgTypeVoipInvite
+}
+
+// 为 isAt 去除有emoji的昵称
+func UnicodeEmojiCode(s string) string {
+	ret := ""
+	rs := []rune(s)
+	for i := 0; i < len(rs); i++ {
+		if len(string(rs[i])) != 4 {
+			ret += string(rs[i])
+		}
+	}
+	return ret
 }
