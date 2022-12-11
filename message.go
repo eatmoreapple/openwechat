@@ -466,12 +466,14 @@ func (m *Message) init(bot *Bot) {
 								displayName = receiver.First().NickName
 							}
 							var atFlag string
-							if strings.Contains(m.Content, "\u2005") {
-								atFlag = "@" + displayName + "\u2005"
+							msgContent := FormatEmoji(m.Content)
+							atName := FormatEmoji(displayName)
+							if strings.Contains(msgContent, "\u2005") {
+								atFlag = "@" + atName + "\u2005"
 							} else {
-								atFlag = "@" + displayName
+								atFlag = "@" + atName
 							}
-							m.isAt = strings.Contains(m.Content, atFlag) || strings.HasSuffix(m.Content, atFlag)
+							m.isAt = strings.Contains(msgContent, atFlag) || strings.HasSuffix(msgContent, atFlag)
 						}
 					}
 				}
