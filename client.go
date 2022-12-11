@@ -40,10 +40,11 @@ func (u UserAgentHook) AfterRequest(response *http.Response, err error) {}
 type Client struct {
 	HttpHooks HttpHooks
 	*http.Client
-	Domain  WechatDomain
-	mode    Mode
-	mu      sync.Mutex
-	cookies map[string][]*http.Cookie
+	Domain        WechatDomain
+	mode          Mode
+	mu            sync.Mutex
+	MaxRetryTimes int
+	cookies       map[string][]*http.Cookie
 }
 
 func NewClient() *Client {
@@ -64,14 +65,13 @@ func NewClient() *Client {
 func DefaultClient() *Client {
 	client := NewClient()
 	client.AddHttpHook(UserAgentHook{})
+	client.MaxRetryTimes = 5
 	return client
 }
 
 func (c *Client) AddHttpHook(hooks ...HttpHook) {
 	c.HttpHooks = append(c.HttpHooks, hooks...)
 }
-
-const maxRetry = 2
 
 func (c *Client) do(req *http.Request) (*http.Response, error) {
 	for _, hook := range c.HttpHooks {
@@ -81,7 +81,7 @@ func (c *Client) do(req *http.Request) (*http.Response, error) {
 		resp *http.Response
 		err  error
 	)
-	for i := 0; i < maxRetry; i++ {
+	for i := 0; i < c.MaxRetryTimes; i++ {
 		resp, err = c.Client.Do(req)
 		if err == nil {
 			break
