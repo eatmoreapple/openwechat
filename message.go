@@ -640,7 +640,7 @@ func (s *SentMessage) CanRevoke() bool {
 		return false
 	}
 	start := time.Unix(i/10000000, 0)
-	return time.Now().Sub(start) < time.Minute*2
+	return time.Since(start) < 2*time.Minute
 }
 
 // ForwardToFriends 转发该消息给好友
