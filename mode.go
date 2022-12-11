@@ -10,6 +10,7 @@ import (
 type Mode interface {
 	GetLoginUUID(client *Client) (*http.Response, error)
 	GetLoginInfo(client *Client, path string) (*http.Response, error)
+	PushLogin(client *Client, uin int64) (*http.Response, error)
 }
 
 var (
@@ -19,6 +20,21 @@ var (
 )
 
 type normalMode struct{}
+
+func (n normalMode) PushLogin(client *Client, uin int64) (*http.Response, error) {
+	path, err := url.Parse(client.Domain.BaseHost() + webwxpushloginurl)
+	if err != nil {
+		return nil, err
+	}
+	query := url.Values{}
+	query.Add("uin", strconv.FormatInt(uin, 10))
+	path.RawQuery = query.Encode()
+	req, err := http.NewRequest(http.MethodGet, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	return client.Do(req)
+}
 
 func (n normalMode) GetLoginUUID(client *Client) (*http.Response, error) {
 	path, _ := url.Parse(jslogin)
@@ -41,6 +57,22 @@ func (n normalMode) GetLoginInfo(client *Client, path string) (*http.Response, e
 }
 
 type desktopMode struct{}
+
+func (n desktopMode) PushLogin(client *Client, uin int64) (*http.Response, error) {
+	path, err := url.Parse(client.Domain.BaseHost() + webwxpushloginurl)
+	if err != nil {
+		return nil, err
+	}
+	query := url.Values{}
+	query.Add("uin", strconv.FormatInt(uin, 10))
+	query.Add("mod", "desktop")
+	path.RawQuery = query.Encode()
+	req, err := http.NewRequest(http.MethodGet, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	return client.Do(req)
+}
 
 func (n desktopMode) GetLoginUUID(client *Client) (*http.Response, error) {
 	path, _ := url.Parse(jslogin)

@@ -717,12 +717,8 @@ func (c *Client) WebWxRelationPin(request *BaseRequest, op uint8, user *User) (*
 }
 
 // WebWxPushLogin 免扫码登陆接口
-func (c *Client) WebWxPushLogin(uin int) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxpushloginurl)
-	params := url.Values{"uin": {strconv.Itoa(uin)}}
-	path.RawQuery = params.Encode()
-	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
-	return c.Do(req)
+func (c *Client) WebWxPushLogin(uin int64) (*http.Response, error) {
+	return c.mode.PushLogin(c, uin)
 }
 
 // WebWxSendVideoMsg 发送视频消息接口

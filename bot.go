@@ -461,3 +461,26 @@ func (b *Bot) IsHot() bool {
 func (b *Bot) UUID() string {
 	return b.uuid
 }
+
+// PushLogin 免扫码登录
+func (b *Bot) PushLogin(storage HotReloadStorage) error {
+	b.hotReloadStorage = storage
+	item, err := NewHotReloadStorageItem(storage)
+	if err != nil {
+		// fixme 这里根据错误类型判断是否需要重新登录
+		return b.Login()
+	}
+	b.Caller.Client.Domain = item.WechatDomain
+	resp, err := b.Caller.WebWxPushLogin(item.BaseRequest.Uin)
+	if err != nil {
+		return err
+	}
+	if err := resp.Err(); err != nil {
+		return err
+	}
+	b.uuid = item.UUID
+	if err = b.hotLoginInit(item); err != nil {
+		return err
+	}
+	return b.WebInit()
+}
