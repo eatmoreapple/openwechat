@@ -1,8 +1,6 @@
 package openwechat
 
 import (
-	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -26,16 +24,19 @@ type HotReloadStorageItem struct {
 // HotReloadStorage 热登陆存储接口
 type HotReloadStorage io.ReadWriter
 
-// JsonFileHotReloadStorage 实现HotReloadStorage接口
+// jsonFileHotReloadStorage 实现HotReloadStorage接口
 // 默认以json文件的形式存储
-type JsonFileHotReloadStorage struct {
-	FileName string
+type jsonFileHotReloadStorage struct {
+	filename string
 	file     *os.File
 }
 
-func (j *JsonFileHotReloadStorage) Read(p []byte) (n int, err error) {
+func (j *jsonFileHotReloadStorage) Read(p []byte) (n int, err error) {
 	if j.file == nil {
-		j.file, err = os.Open(j.FileName)
+		j.file, err = os.Open(j.filename)
+		if os.IsNotExist(err) {
+			return 0, ErrInvalidStorage
+		}
 		if err != nil {
 			return 0, err
 		}
@@ -43,9 +44,9 @@ func (j *JsonFileHotReloadStorage) Read(p []byte) (n int, err error) {
 	return j.file.Read(p)
 }
 
-func (j *JsonFileHotReloadStorage) Write(p []byte) (n int, err error) {
+func (j *jsonFileHotReloadStorage) Write(p []byte) (n int, err error) {
 	if j.file == nil {
-		j.file, err = os.Create(j.FileName)
+		j.file, err = os.Create(j.filename)
 		if err != nil {
 			return 0, err
 		}
@@ -53,21 +54,16 @@ func (j *JsonFileHotReloadStorage) Write(p []byte) (n int, err error) {
 	return j.file.Write(p)
 }
 
+func (j *jsonFileHotReloadStorage) Close() error {
+	if j.file == nil {
+		return nil
+	}
+	return j.file.Close()
+}
+
 // NewJsonFileHotReloadStorage 创建JsonFileHotReloadStorage
-func NewJsonFileHotReloadStorage(filename string) HotReloadStorage {
-	return &JsonFileHotReloadStorage{FileName: filename}
+func NewJsonFileHotReloadStorage(filename string) io.ReadWriteCloser {
+	return &jsonFileHotReloadStorage{filename: filename}
 }
 
-var _ HotReloadStorage = (*JsonFileHotReloadStorage)(nil)
-
-func NewHotReloadStorageItem(storage HotReloadStorage) (*HotReloadStorageItem, error) {
-	if storage == nil {
-		return nil, errors.New("storage can't be nil")
-	}
-	var item HotReloadStorageItem
-
-	if err := json.NewDecoder(storage).Decode(&item); err != nil {
-		return nil, err
-	}
-	return &item, nil
-}
+var _ HotReloadStorage = (*jsonFileHotReloadStorage)(nil)

@@ -73,29 +73,37 @@ func (b *Bot) GetCurrentUser() (*Self, error) {
 //	Storage := NewJsonFileHotReloadStorage("Storage.json")
 //	err := bot.HotLogin(Storage, true)
 //	fmt.Println(err)
-func (b *Bot) HotLogin(storage HotReloadStorage, retry ...bool) error {
-	b.hotReloadStorage = storage
-
-	var err error
-
-	// 如果load出错了,就执行正常登陆逻辑
-	// 第一次没有数据load都会出错的
-	item, err := NewHotReloadStorageItem(storage)
-
-	if err != nil {
+func (b *Bot) HotLogin(storage HotReloadStorage, retries ...bool) error {
+	err := b.hotLogin(storage)
+	// 判断是否为需要重新登录
+	if errors.Is(err, ErrInvalidStorage) {
 		return b.Login()
 	}
-
-	if err = b.hotLoginInit(item); err != nil {
-		return err
-	}
-
-	// 如果webInit出错,则说明可能身份信息已经失效
-	// 如果retry为True的话,则进行正常登陆
-	if err = b.WebInit(); err != nil && (len(retry) > 0 && retry[0]) {
-		err = b.Login()
+	if err != nil {
+		if len(retries) > 0 && retries[0] {
+			retErr, ok := err.(Ret)
+			if !ok {
+				return err
+			}
+			if retErr == cookieInvalid {
+				return b.Login()
+			}
+		}
 	}
 	return err
+}
+
+func (b *Bot) hotLogin(storage HotReloadStorage) error {
+	b.hotReloadStorage = storage
+	var item HotReloadStorageItem
+	err := json.NewDecoder(storage).Decode(&item)
+	if err != nil {
+		return err
+	}
+	if err = b.hotLoginInit(&item); err != nil {
+		return err
+	}
+	return b.WebInit()
 }
 
 // 热登陆初始化
