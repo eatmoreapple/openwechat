@@ -792,7 +792,7 @@ func (m *Message) IsPaiYiPai() bool {
 
 // IsJoinGroup 判断是否有人加入了群聊
 func (m *Message) IsJoinGroup() bool {
-	return m.IsSystem() && strings.Contains(m.Content, "加入了群聊") && m.IsSendByGroup()
+	return m.IsSystem() && (strings.Contains(m.Content, "加入了群聊") || strings.Contains(m.Content, "分享的二维码加入群聊")) && m.IsSendByGroup()
 }
 
 // IsTickled 判断消息是否为拍一拍
