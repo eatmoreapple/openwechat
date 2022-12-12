@@ -12,6 +12,7 @@ type MessageDispatcher interface {
 }
 
 // DispatchMessage 跟 MessageDispatcher 结合封装成 MessageHandler
+// Deprecated: use MessageMatchDispatcher.AsMessageHandler instead
 func DispatchMessage(dispatcher MessageDispatcher) func(msg *Message) {
 	return func(msg *Message) { dispatcher.Dispatch(msg) }
 }
@@ -85,12 +86,13 @@ type matchNode struct {
 type matchNodes []*matchNode
 
 // MessageMatchDispatcher impl MessageDispatcher interface
-//		dispatcher := NewMessageMatchDispatcher()
-//		dispatcher.OnText(func(msg *Message){
-//				msg.ReplyText("hello")
-//		})
-//		bot := DefaultBot()
-//		bot.MessageHandler = DispatchMessage(dispatcher)
+//
+//	dispatcher := NewMessageMatchDispatcher()
+//	dispatcher.OnText(func(msg *Message){
+//			msg.ReplyText("hello")
+//	})
+//	bot := DefaultBot()
+//	bot.MessageHandler = DispatchMessage(dispatcher)
 type MessageMatchDispatcher struct {
 	async      bool
 	matchNodes matchNodes
@@ -224,14 +226,22 @@ func (m *MessageMatchDispatcher) OnGroupByGroupName(groupName string, handlers .
 	m.OnUser(f, handlers...)
 }
 
+// AsMessageHandler 将MessageMatchDispatcher转换为MessageHandler
+func (m *MessageMatchDispatcher) AsMessageHandler() MessageHandler {
+	return func(msg *Message) {
+		m.Dispatch(msg)
+	}
+}
+
 type MessageSenderMatchFunc func(user *User) bool
 
 // SenderMatchFunc 抽象的匹配发送者特征的处理函数
-//     dispatcher := NewMessageMatchDispatcher()
-//	   matchFuncList := MatchFuncList(SenderFriendRequired(), SenderNickNameContainsMatchFunc("多吃点苹果"))
-//	   dispatcher.RegisterHandler(matchFuncList, func(ctx *MessageContext) {
-//		     do your own business
-//	   })
+//
+//	    dispatcher := NewMessageMatchDispatcher()
+//		   matchFuncList := MatchFuncList(SenderFriendRequired(), SenderNickNameContainsMatchFunc("多吃点苹果"))
+//		   dispatcher.RegisterHandler(matchFuncList, func(ctx *MessageContext) {
+//			     do your own business
+//		   })
 func SenderMatchFunc(matchFuncs ...MessageSenderMatchFunc) MatchFunc {
 	return func(message *Message) bool {
 		sender, err := message.Sender()
