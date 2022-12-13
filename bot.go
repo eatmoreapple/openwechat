@@ -85,9 +85,12 @@ func (b *Bot) HotLogin(storage HotReloadStorage, retries ...bool) error {
 			if !ok {
 				return err
 			}
-			if retErr == cookieInvalid {
+			// TODO add more error code handle here
+			switch retErr {
+			case cookieInvalid:
 				return b.Login()
 			}
+			return err
 		}
 	}
 	return err
