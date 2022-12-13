@@ -51,6 +51,9 @@ func (j *jsonFileHotReloadStorage) Write(p []byte) (n int, err error) {
 			return 0, err
 		}
 	}
+	// 为什么这里要对文件进行Truncate操作呢?
+	// 这是为了方便每次Dump的时候对文件进行重新写入, 而不是追加
+	// json序列化写入只会调用一次Write方法, 所以不要把这个方法当成io.Writer的Write方法
 	if _, err = j.file.Seek(0, io.SeekStart); err != nil {
 		return
 	}
