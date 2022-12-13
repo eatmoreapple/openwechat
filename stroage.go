@@ -51,7 +51,9 @@ func (j *jsonFileHotReloadStorage) Write(p []byte) (n int, err error) {
 			return 0, err
 		}
 	}
-	j.file.Seek(0, io.SeekStart)
+	if _, err = j.file.Seek(0, io.SeekStart); err != nil {
+		return
+	}
 	if err = j.file.Truncate(0); err != nil {
 		return
 	}
