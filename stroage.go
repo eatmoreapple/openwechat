@@ -33,7 +33,7 @@ type jsonFileHotReloadStorage struct {
 
 func (j *jsonFileHotReloadStorage) Read(p []byte) (n int, err error) {
 	if j.file == nil {
-		j.file, err = os.Open(j.filename)
+		j.file, err = os.OpenFile(j.filename, os.O_RDWR, 0600)
 		if os.IsNotExist(err) {
 			return 0, ErrInvalidStorage
 		}
@@ -50,6 +50,10 @@ func (j *jsonFileHotReloadStorage) Write(p []byte) (n int, err error) {
 		if err != nil {
 			return 0, err
 		}
+	}
+	j.file.Seek(0, io.SeekStart)
+	if err = j.file.Truncate(0); err != nil {
+		return
 	}
 	return j.file.Write(p)
 }
