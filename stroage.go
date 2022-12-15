@@ -2,7 +2,6 @@ package openwechat
 
 import (
 	"io"
-	"net/http"
 	"os"
 )
 
@@ -14,7 +13,7 @@ type Storage struct {
 }
 
 type HotReloadStorageItem struct {
-	Cookies      map[string][]*http.Cookie
+	Jar          *Jar
 	BaseRequest  *BaseRequest
 	LoginInfo    *LoginInfo
 	WechatDomain WechatDomain
