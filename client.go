@@ -9,7 +9,6 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
-	"net/http/cookiejar"
 	"net/url"
 	"os"
 	"strconv"
@@ -48,14 +47,13 @@ type Client struct {
 }
 
 func NewClient() *Client {
-	jar, _ := cookiejar.New(nil)
 	timeout := 30 * time.Second
 	return &Client{
 		Client: &http.Client{
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse
 			},
-			Jar:     jar,
+			Jar:     newCookieJar(),
 			Timeout: timeout,
 		}}
 }
@@ -96,30 +94,15 @@ func (c *Client) do(req *http.Request) (*http.Response, error) {
 	return resp, err
 }
 
-func (c *Client) setCookie(resp *http.Response) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	cookies := resp.Cookies()
-	if c.cookies == nil {
-		c.cookies = make(map[string][]*http.Cookie)
-	}
-	path := fmt.Sprintf("%s://%s%s", resp.Request.URL.Scheme, resp.Request.URL.Host, resp.Request.URL.Path)
-	c.cookies[path] = cookies
-}
-
 // Do 抽象Do方法,将所有的有效的cookie存入Client.cookies
 // 方便热登陆时获取
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
-	resp, err := c.do(req)
-	if err == nil {
-		c.setCookie(resp)
-	}
-	return resp, err
+	return c.do(req)
 }
 
-// GetCookieMap 获取当前client的所有的有效的client
-func (c *Client) GetCookieMap() map[string][]*http.Cookie {
-	return c.cookies
+// GetCookieJar 获取当前client的所有的有效的client
+func (c *Client) GetCookieJar() *Jar {
+	return fromCookieJar(c.Client.Jar)
 }
 
 // GetLoginUUID 获取登录的uuid

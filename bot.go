@@ -6,7 +6,6 @@ import (
 	"errors"
 	"io"
 	"log"
-	"net/url"
 	"os/exec"
 	"runtime"
 	"sync"
@@ -85,9 +84,12 @@ func (b *Bot) HotLogin(storage HotReloadStorage, retries ...bool) error {
 			if !ok {
 				return err
 			}
-			if retErr == cookieInvalid {
+			// TODO add more error code handle here
+			switch retErr {
+			case cookieInvalid:
 				return b.Login()
 			}
+			return err
 		}
 	}
 	return err
@@ -108,14 +110,7 @@ func (b *Bot) hotLogin(storage HotReloadStorage) error {
 
 // 热登陆初始化
 func (b *Bot) hotLoginInit(item *HotReloadStorageItem) error {
-	cookies := item.Cookies
-	for u, ck := range cookies {
-		path, err := url.Parse(u)
-		if err != nil {
-			return err
-		}
-		b.Caller.Client.Jar.SetCookies(path, ck)
-	}
+	b.Caller.Client.Jar = item.Jar.AsCookieJar()
 	b.Storage.LoginInfo = item.LoginInfo
 	b.Storage.Request = item.BaseRequest
 	b.Caller.Client.Domain = item.WechatDomain
@@ -362,10 +357,10 @@ func (b *Bot) DumpHotReloadStorage() error {
 // DumpTo 将热登录需要的数据写入到指定的 io.Writer 中
 // 注: 写之前最好先清空之前的数据
 func (b *Bot) DumpTo(writer io.Writer) error {
-	cookies := b.Caller.Client.GetCookieMap()
+	cookies := b.Caller.Client.GetCookieJar()
 	item := HotReloadStorageItem{
 		BaseRequest:  b.Storage.Request,
-		Cookies:      cookies,
+		Jar:          cookies,
 		LoginInfo:    b.Storage.LoginInfo,
 		WechatDomain: b.Caller.Client.Domain,
 		UUID:         b.uuid,
