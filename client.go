@@ -43,7 +43,6 @@ type Client struct {
 	mode          Mode
 	mu            sync.Mutex
 	MaxRetryTimes int
-	cookies       map[string][]*http.Cookie
 }
 
 func NewClient() *Client {
