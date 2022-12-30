@@ -341,7 +341,7 @@ func (b *Bot) MessageOnSuccess(h func(msg *Message)) {
 	b.MessageHandler = h
 }
 
-// MessageOnError setter for Bot.GetMessageErrorHandler
+// MessageOnError setter for bot.GetMessageErrorHandler
 func (b *Bot) MessageOnError(h func(err error) bool) {
 	b.MessageErrorHandler = h
 }

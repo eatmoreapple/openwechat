@@ -50,7 +50,7 @@ type Message struct {
 	Url                   string
 	senderInGroupUserName string
 	RecommendInfo         RecommendInfo
-	Bot                   *Bot `json:"-"`
+	bot                   *Bot
 	mu                    sync.RWMutex
 	Context               context.Context `json:"-"`
 	item                  map[string]interface{}
@@ -60,18 +60,18 @@ type Message struct {
 
 // Sender 获取消息的发送者
 func (m *Message) Sender() (*User, error) {
-	if m.FromUserName == m.Bot.self.User.UserName {
-		return m.Bot.self.User, nil
+	if m.FromUserName == m.bot.self.User.UserName {
+		return m.bot.self.User, nil
 	}
 	// 首先尝试从缓存里面查找, 如果没有找到则从服务器获取
-	members, err := m.Bot.self.Members()
+	members, err := m.bot.self.Members()
 	if err != nil {
 		return nil, err
 	}
 	user, exist := members.GetByUserName(m.FromUserName)
 	if !exist {
 		// 找不到, 从服务器获取
-		user = &User{Self: m.Bot.self, UserName: m.FromUserName}
+		user = &User{Self: m.bot.self, UserName: m.FromUserName}
 		err = user.Detail()
 	}
 	if m.IsSendByGroup() && len(user.MemberList) == 0 {
@@ -89,8 +89,8 @@ func (m *Message) SenderInGroup() (*User, error) {
 	// https://github.com/eatmoreapple/openwechat/issues/66
 	if m.IsSystem() {
 		// 判断是否有自己发送
-		if m.FromUserName == m.Bot.self.User.UserName {
-			return m.Bot.self.User, nil
+		if m.FromUserName == m.bot.self.User.UserName {
+			return m.bot.self.User, nil
 		}
 		return nil, errors.New("can not found sender from system message")
 	}
@@ -110,15 +110,15 @@ func (m *Message) SenderInGroup() (*User, error) {
 // 如果消息是好友消息，则返回好友
 // 如果消息是系统消息，则返回当前用户
 func (m *Message) Receiver() (*User, error) {
-	if m.IsSystem() || m.ToUserName == m.Bot.self.UserName {
-		return m.Bot.self.User, nil
+	if m.IsSystem() || m.ToUserName == m.bot.self.UserName {
+		return m.bot.self.User, nil
 	}
 	// https://github.com/eatmoreapple/openwechat/issues/113
-	if m.ToUserName == m.Bot.self.fileHelper.UserName {
-		return m.Bot.self.fileHelper.User, nil
+	if m.ToUserName == m.bot.self.fileHelper.UserName {
+		return m.bot.self.fileHelper.User, nil
 	}
 	if m.IsSendByGroup() {
-		groups, err := m.Bot.self.Groups()
+		groups, err := m.bot.self.Groups()
 		if err != nil {
 			return nil, err
 		}
@@ -132,7 +132,7 @@ func (m *Message) Receiver() (*User, error) {
 		}
 		return users.First().User, nil
 	} else {
-		user, exist := m.Bot.self.MemberList.GetByUserName(m.ToUserName)
+		user, exist := m.bot.self.MemberList.GetByUserName(m.ToUserName)
 		if !exist {
 			return nil, ErrNoSuchUserFoundError
 		}
@@ -142,7 +142,7 @@ func (m *Message) Receiver() (*User, error) {
 
 // IsSendBySelf 判断消息是否由自己发送
 func (m *Message) IsSendBySelf() bool {
-	return m.FromUserName == m.Bot.self.User.UserName
+	return m.FromUserName == m.bot.self.User.UserName
 }
 
 // IsSendByFriend 判断消息是否由好友发送
@@ -157,35 +157,35 @@ func (m *Message) IsSendByGroup() bool {
 
 // ReplyText 回复文本消息
 func (m *Message) ReplyText(content string) (*SentMessage, error) {
-	msg := NewSendMessage(MsgTypeText, content, m.Bot.self.User.UserName, m.FromUserName, "")
-	info := m.Bot.Storage.LoginInfo
-	request := m.Bot.Storage.Request
-	sentMessage, err := m.Bot.Caller.WebWxSendMsg(msg, info, request)
-	return m.Bot.self.sendMessageWrapper(sentMessage, err)
+	msg := NewSendMessage(MsgTypeText, content, m.bot.self.User.UserName, m.FromUserName, "")
+	info := m.bot.Storage.LoginInfo
+	request := m.bot.Storage.Request
+	sentMessage, err := m.bot.Caller.WebWxSendMsg(msg, info, request)
+	return m.bot.self.sendMessageWrapper(sentMessage, err)
 }
 
 // ReplyImage 回复图片消息
 func (m *Message) ReplyImage(file *os.File) (*SentMessage, error) {
-	info := m.Bot.Storage.LoginInfo
-	request := m.Bot.Storage.Request
-	sentMessage, err := m.Bot.Caller.WebWxSendImageMsg(file, request, info, m.Bot.self.UserName, m.FromUserName)
-	return m.Bot.self.sendMessageWrapper(sentMessage, err)
+	info := m.bot.Storage.LoginInfo
+	request := m.bot.Storage.Request
+	sentMessage, err := m.bot.Caller.WebWxSendImageMsg(file, request, info, m.bot.self.UserName, m.FromUserName)
+	return m.bot.self.sendMessageWrapper(sentMessage, err)
 }
 
 // ReplyVideo 回复视频消息
 func (m *Message) ReplyVideo(file *os.File) (*SentMessage, error) {
-	info := m.Bot.Storage.LoginInfo
-	request := m.Bot.Storage.Request
-	sentMessage, err := m.Bot.Caller.WebWxSendVideoMsg(file, request, info, m.Bot.self.UserName, m.FromUserName)
-	return m.Bot.self.sendMessageWrapper(sentMessage, err)
+	info := m.bot.Storage.LoginInfo
+	request := m.bot.Storage.Request
+	sentMessage, err := m.bot.Caller.WebWxSendVideoMsg(file, request, info, m.bot.self.UserName, m.FromUserName)
+	return m.bot.self.sendMessageWrapper(sentMessage, err)
 }
 
 // ReplyFile 回复文件消息
 func (m *Message) ReplyFile(file *os.File) (*SentMessage, error) {
-	info := m.Bot.Storage.LoginInfo
-	request := m.Bot.Storage.Request
-	sentMessage, err := m.Bot.Caller.WebWxSendFile(file, request, info, m.Bot.self.UserName, m.FromUserName)
-	return m.Bot.self.sendMessageWrapper(sentMessage, err)
+	info := m.bot.Storage.LoginInfo
+	request := m.bot.Storage.Request
+	sentMessage, err := m.bot.Caller.WebWxSendFile(file, request, info, m.bot.self.UserName, m.FromUserName)
+	return m.bot.self.sendMessageWrapper(sentMessage, err)
 }
 
 func (m *Message) IsText() bool {
@@ -290,16 +290,16 @@ func (m *Message) GetFile() (*http.Response, error) {
 		return nil, errors.New("invalid message type")
 	}
 	if m.IsPicture() || m.IsEmoticon() {
-		return m.Bot.Caller.Client.WebWxGetMsgImg(m, m.Bot.Storage.LoginInfo)
+		return m.bot.Caller.Client.WebWxGetMsgImg(m, m.bot.Storage.LoginInfo)
 	}
 	if m.IsVoice() {
-		return m.Bot.Caller.Client.WebWxGetVoice(m, m.Bot.Storage.LoginInfo)
+		return m.bot.Caller.Client.WebWxGetVoice(m, m.bot.Storage.LoginInfo)
 	}
 	if m.IsVideo() {
-		return m.Bot.Caller.Client.WebWxGetVideo(m, m.Bot.Storage.LoginInfo)
+		return m.bot.Caller.Client.WebWxGetVideo(m, m.bot.Storage.LoginInfo)
 	}
 	if m.IsMedia() {
-		return m.Bot.Caller.Client.WebWxGetMedia(m, m.Bot.Storage.LoginInfo)
+		return m.bot.Caller.Client.WebWxGetMedia(m, m.bot.Storage.LoginInfo)
 	}
 	return nil, errors.New("unsupported type")
 }
@@ -309,7 +309,7 @@ func (m *Message) GetPicture() (*http.Response, error) {
 	if !(m.IsPicture() || m.IsEmoticon()) {
 		return nil, errors.New("picture message required")
 	}
-	return m.Bot.Caller.Client.WebWxGetMsgImg(m, m.Bot.Storage.LoginInfo)
+	return m.bot.Caller.Client.WebWxGetMsgImg(m, m.bot.Storage.LoginInfo)
 }
 
 // GetVoice 获取录音消息的响应
@@ -317,7 +317,7 @@ func (m *Message) GetVoice() (*http.Response, error) {
 	if !m.IsVoice() {
 		return nil, errors.New("voice message required")
 	}
-	return m.Bot.Caller.Client.WebWxGetVoice(m, m.Bot.Storage.LoginInfo)
+	return m.bot.Caller.Client.WebWxGetVoice(m, m.bot.Storage.LoginInfo)
 }
 
 // GetVideo 获取视频消息的响应
@@ -325,7 +325,7 @@ func (m *Message) GetVideo() (*http.Response, error) {
 	if !m.IsVideo() {
 		return nil, errors.New("video message required")
 	}
-	return m.Bot.Caller.Client.WebWxGetVideo(m, m.Bot.Storage.LoginInfo)
+	return m.bot.Caller.Client.WebWxGetVideo(m, m.bot.Storage.LoginInfo)
 }
 
 // GetMedia 获取媒体消息的响应
@@ -333,7 +333,7 @@ func (m *Message) GetMedia() (*http.Response, error) {
 	if !m.IsMedia() {
 		return nil, errors.New("media message required")
 	}
-	return m.Bot.Caller.Client.WebWxGetMedia(m, m.Bot.Storage.LoginInfo)
+	return m.bot.Caller.Client.WebWxGetMedia(m, m.bot.Storage.LoginInfo)
 }
 
 // SaveFile 保存文件到指定的 io.Writer
@@ -392,11 +392,11 @@ func (m *Message) Agree(verifyContents ...string) (*Friend, error) {
 	if !m.IsFriendAdd() {
 		return nil, errors.New("friend add message required")
 	}
-	err := m.Bot.Caller.WebWxVerifyUser(m.Bot.Storage, m.RecommendInfo, strings.Join(verifyContents, ""))
+	err := m.bot.Caller.WebWxVerifyUser(m.bot.Storage, m.RecommendInfo, strings.Join(verifyContents, ""))
 	if err != nil {
 		return nil, err
 	}
-	friend := newFriend(m.RecommendInfo.UserName, m.Bot.self)
+	friend := newFriend(m.RecommendInfo.UserName, m.bot.self)
 	if err = friend.Detail(); err != nil {
 		return nil, err
 	}
@@ -405,7 +405,7 @@ func (m *Message) Agree(verifyContents ...string) (*Friend, error) {
 
 // AsRead 将消息设置为已读
 func (m *Message) AsRead() error {
-	return m.Bot.Caller.WebWxStatusAsRead(m.Bot.Storage.Request, m.Bot.Storage.LoginInfo, m)
+	return m.bot.Caller.WebWxStatusAsRead(m.bot.Storage.Request, m.bot.Storage.LoginInfo, m)
 }
 
 // IsArticle 判断当前的消息类型是否为文章
@@ -447,7 +447,7 @@ func (m *Message) Get(key string) (value interface{}, exist bool) {
 
 // 消息初始化,根据不同的消息作出不同的处理
 func (m *Message) init(bot *Bot) {
-	m.Bot = bot
+	m.bot = bot
 	raw, _ := json.Marshal(m)
 	m.Raw = raw
 	m.RawContent = m.Content
@@ -806,4 +806,14 @@ func (m *Message) IsTickled() bool {
 // IsVoipInvite 判断消息是否为语音或视频通话邀请
 func (m *Message) IsVoipInvite() bool {
 	return m.MsgType == MsgTypeVoipInvite
+}
+
+// Bot 返回当前消息所属的Bot
+func (m *Message) Bot() *Bot {
+	return m.bot
+}
+
+// Owner 返回当前消息的拥有者
+func (m *Message) Owner() *Self {
+	return m.Bot().self
 }
