@@ -71,7 +71,7 @@ func (m *Message) Sender() (*User, error) {
 	user, exist := members.GetByUserName(m.FromUserName)
 	if !exist {
 		// 找不到, 从服务器获取
-		user = &User{Self: m.bot.self, UserName: m.FromUserName}
+		user = &User{self: m.bot.self, UserName: m.FromUserName}
 		err = user.Detail()
 	}
 	if m.IsSendByGroup() && len(user.MemberList) == 0 {
@@ -629,13 +629,13 @@ type RevokeMsg struct {
 // SentMessage 已发送的信息
 type SentMessage struct {
 	*SendMessage
-	Self  *Self
+	self  *Self
 	MsgId string
 }
 
 // Revoke 撤回该消息
 func (s *SentMessage) Revoke() error {
-	return s.Self.RevokeMessage(s)
+	return s.self.RevokeMessage(s)
 }
 
 // CanRevoke 是否可以撤回该消息
@@ -657,7 +657,7 @@ func (s *SentMessage) ForwardToFriends(friends ...*Friend) error {
 
 // ForwardToFriendsWithDelay 转发该消息给好友，延迟指定时间
 func (s *SentMessage) ForwardToFriendsWithDelay(delay time.Duration, friends ...*Friend) error {
-	return s.Self.ForwardMessageToFriends(s, delay, friends...)
+	return s.self.ForwardMessageToFriends(s, delay, friends...)
 }
 
 // ForwardToGroups 转发该消息给群组
@@ -669,7 +669,7 @@ func (s *SentMessage) ForwardToGroups(groups ...*Group) error {
 
 // ForwardToGroupsWithDelay 转发该消息给群组， 延迟指定时间
 func (s *SentMessage) ForwardToGroupsWithDelay(delay time.Duration, groups ...*Group) error {
-	return s.Self.ForwardMessageToGroups(s, delay, groups...)
+	return s.self.ForwardMessageToGroups(s, delay, groups...)
 }
 
 type appmsg struct {

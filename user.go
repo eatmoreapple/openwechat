@@ -49,7 +49,7 @@ type User struct {
 
 	MemberList Members
 
-	Self *Self `json:"-"`
+	self *Self
 }
 
 // implement fmt.Stringer
@@ -60,7 +60,7 @@ func (u *User) String() string {
 // GetAvatarResponse 获取用户头像
 func (u *User) GetAvatarResponse() (resp *http.Response, err error) {
 	for i := 0; i < 3; i++ {
-		resp, err = u.Self.Bot.Caller.Client.WebWxGetHeadImg(u)
+		resp, err = u.self.bot.Caller.Client.WebWxGetHeadImg(u)
 		if err != nil {
 			return nil, err
 		}
@@ -99,19 +99,19 @@ func (u *User) SaveAvatarWithWriter(writer io.Writer) error {
 
 // Detail 获取用户的详情
 func (u *User) Detail() error {
-	if u.UserName == u.Self.UserName {
+	if u.UserName == u.self.UserName {
 		return nil
 	}
 	members := Members{u}
-	request := u.Self.Bot.Storage.Request
-	newMembers, err := u.Self.Bot.Caller.WebWxBatchGetContact(members, request)
+	request := u.self.bot.Storage.Request
+	newMembers, err := u.self.bot.Caller.WebWxBatchGetContact(members, request)
 	if err != nil {
 		return err
 	}
-	newMembers.init(u.Self)
+	newMembers.init(u.self)
 	user := newMembers.First()
 	*u = *user
-	u.MemberList.init(u.Self)
+	u.MemberList.init(u.self)
 	return nil
 }
 
@@ -132,14 +132,14 @@ func (u *User) IsMP() bool {
 
 // Pin 将联系人置顶
 func (u *User) Pin() error {
-	req := u.Self.Bot.Storage.Request
-	return u.Self.Bot.Caller.WebWxRelationPin(req, u, 1)
+	req := u.self.bot.Storage.Request
+	return u.self.bot.Caller.WebWxRelationPin(req, u, 1)
 }
 
 // UnPin 将联系人取消置顶
 func (u *User) UnPin() error {
-	req := u.Self.Bot.Storage.Request
-	return u.Self.Bot.Caller.WebWxRelationPin(req, u, 0)
+	req := u.self.bot.Storage.Request
+	return u.self.bot.Caller.WebWxRelationPin(req, u, 0)
 }
 
 // IsPin 判断当前联系人(好友、群组、公众号)是否为置顶状态
@@ -170,6 +170,16 @@ func (u *User) ID() string {
 	return ""
 }
 
+// Self 返回当前用户
+func (u *User) Self() *Self {
+	return u.self
+}
+
+// IsSelf 判断是否为当前用户
+func (u *User) IsSelf() bool {
+	return u.UserName == u.Self().UserName
+}
+
 // 格式化emoji表情
 func (u *User) formatEmoji() {
 	u.NickName = FormatEmoji(u.NickName)
@@ -180,7 +190,7 @@ func (u *User) formatEmoji() {
 // Self 自己,当前登录用户对象
 type Self struct {
 	*User
-	Bot        *Bot
+	bot        *Bot
 	fileHelper *Friend
 	members    Members
 	friends    Friends
@@ -202,8 +212,8 @@ func (s *Self) Members(update ...bool) (Members, error) {
 
 // 更新联系人处理
 func (s *Self) updateMembers() error {
-	info := s.Bot.Storage.LoginInfo
-	members, err := s.Bot.Caller.WebWxGetContact(info)
+	info := s.bot.Storage.LoginInfo
+	members, err := s.bot.Caller.WebWxGetContact(info)
 	if err != nil {
 		return err
 	}
@@ -269,30 +279,30 @@ func (s *Self) sendTextToUser(user *User, text string) (*SentMessage, error) {
 	msg := NewTextSendMessage(text, s.UserName, user.UserName)
 	msg.FromUserName = s.UserName
 	msg.ToUserName = user.UserName
-	info := s.Bot.Storage.LoginInfo
-	request := s.Bot.Storage.Request
-	sentMessage, err := s.Bot.Caller.WebWxSendMsg(msg, info, request)
+	info := s.bot.Storage.LoginInfo
+	request := s.bot.Storage.Request
+	sentMessage, err := s.bot.Caller.WebWxSendMsg(msg, info, request)
 	return s.sendMessageWrapper(sentMessage, err)
 }
 
 func (s *Self) sendImageToUser(user *User, file *os.File) (*SentMessage, error) {
-	req := s.Bot.Storage.Request
-	info := s.Bot.Storage.LoginInfo
-	sentMessage, err := s.Bot.Caller.WebWxSendImageMsg(file, req, info, s.UserName, user.UserName)
+	req := s.bot.Storage.Request
+	info := s.bot.Storage.LoginInfo
+	sentMessage, err := s.bot.Caller.WebWxSendImageMsg(file, req, info, s.UserName, user.UserName)
 	return s.sendMessageWrapper(sentMessage, err)
 }
 
 func (s *Self) sendVideoToUser(user *User, file *os.File) (*SentMessage, error) {
-	req := s.Bot.Storage.Request
-	info := s.Bot.Storage.LoginInfo
-	sentMessage, err := s.Bot.Caller.WebWxSendVideoMsg(file, req, info, s.UserName, user.UserName)
+	req := s.bot.Storage.Request
+	info := s.bot.Storage.LoginInfo
+	sentMessage, err := s.bot.Caller.WebWxSendVideoMsg(file, req, info, s.UserName, user.UserName)
 	return s.sendMessageWrapper(sentMessage, err)
 }
 
 func (s *Self) sendFileToUser(user *User, file *os.File) (*SentMessage, error) {
-	req := s.Bot.Storage.Request
-	info := s.Bot.Storage.LoginInfo
-	sentMessage, err := s.Bot.Caller.WebWxSendFile(file, req, info, s.UserName, user.UserName)
+	req := s.bot.Storage.Request
+	info := s.bot.Storage.LoginInfo
+	sentMessage, err := s.bot.Caller.WebWxSendFile(file, req, info, s.UserName, user.UserName)
 	return s.sendMessageWrapper(sentMessage, err)
 }
 
@@ -320,8 +330,8 @@ func (s *Self) SendFileToFriend(friend *Friend, file *os.File) (*SentMessage, er
 //
 //	self.SetRemarkNameToFriend(friend, "remark") // or friend.SetRemarkName("remark")
 func (s *Self) SetRemarkNameToFriend(friend *Friend, remarkName string) error {
-	req := s.Bot.Storage.Request
-	return s.Bot.Caller.WebWxOplog(req, remarkName, friend.UserName)
+	req := s.bot.Storage.Request
+	return s.bot.Caller.WebWxOplog(req, remarkName, friend.UserName)
 }
 
 // CreateGroup 创建群聊
@@ -331,13 +341,13 @@ func (s *Self) CreateGroup(topic string, friends ...*Friend) (*Group, error) {
 	if len(friends) < 2 {
 		return nil, errors.New("a group must be at least 2 members")
 	}
-	req := s.Bot.Storage.Request
-	info := s.Bot.Storage.LoginInfo
-	group, err := s.Bot.Caller.WebWxCreateChatRoom(req, info, topic, friends)
+	req := s.bot.Storage.Request
+	info := s.bot.Storage.LoginInfo
+	group, err := s.bot.Caller.WebWxCreateChatRoom(req, info, topic, friends)
 	if err != nil {
 		return nil, err
 	}
-	group.Self = s
+	group.self = s
 	err = group.Detail()
 	return group, err
 }
@@ -361,9 +371,9 @@ func (s *Self) AddFriendsIntoGroup(group *Group, friends ...*Friend) error {
 			}
 		}
 	}
-	req := s.Bot.Storage.Request
-	info := s.Bot.Storage.LoginInfo
-	return s.Bot.Caller.AddFriendIntoChatRoom(req, info, group, friends...)
+	req := s.bot.Storage.Request
+	info := s.bot.Storage.LoginInfo
+	return s.bot.Caller.AddFriendIntoChatRoom(req, info, group, friends...)
 }
 
 // RemoveMemberFromGroup 从群聊中移除用户
@@ -392,9 +402,9 @@ func (s *Self) RemoveMemberFromGroup(group *Group, members Members) error {
 	if count != len(members) {
 		return errors.New("invalid members")
 	}
-	req := s.Bot.Storage.Request
-	info := s.Bot.Storage.LoginInfo
-	return s.Bot.Caller.RemoveFriendFromChatRoom(req, info, group, members...)
+	req := s.bot.Storage.Request
+	info := s.bot.Storage.LoginInfo
+	return s.bot.Caller.RemoveFriendFromChatRoom(req, info, group, members...)
 }
 
 // AddFriendIntoManyGroups 拉好友进多个群聊
@@ -410,9 +420,9 @@ func (s *Self) AddFriendIntoManyGroups(friend *Friend, groups ...*Group) error {
 
 // RenameGroup 群组重命名
 func (s *Self) RenameGroup(group *Group, newName string) error {
-	req := s.Bot.Storage.Request
-	info := s.Bot.Storage.LoginInfo
-	return s.Bot.Caller.WebWxRenameChatRoom(req, info, newName, group)
+	req := s.bot.Storage.Request
+	info := s.bot.Storage.LoginInfo
+	return s.bot.Caller.WebWxRenameChatRoom(req, info, newName, group)
 }
 
 // SendTextToGroup 发送文本消息给群组
@@ -442,19 +452,19 @@ func (s *Self) SendFileToGroup(group *Group, file *os.File) (*SentMessage, error
 //	    self.RevokeMessage(sentMessage) // or sentMessage.Revoke()
 //	}
 func (s *Self) RevokeMessage(msg *SentMessage) error {
-	return s.Bot.Caller.WebWxRevokeMsg(msg, s.Bot.Storage.Request)
+	return s.bot.Caller.WebWxRevokeMsg(msg, s.bot.Storage.Request)
 }
 
 // 转发消息接口
 func (s *Self) forwardMessage(msg *SentMessage, delay time.Duration, users ...*User) error {
-	info := s.Bot.Storage.LoginInfo
-	req := s.Bot.Storage.Request
+	info := s.bot.Storage.LoginInfo
+	req := s.bot.Storage.Request
 	switch msg.Type {
 	case MsgTypeText:
 		for _, user := range users {
 			msg.FromUserName = s.UserName
 			msg.ToUserName = user.UserName
-			if _, err := s.Self.Bot.Caller.WebWxSendMsg(msg.SendMessage, info, req); err != nil {
+			if _, err := s.self.bot.Caller.WebWxSendMsg(msg.SendMessage, info, req); err != nil {
 				return err
 			}
 			time.Sleep(delay)
@@ -463,7 +473,7 @@ func (s *Self) forwardMessage(msg *SentMessage, delay time.Duration, users ...*U
 		for _, user := range users {
 			msg.FromUserName = s.UserName
 			msg.ToUserName = user.UserName
-			if _, err := s.Self.Bot.Caller.Client.WebWxSendMsgImg(msg.SendMessage, req, info); err != nil {
+			if _, err := s.self.bot.Caller.Client.WebWxSendMsgImg(msg.SendMessage, req, info); err != nil {
 				return err
 			}
 			time.Sleep(delay)
@@ -472,7 +482,7 @@ func (s *Self) forwardMessage(msg *SentMessage, delay time.Duration, users ...*U
 		for _, user := range users {
 			msg.FromUserName = s.UserName
 			msg.ToUserName = user.UserName
-			if _, err := s.Self.Bot.Caller.Client.WebWxSendAppMsg(msg.SendMessage, req); err != nil {
+			if _, err := s.self.bot.Caller.Client.WebWxSendAppMsg(msg.SendMessage, req); err != nil {
 				return err
 			}
 			time.Sleep(delay)
@@ -721,7 +731,7 @@ func (m Members) detail(self *Self) error {
 		times = count / 50
 	}
 	var newMembers Members
-	request := self.Bot.Storage.Request
+	request := self.bot.Storage.Request
 	var pMembers Members
 	// 分情况依次更新
 	for i := 1; i <= times; i++ {
@@ -730,7 +740,7 @@ func (m Members) detail(self *Self) error {
 		} else {
 			pMembers = members[(i-1)*50 : i*50]
 		}
-		nMembers, err := self.Bot.Caller.WebWxBatchGetContact(pMembers, request)
+		nMembers, err := self.bot.Caller.WebWxBatchGetContact(pMembers, request)
 		if err != nil {
 			return err
 		}
@@ -742,7 +752,7 @@ func (m Members) detail(self *Self) error {
 		// 将全部剩余的更新完毕
 		left := count - total
 		pMembers = members[total : total+left]
-		nMembers, err := self.Bot.Caller.WebWxBatchGetContact(pMembers, request)
+		nMembers, err := self.bot.Caller.WebWxBatchGetContact(pMembers, request)
 		if err != nil {
 			return err
 		}
@@ -757,13 +767,13 @@ func (m Members) detail(self *Self) error {
 
 func (m Members) init(self *Self) {
 	for _, member := range m {
-		member.Self = self
+		member.self = self
 		member.formatEmoji()
 	}
 }
 
 func newFriend(username string, self *Self) *Friend {
-	return &Friend{&User{UserName: username, Self: self}}
+	return &Friend{&User{UserName: username, self: self}}
 }
 
 // NewFriendHelper 创建一个文件传输助手
@@ -796,6 +806,11 @@ func (s *Self) sendMessageWrapper(message *SentMessage, err error) (*SentMessage
 	if err != nil {
 		return nil, err
 	}
-	message.Self = s
+	message.self = s
 	return message, nil
+}
+
+// Bot 获取当前用户的机器人
+func (s *Self) Bot() *Bot {
+	return s.bot
 }

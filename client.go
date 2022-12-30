@@ -278,7 +278,7 @@ func (c *Client) WebWxGetHeadImg(user *User) (*http.Response, error) {
 	} else {
 		params := url.Values{}
 		params.Add("username", user.UserName)
-		params.Add("skey", user.Self.Bot.Storage.Request.Skey)
+		params.Add("skey", user.self.bot.Storage.Request.Skey)
 		params.Add("type", "big")
 		params.Add("chatroomid", user.EncryChatRoomId)
 		params.Add("seq", "0")
