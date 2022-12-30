@@ -54,7 +54,17 @@ type User struct {
 
 // implement fmt.Stringer
 func (u *User) String() string {
-	return fmt.Sprintf("<User:%s>", u.NickName)
+	format := "User"
+	if u.IsFriend() {
+		format = "Friend"
+	} else if u.IsGroup() {
+		format = "Group"
+	} else if u.IsMP() {
+		format = "MP"
+	} else if u.IsSelf() {
+		format = "Self"
+	}
+	return fmt.Sprintf("<%s:%s>", format, u.NickName)
 }
 
 // GetAvatarResponse 获取用户头像
