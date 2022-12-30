@@ -564,13 +564,12 @@ func (c *Client) WebWxGetMedia(msg *Message, info *LoginInfo) (*http.Response, e
 	params.Add("sender", msg.FromUserName)
 	params.Add("mediaid", msg.MediaId)
 	params.Add("encryfilename", msg.EncryFileName)
-	params.Add("fromuser", fmt.Sprintf("%d", info.WxUin))
+	params.Add("fromuser", strconv.FormatInt(info.WxUin, 10))
 	params.Add("pass_ticket", info.PassTicket)
 	params.Add("webwx_data_ticket", getWebWxDataTicket(c.Jar.Cookies(path)))
 	path.RawQuery = params.Encode()
 	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
-	req.Header.Add("Referer", path.String())
-	req.Header.Add("Range", "bytes=0-")
+	req.Header.Add("Referer", c.Domain.BaseHost()+"/")
 	return c.Do(req)
 }
 
