@@ -66,102 +66,43 @@ func (b *Bot) GetCurrentUser() (*Self, error) {
 	return b.self, nil
 }
 
+func (b *Bot) login(login BotLogin) error {
+	return login.Login(b)
+}
+
+// Login 用户登录
+func (b *Bot) Login() error {
+	scanLogin := &SacnLogin{}
+	return b.login(scanLogin)
+}
+
 // HotLogin 热登录,可实现重复登录,
 // retry设置为true可在热登录失效后进行普通登录行为
 //
 //	Storage := NewJsonFileHotReloadStorage("Storage.json")
 //	err := bot.HotLogin(Storage, true)
 //	fmt.Println(err)
-func (b *Bot) HotLogin(storage HotReloadStorage, retries ...bool) error {
-	err := b.hotLogin(storage)
-	// 判断是否为需要重新登录
-	if errors.Is(err, ErrInvalidStorage) {
-		return b.Login()
+func (b *Bot) HotLogin(storage HotReloadStorage, opts ...HotLoginOptionFunc) error {
+	hotLogin := &HotLogin{storage: storage}
+	for _, opt := range opts {
+		opt(&hotLogin.opt)
 	}
-	if err != nil {
-		if len(retries) > 0 && retries[0] {
-			retErr, ok := err.(Ret)
-			if !ok {
-				return err
-			}
-			// TODO add more error code handle here
-			switch retErr {
-			case cookieInvalid:
-				return b.Login()
-			}
-			return err
-		}
-	}
-	return err
+	return b.login(hotLogin)
 }
 
-func (b *Bot) hotLogin(storage HotReloadStorage) error {
-	b.hotReloadStorage = storage
-	var item HotReloadStorageItem
-	err := json.NewDecoder(storage).Decode(&item)
-	if err != nil {
-		return err
+// PushLogin 免扫码登录
+// 免扫码登录需要先扫码登录一次才可以进行扫码登录
+// 扫码登录成功后需要利用微信号发送一条消息，然后在手机上进行主动退出。
+// 这时候在进行一次 PushLogin 即可。
+func (b *Bot) PushLogin(storage HotReloadStorage, opts ...PushLoginOptionFunc) error {
+	pushLogin := &PushLogin{storage: storage}
+	// 进行相关设置。
+	// 如果相对默认的行为进行修改，在opts里面进行追加即可。
+	opts = append(defaultPushLoginOpts[:], opts...)
+	for _, opt := range opts {
+		opt(&pushLogin.opt)
 	}
-	if err = b.hotLoginInit(&item); err != nil {
-		return err
-	}
-	return b.WebInit()
-}
-
-// 热登陆初始化
-func (b *Bot) hotLoginInit(item *HotReloadStorageItem) error {
-	b.Caller.Client.Jar = item.Jar.AsCookieJar()
-	b.Storage.LoginInfo = item.LoginInfo
-	b.Storage.Request = item.BaseRequest
-	b.Caller.Client.Domain = item.WechatDomain
-	b.uuid = item.UUID
-	return nil
-}
-
-// Login 用户登录
-func (b *Bot) Login() error {
-	uuid, err := b.Caller.GetLoginUUID()
-	if err != nil {
-		return err
-	}
-	return b.LoginWithUUID(uuid)
-}
-
-// LoginWithUUID 用户登录
-// 该方法会一直阻塞，直到用户扫码登录，或者二维码过期
-func (b *Bot) LoginWithUUID(uuid string) error {
-	b.uuid = uuid
-	// 二维码获取回调
-	if b.UUIDCallback != nil {
-		b.UUIDCallback(uuid)
-	}
-	for {
-		// 长轮询检查是否扫码登录
-		resp, err := b.Caller.CheckLogin(uuid)
-		if err != nil {
-			return err
-		}
-		switch resp.Code {
-		case StatusSuccess:
-			// 判断是否有登录回调，如果有执行它
-			if err = b.HandleLogin(resp.Raw); err != nil {
-				return err
-			}
-			if b.LoginCallBack != nil {
-				b.LoginCallBack(resp.Raw)
-			}
-			return nil
-		case StatusScanned:
-			// 执行扫码回调
-			if b.ScanCallBack != nil {
-				b.ScanCallBack(resp.Raw)
-			}
-		case StatusTimeout:
-			return ErrLoginTimeout
-		case StatusWait:
-			continue
-		}
-	}
+	return b.login(pushLogin)
 }
 
 // Logout 用户退出
@@ -463,4 +404,21 @@ func (b *Bot) IsHot() bool {
 // UUID returns current uuid of bot
 func (b *Bot) UUID() string {
 	return b.uuid
+}
+
+func (b *Bot) reload() error {
+	if b.hotReloadStorage == nil {
+		return errors.New("hotReloadStorage is nil")
+	}
+	var item HotReloadStorageItem
+	err := json.NewDecoder(b.hotReloadStorage).Decode(&item)
+	if err != nil {
+		return err
+	}
+	b.Caller.Client.Jar = item.Jar.AsCookieJar()
+	b.Storage.LoginInfo = item.LoginInfo
+	b.Storage.Request = item.BaseRequest
+	b.Caller.Client.Domain = item.WechatDomain
+	b.uuid = item.UUID
+	return nil
 }

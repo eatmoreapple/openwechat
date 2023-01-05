@@ -116,7 +116,7 @@ func (c *Client) GetLoginQrcode(uuid string) (*http.Response, error) {
 }
 
 // CheckLogin 检查是否登录
-func (c *Client) CheckLogin(uuid string) (*http.Response, error) {
+func (c *Client) CheckLogin(uuid, tip string) (*http.Response, error) {
 	path, _ := url.Parse(login)
 	now := time.Now().Unix()
 	params := url.Values{}
@@ -124,7 +124,7 @@ func (c *Client) CheckLogin(uuid string) (*http.Response, error) {
 	params.Add("_", strconv.FormatInt(now, 10))
 	params.Add("loginicon", "true")
 	params.Add("uuid", uuid)
-	params.Add("tip", "0")
+	params.Add("tip", tip)
 	path.RawQuery = params.Encode()
 	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
 	return c.Do(req)
@@ -699,12 +699,7 @@ func (c *Client) WebWxRelationPin(request *BaseRequest, op uint8, user *User) (*
 
 // WebWxPushLogin 免扫码登陆接口
 func (c *Client) WebWxPushLogin(uin int64) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxpushloginurl)
-	params := url.Values{}
-	params.Add("uin", strconv.FormatInt(uin, 10))
-	path.RawQuery = params.Encode()
-	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
-	return c.Do(req)
+	return c.mode.PushLogin(c, uin)
 }
 
 // WebWxSendVideoMsg 发送视频消息接口
