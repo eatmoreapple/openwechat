@@ -698,9 +698,10 @@ func (c *Client) WebWxRelationPin(request *BaseRequest, op uint8, user *User) (*
 }
 
 // WebWxPushLogin 免扫码登陆接口
-func (c *Client) WebWxPushLogin(uin int) (*http.Response, error) {
+func (c *Client) WebWxPushLogin(uin int64) (*http.Response, error) {
 	path, _ := url.Parse(c.Domain.BaseHost() + webwxpushloginurl)
-	params := url.Values{"uin": {strconv.Itoa(uin)}}
+	params := url.Values{}
+	params.Add("uin", strconv.FormatInt(uin, 10))
 	path.RawQuery = params.Encode()
 	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
 	return c.Do(req)

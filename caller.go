@@ -413,7 +413,7 @@ func (c *Caller) WebWxRelationPin(request *BaseRequest, user *User, op uint8) er
 }
 
 // WebWxPushLogin 免扫码登陆接口
-func (c *Caller) WebWxPushLogin(uin int) (*PushLoginResponse, error) {
+func (c *Caller) WebWxPushLogin(uin int64) (*PushLoginResponse, error) {
 	resp, err := c.Client.WebWxPushLogin(uin)
 	if err != nil {
 		return nil, err
