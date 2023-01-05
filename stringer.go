@@ -58,6 +58,8 @@ func _() {
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
 	_ = x[ticketError - -14]
+	_ = x[logicError - -2]
+	_ = x[sysError - -1]
 	_ = x[paramError-1]
 	_ = x[failedLoginWarn-1100]
 	_ = x[failedLoginCheck-1101]
@@ -68,31 +70,36 @@ func _() {
 
 const (
 	_Ret_name_0 = "ticket error"
-	_Ret_name_1 = "param error"
-	_Ret_name_2 = "failed login warnfailed login Checkcookie invalid"
-	_Ret_name_3 = "login environmental abnormality"
-	_Ret_name_4 = "operate too often"
+	_Ret_name_1 = "logic errorsys error"
+	_Ret_name_2 = "param error"
+	_Ret_name_3 = "failed login warnfailed login checkcookie invalid"
+	_Ret_name_4 = "login environmental abnormality"
+	_Ret_name_5 = "operate too often"
 )
 
 var (
-	_Ret_index_2 = [...]uint8{0, 17, 35, 49}
+	_Ret_index_1 = [...]uint8{0, 11, 20}
+	_Ret_index_3 = [...]uint8{0, 17, 35, 49}
 )
 
-func (r Ret) String() string {
+func (i Ret) String() string {
 	switch {
-	case r == -14:
+	case i == -14:
 		return _Ret_name_0
-	case r == 1:
-		return _Ret_name_1
-	case 1100 <= r && r <= 1102:
-		r -= 1100
-		return _Ret_name_2[_Ret_index_2[r]:_Ret_index_2[r+1]]
-	case r == 1203:
-		return _Ret_name_3
-	case r == 1205:
+	case -2 <= i && i <= -1:
+		i -= -2
+		return _Ret_name_1[_Ret_index_1[i]:_Ret_index_1[i+1]]
+	case i == 1:
+		return _Ret_name_2
+	case 1100 <= i && i <= 1102:
+		i -= 1100
+		return _Ret_name_3[_Ret_index_3[i]:_Ret_index_3[i+1]]
+	case i == 1203:
 		return _Ret_name_4
+	case i == 1205:
+		return _Ret_name_5
 	default:
-		return "Ret(" + strconv.FormatInt(int64(r), 10) + ")"
+		return "Ret(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
 }
 func _() {
