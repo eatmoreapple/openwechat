@@ -387,8 +387,8 @@ func (b *Bot) OnLogout(f func(bot *Bot)) {
 // 接收外部的 context.Context，用于控制Bot的存活
 func NewBot(c context.Context) *Bot {
 	caller := DefaultCaller()
-	// 默认行为为桌面模式
-	caller.Client.SetMode(Normal)
+	// 默认行为为网页版微信模式
+	caller.Client.SetMode(normal)
 	ctx, cancel := context.WithCancel(c)
 	return &Bot{Caller: caller, Storage: &Storage{}, context: ctx, cancel: cancel}
 }
@@ -397,11 +397,8 @@ func NewBot(c context.Context) *Bot {
 // mode不传入默认为 openwechat.Desktop,详情见mode
 //
 //	bot := openwechat.DefaultBot(openwechat.Desktop)
-func DefaultBot(modes ...Mode) *Bot {
+func DefaultBot(opts ...BotOptionFunc) *Bot {
 	bot := NewBot(context.Background())
-	if len(modes) > 0 {
-		bot.Caller.Client.SetMode(modes[0])
-	}
 	// 获取二维码回调
 	bot.UUIDCallback = PrintlnQrcodeUrl
 	// 扫码回调
@@ -416,6 +413,9 @@ func DefaultBot(modes ...Mode) *Bot {
 	// 默认的行为打印SyncCheckResponse
 	bot.SyncCheckCallback = func(resp SyncCheckResponse) {
 		log.Printf("RetCode:%s  Selector:%s", resp.RetCode, resp.Selector)
+	}
+	for _, opt := range opts {
+		opt(bot)
 	}
 	return bot
 }

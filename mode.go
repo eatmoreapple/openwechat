@@ -13,9 +13,9 @@ type Mode interface {
 }
 
 var (
-	Normal Mode = normalMode{}
+	normal Mode = normalMode{}
 
-	Desktop Mode = desktopMode{}
+	desktop Mode = desktopMode{}
 )
 
 type normalMode struct{}
