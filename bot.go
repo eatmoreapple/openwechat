@@ -76,12 +76,7 @@ func (b *Bot) Login() error {
 	return b.login(scanLogin)
 }
 
-// HotLogin 热登录,可实现重复登录,
-// retry设置为true可在热登录失效后进行普通登录行为
-//
-//	Storage := NewJsonFileHotReloadStorage("Storage.json")
-//	err := bot.HotLogin(Storage, true)
-//	fmt.Println(err)
+// HotLogin 热登录,可实现在单位时间内免重复扫码登录
 func (b *Bot) HotLogin(storage HotReloadStorage, opts ...HotLoginOptionFunc) error {
 	hotLogin := &HotLogin{storage: storage}
 	for _, opt := range opts {
