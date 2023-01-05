@@ -20,37 +20,12 @@ func (s *SacnLogin) Login(bot *Bot) error {
 // checkLogin 该方法会一直阻塞，直到用户扫码登录，或者二维码过期
 func (s *SacnLogin) checkLogin(bot *Bot, uuid string) error {
 	bot.uuid = uuid
-	// 二维码获取回调
-	if bot.UUIDCallback != nil {
-		bot.UUIDCallback(uuid)
+	bot.uuid = uuid
+	loginChecker := &LoginChecker{
+		Bot: bot,
+		Tip: "0",
 	}
-	for {
-		// 长轮询检查是否扫码登录
-		resp, err := bot.Caller.CheckLogin(uuid, "0")
-		if err != nil {
-			return err
-		}
-		switch resp.Code {
-		case StatusSuccess:
-			// 判断是否有登录回调，如果有执行它
-			if err = bot.HandleLogin(resp.Raw); err != nil {
-				return err
-			}
-			if bot.LoginCallBack != nil {
-				bot.LoginCallBack(resp.Raw)
-			}
-			return nil
-		case StatusScanned:
-			// 执行扫码回调
-			if bot.ScanCallBack != nil {
-				bot.ScanCallBack(resp.Raw)
-			}
-		case StatusTimeout:
-			return ErrLoginTimeout
-		case StatusWait:
-			continue
-		}
-	}
+	return loginChecker.CheckLogin()
 }
 
 type hotLoginOption struct {
@@ -155,7 +130,7 @@ func (p PushLogin) Login(bot *Bot) error {
 	if err = resp.Err(); err != nil {
 		return err
 	}
-	err = p.checkLogin(bot, resp.UUID, "1")
+	err = p.checkLogin(bot, resp.UUID)
 	if err != nil && p.opt.withRetry {
 		scanLogin := SacnLogin{}
 		return scanLogin.Login(bot)
@@ -169,16 +144,36 @@ func (p PushLogin) pushLoginInit(bot *Bot) error {
 }
 
 // checkLogin 登录检查
-func (p PushLogin) checkLogin(bot *Bot, uuid, tip string) error {
-	// todo 将checkLogin剥离出来
+func (p PushLogin) checkLogin(bot *Bot, uuid string) error {
 	bot.uuid = uuid
-	// 二维码获取回调
-	if bot.UUIDCallback != nil && !p.opt.withoutUUIDCallback {
-		bot.UUIDCallback(uuid)
+	loginChecker := &LoginChecker{
+		Bot:                 bot,
+		Tip:                 "1",
+		WithLoginCallback:   p.opt.withoutLoginCallback,
+		WithoutUUIDCallback: p.opt.withoutUUIDCallback,
+		WithScanCallback:    p.opt.withoutScanCallback,
 	}
+	return loginChecker.CheckLogin()
+}
+
+type LoginChecker struct {
+	Bot                 *Bot
+	Tip                 string
+	WithoutUUIDCallback bool
+	WithLoginCallback   bool
+	WithScanCallback    bool
+}
+
+func (l *LoginChecker) CheckLogin() error {
+	uuid := l.Bot.UUID()
+	// 二维码获取回调
+	if l.Bot.UUIDCallback != nil && !l.WithoutUUIDCallback {
+		l.Bot.UUIDCallback(uuid)
+	}
+	var tip = l.Tip
 	for {
 		// 长轮询检查是否扫码登录
-		resp, err := bot.Caller.CheckLogin(uuid, tip)
+		resp, err := l.Bot.Caller.CheckLogin(uuid, tip)
 		if err != nil {
 			return err
 		}
@@ -188,17 +183,17 @@ func (p PushLogin) checkLogin(bot *Bot, uuid, tip string) error {
 		switch resp.Code {
 		case StatusSuccess:
 			// 判断是否有登录回调，如果有执行它
-			if err = bot.HandleLogin(resp.Raw); err != nil {
+			if err = l.Bot.HandleLogin(resp.Raw); err != nil {
 				return err
 			}
-			if bot.LoginCallBack != nil && !p.opt.withoutLoginCallback {
-				bot.LoginCallBack(resp.Raw)
+			if l.Bot.LoginCallBack != nil && !l.WithLoginCallback {
+				l.Bot.LoginCallBack(resp.Raw)
 			}
 			return nil
 		case StatusScanned:
 			// 执行扫码回调
-			if bot.ScanCallBack != nil && !p.opt.withoutScanCallback {
-				bot.ScanCallBack(resp.Raw)
+			if l.Bot.ScanCallBack != nil && !l.WithScanCallback {
+				l.Bot.ScanCallBack(resp.Raw)
 			}
 		case StatusTimeout:
 			return ErrLoginTimeout
