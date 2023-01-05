@@ -277,16 +277,6 @@ func (b *Bot) CrashReason() error {
 	return b.err
 }
 
-// MessageOnSuccess setter for Bot.MessageHandler
-func (b *Bot) MessageOnSuccess(h func(msg *Message)) {
-	b.MessageHandler = h
-}
-
-// MessageOnError setter for bot.GetMessageErrorHandler
-func (b *Bot) MessageOnError(h func(err error) bool) {
-	b.MessageErrorHandler = h
-}
-
 // DumpHotReloadStorage 写入HotReloadStorage
 func (b *Bot) DumpHotReloadStorage() error {
 	if b.hotReloadStorage == nil {
@@ -307,21 +297,6 @@ func (b *Bot) DumpTo(writer io.Writer) error {
 		UUID:         b.uuid,
 	}
 	return json.NewEncoder(writer).Encode(item)
-}
-
-// OnLogin is a setter for LoginCallBack
-func (b *Bot) OnLogin(f func(body []byte)) {
-	b.LoginCallBack = f
-}
-
-// OnScanned is a setter for ScanCallBack
-func (b *Bot) OnScanned(f func(body []byte)) {
-	b.ScanCallBack = f
-}
-
-// OnLogout is a setter for LogoutCallBack
-func (b *Bot) OnLogout(f func(bot *Bot)) {
-	b.LogoutCallBack = f
 }
 
 // NewBot Bot的构造方法
