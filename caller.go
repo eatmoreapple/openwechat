@@ -50,8 +50,8 @@ func (c *Caller) GetLoginUUID() (string, error) {
 }
 
 // CheckLogin 检查是否登录成功
-func (c *Caller) CheckLogin(uuid string) (*CheckLoginResponse, error) {
-	resp, err := c.Client.CheckLogin(uuid)
+func (c *Caller) CheckLogin(uuid, tip string) (*CheckLoginResponse, error) {
+	resp, err := c.Client.CheckLogin(uuid, tip)
 	if err != nil {
 		return nil, err
 	}

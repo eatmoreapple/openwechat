@@ -167,3 +167,10 @@ type PushLoginResponse struct {
 func (p PushLoginResponse) Ok() bool {
 	return p.Ret == "0" && p.UUID != ""
 }
+
+func (p PushLoginResponse) Err() error {
+	if p.Ok() {
+		return nil
+	}
+	return errors.New(p.Msg)
+}
