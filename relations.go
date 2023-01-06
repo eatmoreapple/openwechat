@@ -2,7 +2,7 @@ package openwechat
 
 import (
 	"fmt"
-	"os"
+	"io"
 	"time"
 )
 
@@ -24,17 +24,17 @@ func (f *Friend) SendText(content string) (*SentMessage, error) {
 }
 
 // SendImage 发送图片消息
-func (f *Friend) SendImage(file *os.File) (*SentMessage, error) {
+func (f *Friend) SendImage(file io.Reader) (*SentMessage, error) {
 	return f.self.SendImageToFriend(f, file)
 }
 
 // SendVideo 发送视频消息
-func (f *Friend) SendVideo(file *os.File) (*SentMessage, error) {
+func (f *Friend) SendVideo(file io.Reader) (*SentMessage, error) {
 	return f.self.SendVideoToFriend(f, file)
 }
 
 // SendFile 发送文件消息
-func (f *Friend) SendFile(file *os.File) (*SentMessage, error) {
+func (f *Friend) SendFile(file io.Reader) (*SentMessage, error) {
 	return f.self.SendFileToFriend(f, file)
 }
 
@@ -117,7 +117,7 @@ func (f Friends) SendText(text string, delays ...time.Duration) error {
 }
 
 // SendImage 向slice的好友依次发送图片消息
-func (f Friends) SendImage(file *os.File, delays ...time.Duration) error {
+func (f Friends) SendImage(file io.Reader, delays ...time.Duration) error {
 	if f.Count() == 0 {
 		return nil
 	}
@@ -130,7 +130,7 @@ func (f Friends) SendImage(file *os.File, delays ...time.Duration) error {
 }
 
 // SendFile 群发文件
-func (f Friends) SendFile(file *os.File, delay ...time.Duration) error {
+func (f Friends) SendFile(file io.Reader, delay ...time.Duration) error {
 	if f.Count() == 0 {
 		return nil
 	}
@@ -155,17 +155,17 @@ func (g *Group) SendText(content string) (*SentMessage, error) {
 }
 
 // SendImage 发行图片消息给当前的群组
-func (g *Group) SendImage(file *os.File) (*SentMessage, error) {
+func (g *Group) SendImage(file io.Reader) (*SentMessage, error) {
 	return g.self.SendImageToGroup(g, file)
 }
 
 // SendVideo 发行视频消息给当前的群组
-func (g *Group) SendVideo(file *os.File) (*SentMessage, error) {
+func (g *Group) SendVideo(file io.Reader) (*SentMessage, error) {
 	return g.self.SendVideoToGroup(g, file)
 }
 
 // SendFile 发送文件给当前的群组
-func (g *Group) SendFile(file *os.File) (*SentMessage, error) {
+func (g *Group) SendFile(file io.Reader) (*SentMessage, error) {
 	return g.self.SendFileToGroup(g, file)
 }
 
@@ -254,7 +254,7 @@ func (g Groups) SendText(text string, delay ...time.Duration) error {
 }
 
 // SendImage 向群组依次发送图片消息, 支持发送延迟
-func (g Groups) SendImage(file *os.File, delay ...time.Duration) error {
+func (g Groups) SendImage(file io.Reader, delay ...time.Duration) error {
 	if g.Count() == 0 {
 		return nil
 	}
@@ -267,7 +267,7 @@ func (g Groups) SendImage(file *os.File, delay ...time.Duration) error {
 }
 
 // SendFile 向群组依次发送文件消息, 支持发送延迟
-func (g Groups) SendFile(file *os.File, delay ...time.Duration) error {
+func (g Groups) SendFile(file io.Reader, delay ...time.Duration) error {
 	if g.Count() == 0 {
 		return nil
 	}
@@ -385,12 +385,12 @@ func (m *Mp) SendText(content string) (*SentMessage, error) {
 }
 
 // SendImage 发送图片消息给公众号
-func (m *Mp) SendImage(file *os.File) (*SentMessage, error) {
+func (m *Mp) SendImage(file io.Reader) (*SentMessage, error) {
 	return m.self.SendImageToMp(m, file)
 }
 
 // SendFile 发送文件消息给公众号
-func (m *Mp) SendFile(file *os.File) (*SentMessage, error) {
+func (m *Mp) SendFile(file io.Reader) (*SentMessage, error) {
 	return m.self.SendFileToMp(m, file)
 }
 

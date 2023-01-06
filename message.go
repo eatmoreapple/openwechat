@@ -165,7 +165,7 @@ func (m *Message) ReplyText(content string) (*SentMessage, error) {
 }
 
 // ReplyImage 回复图片消息
-func (m *Message) ReplyImage(file *os.File) (*SentMessage, error) {
+func (m *Message) ReplyImage(file io.Reader) (*SentMessage, error) {
 	info := m.bot.Storage.LoginInfo
 	request := m.bot.Storage.Request
 	sentMessage, err := m.bot.Caller.WebWxSendImageMsg(file, request, info, m.bot.self.UserName, m.FromUserName)
@@ -173,7 +173,7 @@ func (m *Message) ReplyImage(file *os.File) (*SentMessage, error) {
 }
 
 // ReplyVideo 回复视频消息
-func (m *Message) ReplyVideo(file *os.File) (*SentMessage, error) {
+func (m *Message) ReplyVideo(file io.Reader) (*SentMessage, error) {
 	info := m.bot.Storage.LoginInfo
 	request := m.bot.Storage.Request
 	sentMessage, err := m.bot.Caller.WebWxSendVideoMsg(file, request, info, m.bot.self.UserName, m.FromUserName)
@@ -181,7 +181,7 @@ func (m *Message) ReplyVideo(file *os.File) (*SentMessage, error) {
 }
 
 // ReplyFile 回复文件消息
-func (m *Message) ReplyFile(file *os.File) (*SentMessage, error) {
+func (m *Message) ReplyFile(file io.Reader) (*SentMessage, error) {
 	info := m.bot.Storage.LoginInfo
 	request := m.bot.Storage.Request
 	sentMessage, err := m.bot.Caller.WebWxSendFile(file, request, info, m.bot.self.UserName, m.FromUserName)

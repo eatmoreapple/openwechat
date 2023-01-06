@@ -295,21 +295,21 @@ func (s *Self) sendTextToUser(user *User, text string) (*SentMessage, error) {
 	return s.sendMessageWrapper(sentMessage, err)
 }
 
-func (s *Self) sendImageToUser(user *User, file *os.File) (*SentMessage, error) {
+func (s *Self) sendImageToUser(user *User, file io.Reader) (*SentMessage, error) {
 	req := s.bot.Storage.Request
 	info := s.bot.Storage.LoginInfo
 	sentMessage, err := s.bot.Caller.WebWxSendImageMsg(file, req, info, s.UserName, user.UserName)
 	return s.sendMessageWrapper(sentMessage, err)
 }
 
-func (s *Self) sendVideoToUser(user *User, file *os.File) (*SentMessage, error) {
+func (s *Self) sendVideoToUser(user *User, file io.Reader) (*SentMessage, error) {
 	req := s.bot.Storage.Request
 	info := s.bot.Storage.LoginInfo
 	sentMessage, err := s.bot.Caller.WebWxSendVideoMsg(file, req, info, s.UserName, user.UserName)
 	return s.sendMessageWrapper(sentMessage, err)
 }
 
-func (s *Self) sendFileToUser(user *User, file *os.File) (*SentMessage, error) {
+func (s *Self) sendFileToUser(user *User, file io.Reader) (*SentMessage, error) {
 	req := s.bot.Storage.Request
 	info := s.bot.Storage.LoginInfo
 	sentMessage, err := s.bot.Caller.WebWxSendFile(file, req, info, s.UserName, user.UserName)
@@ -322,17 +322,17 @@ func (s *Self) SendTextToFriend(friend *Friend, text string) (*SentMessage, erro
 }
 
 // SendImageToFriend 发送图片消息给好友
-func (s *Self) SendImageToFriend(friend *Friend, file *os.File) (*SentMessage, error) {
+func (s *Self) SendImageToFriend(friend *Friend, file io.Reader) (*SentMessage, error) {
 	return s.sendImageToUser(friend.User, file)
 }
 
 // SendVideoToFriend 发送视频给好友
-func (s *Self) SendVideoToFriend(friend *Friend, file *os.File) (*SentMessage, error) {
+func (s *Self) SendVideoToFriend(friend *Friend, file io.Reader) (*SentMessage, error) {
 	return s.sendVideoToUser(friend.User, file)
 }
 
 // SendFileToFriend 发送文件给好友
-func (s *Self) SendFileToFriend(friend *Friend, file *os.File) (*SentMessage, error) {
+func (s *Self) SendFileToFriend(friend *Friend, file io.Reader) (*SentMessage, error) {
 	return s.sendFileToUser(friend.User, file)
 }
 
@@ -441,17 +441,17 @@ func (s *Self) SendTextToGroup(group *Group, text string) (*SentMessage, error) 
 }
 
 // SendImageToGroup 发送图片消息给群组
-func (s *Self) SendImageToGroup(group *Group, file *os.File) (*SentMessage, error) {
+func (s *Self) SendImageToGroup(group *Group, file io.Reader) (*SentMessage, error) {
 	return s.sendImageToUser(group.User, file)
 }
 
 // SendVideoToGroup 发送视频给群组
-func (s *Self) SendVideoToGroup(group *Group, file *os.File) (*SentMessage, error) {
+func (s *Self) SendVideoToGroup(group *Group, file io.Reader) (*SentMessage, error) {
 	return s.sendVideoToUser(group.User, file)
 }
 
 // SendFileToGroup 发送文件给群组
-func (s *Self) SendFileToGroup(group *Group, file *os.File) (*SentMessage, error) {
+func (s *Self) SendFileToGroup(group *Group, file io.Reader) (*SentMessage, error) {
 	return s.sendFileToUser(group.User, file)
 }
 
@@ -530,7 +530,7 @@ func (s *Self) sendTextToMembers(text string, delay time.Duration, members ...*U
 }
 
 // sendImageToMembers 发送图片消息给群组或者好友
-func (s *Self) sendImageToMembers(img *os.File, delay time.Duration, members ...*User) error {
+func (s *Self) sendImageToMembers(img io.Reader, delay time.Duration, members ...*User) error {
 	if len(members) == 0 {
 		return nil
 	}
@@ -544,7 +544,7 @@ func (s *Self) sendImageToMembers(img *os.File, delay time.Duration, members ...
 }
 
 // sendVideoToMembers 发送视频消息给群组或者好友
-func (s *Self) sendVideoToMembers(video *os.File, delay time.Duration, members ...*User) error {
+func (s *Self) sendVideoToMembers(video io.Reader, delay time.Duration, members ...*User) error {
 	if len(members) == 0 {
 		return nil
 	}
@@ -557,7 +557,7 @@ func (s *Self) sendVideoToMembers(video *os.File, delay time.Duration, members .
 	return s.forwardMessage(msg, delay, members[1:]...)
 }
 
-func (s *Self) sendFileToMembers(file *os.File, delay time.Duration, members ...*User) error {
+func (s *Self) sendFileToMembers(file io.Reader, delay time.Duration, members ...*User) error {
 	if len(members) == 0 {
 		return nil
 	}
@@ -577,19 +577,19 @@ func (s *Self) SendTextToFriends(text string, delay time.Duration, friends ...*F
 }
 
 // SendImageToFriends 发送图片消息给好友
-func (s *Self) SendImageToFriends(img *os.File, delay time.Duration, friends ...*Friend) error {
+func (s *Self) SendImageToFriends(img io.Reader, delay time.Duration, friends ...*Friend) error {
 	members := Friends(friends).AsMembers()
 	return s.sendImageToMembers(img, delay, members...)
 }
 
 // SendFileToFriends 发送文件给好友
-func (s *Self) SendFileToFriends(file *os.File, delay time.Duration, friends ...*Friend) error {
+func (s *Self) SendFileToFriends(file io.Reader, delay time.Duration, friends ...*Friend) error {
 	members := Friends(friends).AsMembers()
 	return s.sendFileToMembers(file, delay, members...)
 }
 
 // SendVideoToFriends 发送视频给好友
-func (s *Self) SendVideoToFriends(video *os.File, delay time.Duration, friends ...*Friend) error {
+func (s *Self) SendVideoToFriends(video io.Reader, delay time.Duration, friends ...*Friend) error {
 	members := Friends(friends).AsMembers()
 	return s.sendVideoToMembers(video, delay, members...)
 }
@@ -601,19 +601,19 @@ func (s *Self) SendTextToGroups(text string, delay time.Duration, groups ...*Gro
 }
 
 // SendImageToGroups 发送图片消息给群组
-func (s *Self) SendImageToGroups(img *os.File, delay time.Duration, groups ...*Group) error {
+func (s *Self) SendImageToGroups(img io.Reader, delay time.Duration, groups ...*Group) error {
 	members := Groups(groups).AsMembers()
 	return s.sendImageToMembers(img, delay, members...)
 }
 
 // SendFileToGroups 发送文件给群组
-func (s *Self) SendFileToGroups(file *os.File, delay time.Duration, groups ...*Group) error {
+func (s *Self) SendFileToGroups(file io.Reader, delay time.Duration, groups ...*Group) error {
 	members := Groups(groups).AsMembers()
 	return s.sendFileToMembers(file, delay, members...)
 }
 
 // SendVideoToGroups 发送视频给群组
-func (s *Self) SendVideoToGroups(video *os.File, delay time.Duration, groups ...*Group) error {
+func (s *Self) SendVideoToGroups(video io.Reader, delay time.Duration, groups ...*Group) error {
 	members := Groups(groups).AsMembers()
 	return s.sendVideoToMembers(video, delay, members...)
 }
@@ -798,17 +798,17 @@ func (s *Self) SendTextToMp(mp *Mp, text string) (*SentMessage, error) {
 }
 
 // SendImageToMp 发送图片消息给公众号
-func (s *Self) SendImageToMp(mp *Mp, file *os.File) (*SentMessage, error) {
+func (s *Self) SendImageToMp(mp *Mp, file io.Reader) (*SentMessage, error) {
 	return s.sendImageToUser(mp.User, file)
 }
 
 // SendFileToMp 发送文件给公众号
-func (s *Self) SendFileToMp(mp *Mp, file *os.File) (*SentMessage, error) {
+func (s *Self) SendFileToMp(mp *Mp, file io.Reader) (*SentMessage, error) {
 	return s.sendFileToUser(mp.User, file)
 }
 
 // SendVideoToMp 发送视频消息给公众号
-func (s *Self) SendVideoToMp(mp *Mp, file *os.File) (*SentMessage, error) {
+func (s *Self) SendVideoToMp(mp *Mp, file io.Reader) (*SentMessage, error) {
 	return s.sendVideoToUser(mp.User, file)
 }
 
