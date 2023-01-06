@@ -120,6 +120,15 @@ type PushLogin struct {
 
 // Login 实现了 BotLogin 接口
 func (p PushLogin) Login(bot *Bot) error {
+	err := p.login(bot)
+	if err != nil && p.opt.withRetry {
+		scanLogin := SacnLogin{}
+		return scanLogin.Login(bot)
+	}
+	return err
+}
+
+func (p PushLogin) login(bot *Bot) error {
 	if err := p.pushLoginInit(bot); err != nil {
 		return err
 	}
@@ -130,12 +139,7 @@ func (p PushLogin) Login(bot *Bot) error {
 	if err = resp.Err(); err != nil {
 		return err
 	}
-	err = p.checkLogin(bot, resp.UUID)
-	if err != nil && p.opt.withRetry {
-		scanLogin := SacnLogin{}
-		return scanLogin.Login(bot)
-	}
-	return err
+	return p.checkLogin(bot, resp.UUID)
 }
 
 func (p PushLogin) pushLoginInit(bot *Bot) error {
