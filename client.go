@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -310,15 +312,22 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 		return nil, err
 	}
 
-	fileMd5 := fmt.Sprintf("%x", h.Sum(nil))
+	fileMd5 := hex.EncodeToString(h.Sum(nil))
 
 	sate, err := file.Stat()
 	if err != nil {
 		return nil, err
 	}
 
+	filename := sate.Name()
+
+	if ext := filepath.Ext(filename); ext == "" {
+		names := strings.Split(contentType, "/")
+		filename = filename + "." + names[len(names)-1]
+	}
+
 	// 获取文件的类型
-	mediaType := getMessageType(sate.Name())
+	mediaType := getMessageType(filename)
 
 	path, _ := url.Parse(c.Domain.FileHost() + webwxuploadmedia)
 	params := url.Values{}
@@ -362,7 +371,7 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 
 	content := map[string]string{
 		"id":                "WU_FILE_0",
-		"name":              file.Name(),
+		"name":              filename,
 		"type":              contentType,
 		"lastModifiedDate":  sate.ModTime().Format(TimeFormat),
 		"size":              strconv.FormatInt(sate.Size(), 10),
