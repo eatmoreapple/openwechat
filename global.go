@@ -148,3 +148,6 @@ var videoType = "mp4"
 // ZombieText 检测僵尸好友字符串
 // 发送该字符给好友，能正常发送不报错的为正常好友，否则为僵尸好友
 const ZombieText = "وُحfخe ̷̴̐nخg ̷̴̐cخh ̷̴̐aخo امارتيخ ̷̴̐خ\n"
+
+// FileHelper 文件传输助手
+const FileHelper = "filehelper"
