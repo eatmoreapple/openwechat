@@ -114,9 +114,10 @@ func (m *Message) Receiver() (*User, error) {
 		return m.bot.self.User, nil
 	}
 	// https://github.com/eatmoreapple/openwechat/issues/113
-	if m.ToUserName == m.bot.self.fileHelper.UserName {
-		return m.bot.self.fileHelper.User, nil
+	if m.ToUserName == FileHelper {
+		return m.bot.self.FileHelper().User, nil
 	}
+
 	if m.IsSendByGroup() {
 		groups, err := m.bot.self.Groups()
 		if err != nil {

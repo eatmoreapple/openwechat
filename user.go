@@ -789,7 +789,7 @@ func newFriend(username string, self *Self) *Friend {
 // NewFriendHelper 创建一个文件传输助手
 // 文件传输助手的微信身份标识符永远是filehelper
 func NewFriendHelper(self *Self) *Friend {
-	return newFriend("filehelper", self)
+	return newFriend(FileHelper, self)
 }
 
 // SendTextToMp 发送文本消息给公众号
