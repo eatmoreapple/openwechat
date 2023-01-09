@@ -158,6 +158,11 @@ sender, err := msg.SenderInGroup()
 msg.IsSendBySelf()
 ```
 
+#### 是否为拍一拍
+
+```go
+msg.IsTickled()
+```
 
 
 #### 消息是否由好友发出

@@ -60,13 +60,15 @@ func main() {
 
 
 
-#### 普通登录
+#### 扫码登录
 
 上面的准备工作做完了，下面就可以登录，直接调用`Bot.Login`即可。
 
 ```go
 bot.Login() 
 ```
+
+`Login`方法会阻塞当前 goroutine，直到登录成功或者失败。
 
 登录会返回一个`error`，即登录失败的原因。
 
@@ -88,6 +90,17 @@ bot.HotLogin(reloadStorage)
 
 `HotLogin`需要接受一个`热存储容器对象`来调用。`热存储容器`用来保存登录的会话信息，本质是一个接口类型
 
+我们第一次进行热登录的时候，因为我们的`热存储容器`是空的，所以这时候会发生错误。
+
+我们只需要在`HotLogin`增加一个参数，让它在失败后执行扫码登录即可
+
+```go
+bot.HotLogin(reloadStorage, openwechat.HotLoginWithRetry(true))
+```
+
+当扫码登录成功后，会将会话信息写入到`热存储容器`中，下次再执行热登录的时候就会从`热存储容器`中读取会话信息，直接登录成功。
+
+
 ```go
 // 热登陆存储接口
 type HotReloadStorage io.ReadWriter
@@ -97,6 +110,51 @@ type HotReloadStorage io.ReadWriter
 
 实现这个接口，实现你自己的存储方式。
 
+#### 免扫码登录
+
+目前热登录有一点缺点就是它的有效期很短（具体多久我也不知道）。 
+
+我们平常在pc上登录微信的时候，通常只需要登录一次，第二次就会在微信上有一个确认登录的按钮，点击确认就会往手机上发送一个确认登录的请求，这样就可以免扫码登录了。
+
+openwechat也提供了这样的功能。
+
+```go
+bot.PushLogin(storage HotReloadStorage, opts ...PushLoginOptionFunc) error 
+```
+
+`PushLogin`需要传入一个`热存储容器`，和一些可选参数。
+
+`HotReloadStorage` 跟上面一样，用来保存会话信息，必要参数。
+
+`PushLoginOptionFunc`是一个可选参数，用来设置一些额外的行为。
+
+目前有下面几个可选参数：
+
+```go
+// PushLoginWithoutUUIDCallback 设置 PushLogin 不执行二维码回调, 默认为 true
+func PushLoginWithoutUUIDCallback(flag bool) PushLoginOptionFunc 
+
+// PushLoginWithoutScanCallback 设置 PushLogin 不执行扫码回调， 默认为true
+func PushLoginWithoutScanCallback(flag bool) PushLoginOptionFunc 
+
+// PushLoginWithoutLoginCallback 设置 PushLogin 不执行登录回调，默认为false
+func PushLoginWithoutLoginCallback(flag bool) PushLoginOptionFunc 
+
+// PushLoginWithRetry 设置 PushLogin 失败后执行扫码登录，默认为false
+func PushLoginWithRetry(flag bool) PushLoginOptionFunc 
+```
+
+注意：如果是第一次登录，``PushLogin`` 一定会失败的，因为我们的`HotReloadStorage`里面没有会话信息，你需要设置失败会进行扫码登录。
+
+```go
+bot := openwechat.DefaultBot()
+reloadStorage := openwechat.NewJsonFileHotReloadStorage("storage.json")
+err = bot.PushLogin(reloadStorage, openwechat.PushLoginWithRetry(true))
+```
+
+这样当第一次登录失败的时候，会自动执行扫码登录。
+
+扫码登录成功后，会自动保存会话信息到`HotReloadStorage`，下次登录就可以直接使用`PushLogin`了，就会往手机上发送确认登录的请求。
 
 
 ### 扫码回调
@@ -262,5 +320,29 @@ self, err := bot.GetCurrentUser()
 bot.Block()
 ```
 
-该方法会一直阻塞，直到用户主动退出或者网络请求发生错误
+该方法会一直阻塞，直到用户主动退出或者网络请求发生错误。
+
+
+### 控制Bot存活
+
+判断当前的`Bot`是否存活。
+
+```go
+func (b *Bot) Alive() bool
+```
+
+当返回为`true`则表示`Bot`存活。
+
+如何控制`Bot`存活呢？
+
+```go
+ctx, cancel := context.WithCancel(context.Background())
+
+bot := openwechat.DefaultBot(openwechat.WithContext(ctx))
+```
+
+`WithContext`接受一个`context.Context`对象，当`context`对象被取消时，`Bot`也会被取消。
+
+当前我们也可以调用`bot.Logout`来主动退出当前的`Bot`，当`Bot`退出后，`bot.Alive()`会返回`false`。
+
 
