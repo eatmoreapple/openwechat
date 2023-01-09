@@ -400,10 +400,10 @@ func (f Friends) SendText(text string, delay ...time.Duration) error
 #### 群发图片
 
 ```go
-func (f Friends) SendImage(file *os.File, delay ...time.Duration) error 
+func (f Friends) SendImage(file io.Reader, delay ...time.Duration) error 
 ```
 
-* `file`：`os.file`类型，即发送图片的文件指针
+* `file`：`io.Reader`类型。
 * `delay`：每次发送消息的间隔（发送消息过快可能会被wx检测到，最好加上间隔时间）
 
 
@@ -411,10 +411,10 @@ func (f Friends) SendImage(file *os.File, delay ...time.Duration) error
 #### 群发文件
 
 ```go
-func (f Friends) SendFile(file *os.File, delay ...time.Duration) error
+func (f Friends) SendFile(file io.Reader, delay ...time.Duration) error
 ```
 
-* `file`：`os.file`类型，即发送文件的文件指针
+* `file`：`io.Reader`类型。
 * `delay`：每次发送消息的间隔（发送消息过快可能会被wx检测到，最好加上间隔时间）
 
 
@@ -545,10 +545,10 @@ func (g Groups) SendText(text string, delay ...time.Duration) error
 #### 群发图片
 
 ```go
-func (g Groups) SendImage(file *os.File, delay ...time.Duration) error
+func (g Groups) SendImage(file io.Reader, delay ...time.Duration) error
 ```
 
-* `file`：`os.file`类型，即发送文件的文件指针
+* `file`：`io.Reader`类型。
 * `delay`：每次发送消息的间隔（发送消息过快可能会被wx检测到，最好加上间隔时间）
 
 
@@ -556,10 +556,10 @@ func (g Groups) SendImage(file *os.File, delay ...time.Duration) error
 #### 群发文件
 
 ```go
-func (g Groups) SendFile(file *os.File, delay ...time.Duration) error
+func (g Groups) SendFile(file io.Reader, delay ...time.Duration) error
 ```
 
-* `file`：`os.file`类型，即发送文件的文件指针
+* `file`：`io.Reader`类型。
 * `delay`：每次发送消息的间隔（发送消息过快可能会被wx检测到，最好加上间隔时间）
 
 
