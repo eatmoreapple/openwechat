@@ -4,6 +4,10 @@ import (
 	"time"
 )
 
+const (
+	defaultHotStorageSyncDuration = time.Minute * 5
+)
+
 // BotLogin 定义了一个Login的接口
 type BotLogin interface {
 	Login(bot *Bot) error
@@ -50,6 +54,10 @@ func HotLoginWithSyncReloadData(duration time.Duration) HotLoginOptionFunc {
 	return func(o *hotLoginOption) {
 		o.syncDuration = duration
 	}
+}
+
+var defaultHotLoginOpts = [...]HotLoginOptionFunc{
+	HotLoginWithSyncReloadData(defaultHotStorageSyncDuration),
 }
 
 // HotLogin 热登录模式
@@ -138,6 +146,7 @@ func PushLoginWithSyncReloadData(duration time.Duration) PushLoginOptionFunc {
 var defaultPushLoginOpts = [...]PushLoginOptionFunc{
 	PushLoginWithoutUUIDCallback(true),
 	PushLoginWithoutScanCallback(true),
+	PushLoginWithSyncReloadData(defaultHotStorageSyncDuration),
 }
 
 // PushLogin 免扫码登录模式
