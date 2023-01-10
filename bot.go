@@ -79,6 +79,9 @@ func (b *Bot) Login() error {
 // HotLogin 热登录,可实现在单位时间内免重复扫码登录
 func (b *Bot) HotLogin(storage HotReloadStorage, opts ...HotLoginOptionFunc) error {
 	hotLogin := &HotLogin{storage: storage}
+	// 进行相关设置。
+	// 如果相对默认的行为进行修改，在opts里面进行追加即可。
+	opts = append(defaultHotLoginOpts[:], opts...)
 	for _, opt := range opts {
 		opt(&hotLogin.opt)
 	}
@@ -331,7 +334,7 @@ func NewBot(c context.Context) *Bot {
 }
 
 // DefaultBot 默认的Bot的构造方法,
-// mode不传入默认为 openwechat.Desktop,详情见mode
+// mode不传入默认为 openwechat.Normal,详情见mode
 //
 //	bot := openwechat.DefaultBot(openwechat.Desktop)
 func DefaultBot(opts ...BotOptionFunc) *Bot {
