@@ -107,7 +107,7 @@ func (b *Bot) Logout() error {
 		if err := b.Caller.Logout(info); err != nil {
 			return err
 		}
-		b.stopSyncCheck(errors.New("logout"))
+		b.Exit()
 		return nil
 	}
 	return errors.New("user not login")
@@ -173,7 +173,7 @@ func (b *Bot) WebInit() error {
 	// FIX: 当bot在线的情况下执行热登录,会开启多次事件监听
 	go b.once.Do(func() {
 		if b.MessageErrorHandler == nil {
-			b.MessageErrorHandler = b.stopSyncCheck
+			b.MessageErrorHandler = defaultSyncCheckErrHandler(b)
 		}
 		for {
 			err := b.syncCheck()
@@ -182,6 +182,7 @@ func (b *Bot) WebInit() error {
 			}
 			// 判断是否继续, 如果不继续则退出
 			if goon := b.MessageErrorHandler(err); !goon {
+				b.err = err
 				break
 			}
 		}
@@ -229,13 +230,6 @@ func (b *Bot) syncCheck() error {
 		}
 	}
 	return err
-}
-
-// 当获取消息发生错误时, 默认的错误处理行为
-func (b *Bot) stopSyncCheck(err error) bool {
-	b.err = err
-	b.Exit()
-	return false
 }
 
 // 获取新的消息
@@ -294,6 +288,33 @@ func (b *Bot) DumpTo(writer io.Writer) error {
 	return json.NewEncoder(writer).Encode(item)
 }
 
+// IsHot returns true if is hot login otherwise false
+func (b *Bot) IsHot() bool {
+	return b.hotReloadStorage != nil
+}
+
+// UUID returns current uuid of bot
+func (b *Bot) UUID() string {
+	return b.uuid
+}
+
+func (b *Bot) reload() error {
+	if b.hotReloadStorage == nil {
+		return errors.New("hotReloadStorage is nil")
+	}
+	var item HotReloadStorageItem
+	err := json.NewDecoder(b.hotReloadStorage).Decode(&item)
+	if err != nil {
+		return err
+	}
+	b.Caller.Client.Jar = item.Jar.AsCookieJar()
+	b.Storage.LoginInfo = item.LoginInfo
+	b.Storage.Request = item.BaseRequest
+	b.Caller.Client.Domain = item.WechatDomain
+	b.uuid = item.UUID
+	return nil
+}
+
 // NewBot Bot的构造方法
 // 接收外部的 context.Context，用于控制Bot的存活
 func NewBot(c context.Context) *Bot {
@@ -331,6 +352,21 @@ func DefaultBot(opts ...BotOptionFunc) *Bot {
 	return bot
 }
 
+// defaultSyncCheckErrHandler 默认的SyncCheck错误处理函数
+func defaultSyncCheckErrHandler(bot *Bot) func(error) bool {
+	return func(err error) bool {
+		var ret Ret
+		if errors.As(err, &ret) {
+			switch ret {
+			case failedLoginCheck, cookieInvalid, failedLoginWarn:
+				_ = bot.Logout()
+				return false
+			}
+		}
+		return true
+	}
+}
+
 // GetQrcodeUrl 通过uuid获取登录二维码的url
 func GetQrcodeUrl(uuid string) string {
 	return qrcode + uuid
@@ -364,31 +400,4 @@ func open(url string) error {
 	}
 	args = append(args, url)
 	return exec.Command(cmd, args...).Start()
-}
-
-// IsHot returns true if is hot login otherwise false
-func (b *Bot) IsHot() bool {
-	return b.hotReloadStorage != nil
-}
-
-// UUID returns current uuid of bot
-func (b *Bot) UUID() string {
-	return b.uuid
-}
-
-func (b *Bot) reload() error {
-	if b.hotReloadStorage == nil {
-		return errors.New("hotReloadStorage is nil")
-	}
-	var item HotReloadStorageItem
-	err := json.NewDecoder(b.hotReloadStorage).Decode(&item)
-	if err != nil {
-		return err
-	}
-	b.Caller.Client.Jar = item.Jar.AsCookieJar()
-	b.Storage.LoginInfo = item.LoginInfo
-	b.Storage.Request = item.BaseRequest
-	b.Caller.Client.Domain = item.WechatDomain
-	b.uuid = item.UUID
-	return nil
 }

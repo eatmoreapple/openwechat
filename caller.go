@@ -147,7 +147,7 @@ func (c *Caller) SyncCheck(request *BaseRequest, info *LoginInfo, response *WebI
 	if len(results) != 3 {
 		return nil, errors.New("parse sync key failed")
 	}
-	retCode, selector := string(results[1]), string(results[2])
+	retCode, selector := string(results[1]), Selector(results[2])
 	syncCheckResponse := &SyncCheckResponse{RetCode: retCode, Selector: selector}
 	return syncCheckResponse, nil
 }
