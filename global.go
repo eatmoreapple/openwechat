@@ -1,7 +1,6 @@
 package openwechat
 
 import (
-	"errors"
 	"regexp"
 )
 
@@ -104,12 +103,6 @@ const (
 	StatusScanned = "201"
 	StatusTimeout = "400"
 	StatusWait    = "408"
-)
-
-// errors
-var (
-	ErrNoSuchUserFoundError = errors.New("no such user found")
-	ErrLoginTimeout         = errors.New("login timeout")
 )
 
 // ALL 跟search函数搭配
