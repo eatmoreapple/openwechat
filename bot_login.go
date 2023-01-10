@@ -1,5 +1,9 @@
 package openwechat
 
+import (
+	"time"
+)
+
 // BotLogin 定义了一个Login的接口
 type BotLogin interface {
 	Login(bot *Bot) error
@@ -28,8 +32,9 @@ func (s *SacnLogin) checkLogin(bot *Bot, uuid string) error {
 }
 
 type hotLoginOption struct {
-	withRetry bool
-	_         struct{}
+	withRetry    bool
+	syncDuration time.Duration
+	_            struct{}
 }
 
 type HotLoginOptionFunc func(o *hotLoginOption)
@@ -37,6 +42,13 @@ type HotLoginOptionFunc func(o *hotLoginOption)
 func HotLoginWithRetry(flag bool) HotLoginOptionFunc {
 	return func(o *hotLoginOption) {
 		o.withRetry = flag
+	}
+}
+
+// HotLoginWithSyncReloadData 定时同步 HotLogin 的数据
+func HotLoginWithSyncReloadData(duration time.Duration) HotLoginOptionFunc {
+	return func(o *hotLoginOption) {
+		o.syncDuration = duration
 	}
 }
 
@@ -48,6 +60,17 @@ type HotLogin struct {
 
 // Login 实现了 BotLogin 接口
 func (h *HotLogin) Login(bot *Bot) error {
+	if err := h.loginWrapper(bot); err != nil {
+		return err
+	}
+	if h.opt.syncDuration > 0 {
+		syncer := NewHotReloadStorageSyncer(bot, h.opt.syncDuration)
+		go func() { _ = syncer.Sync() }()
+	}
+	return nil
+}
+
+func (h *HotLogin) loginWrapper(bot *Bot) error {
 	err := h.login(bot)
 	if err != nil && h.opt.withRetry {
 		scanLogin := SacnLogin{}
@@ -73,6 +96,7 @@ type pushLoginOption struct {
 	withoutScanCallback  bool
 	withoutLoginCallback bool
 	withRetry            bool
+	syncDuration         time.Duration
 }
 
 type PushLoginOptionFunc func(o *pushLoginOption)
@@ -105,6 +129,13 @@ func PushLoginWithRetry(flag bool) PushLoginOptionFunc {
 	}
 }
 
+// PushLoginWithSyncReloadData 定时同步 PushLogin 的数据
+func PushLoginWithSyncReloadData(duration time.Duration) PushLoginOptionFunc {
+	return func(o *pushLoginOption) {
+		o.syncDuration = duration
+	}
+}
+
 // defaultPushLoginOpts 默认的 PushLogin
 var defaultPushLoginOpts = [...]PushLoginOptionFunc{
 	PushLoginWithoutUUIDCallback(true),
@@ -118,7 +149,18 @@ type PushLogin struct {
 }
 
 // Login 实现了 BotLogin 接口
-func (p PushLogin) Login(bot *Bot) error {
+func (p *PushLogin) Login(bot *Bot) error {
+	if err := p.loginWrapper(bot); err != nil {
+		return err
+	}
+	if p.opt.syncDuration > 0 {
+		syncer := NewHotReloadStorageSyncer(bot, p.opt.syncDuration)
+		go func() { _ = syncer.Sync() }()
+	}
+	return nil
+}
+
+func (p *PushLogin) loginWrapper(bot *Bot) error {
 	err := p.login(bot)
 	if err != nil && p.opt.withRetry {
 		scanLogin := SacnLogin{}
@@ -127,7 +169,7 @@ func (p PushLogin) Login(bot *Bot) error {
 	return err
 }
 
-func (p PushLogin) login(bot *Bot) error {
+func (p *PushLogin) login(bot *Bot) error {
 	if err := p.pushLoginInit(bot); err != nil {
 		return err
 	}
@@ -141,13 +183,13 @@ func (p PushLogin) login(bot *Bot) error {
 	return p.checkLogin(bot, resp.UUID)
 }
 
-func (p PushLogin) pushLoginInit(bot *Bot) error {
+func (p *PushLogin) pushLoginInit(bot *Bot) error {
 	bot.hotReloadStorage = p.storage
 	return bot.reload()
 }
 
 // checkLogin 登录检查
-func (p PushLogin) checkLogin(bot *Bot, uuid string) error {
+func (p *PushLogin) checkLogin(bot *Bot, uuid string) error {
 	bot.uuid = uuid
 	loginChecker := &LoginChecker{
 		Bot:                 bot,

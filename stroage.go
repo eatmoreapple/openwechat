@@ -3,6 +3,7 @@ package openwechat
 import (
 	"io"
 	"os"
+	"time"
 )
 
 // Storage 身份信息, 维持整个登陆的Session会话
@@ -75,3 +76,30 @@ func NewJsonFileHotReloadStorage(filename string) io.ReadWriteCloser {
 }
 
 var _ HotReloadStorage = (*jsonFileHotReloadStorage)(nil)
+
+type HotReloadStorageSyncer struct {
+	duration time.Duration
+	bot      *Bot
+}
+
+// Sync 定时同步数据到登陆存储中
+func (h *HotReloadStorageSyncer) Sync() error {
+	// 定时器
+	ticker := time.NewTicker(h.duration)
+	for {
+		select {
+		case <-ticker.C:
+			// 每隔一段时间, 将数据同步到storage中
+			if err := h.bot.DumpHotReloadStorage(); err != nil {
+				return err
+			}
+		case <-h.bot.Context().Done():
+			// 当Bot关闭的时候, 退出循环
+			return nil
+		}
+	}
+}
+
+func NewHotReloadStorageSyncer(bot *Bot, duration time.Duration) *HotReloadStorageSyncer {
+	return &HotReloadStorageSyncer{duration: duration, bot: bot}
+}
