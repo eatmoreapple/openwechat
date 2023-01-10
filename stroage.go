@@ -84,6 +84,9 @@ type HotReloadStorageSyncer struct {
 
 // Sync 定时同步数据到登陆存储中
 func (h *HotReloadStorageSyncer) Sync() error {
+	if h.duration <= 0 {
+		return nil
+	}
 	// 定时器
 	ticker := time.NewTicker(h.duration)
 	for {

@@ -63,10 +63,8 @@ func (h *HotLogin) Login(bot *Bot) error {
 	if err := h.loginWrapper(bot); err != nil {
 		return err
 	}
-	if h.opt.syncDuration > 0 {
-		syncer := NewHotReloadStorageSyncer(bot, h.opt.syncDuration)
-		go func() { _ = syncer.Sync() }()
-	}
+	syncer := NewHotReloadStorageSyncer(bot, h.opt.syncDuration)
+	go func() { _ = syncer.Sync() }()
 	return nil
 }
 
@@ -153,10 +151,8 @@ func (p *PushLogin) Login(bot *Bot) error {
 	if err := p.loginWrapper(bot); err != nil {
 		return err
 	}
-	if p.opt.syncDuration > 0 {
-		syncer := NewHotReloadStorageSyncer(bot, p.opt.syncDuration)
-		go func() { _ = syncer.Sync() }()
-	}
+	syncer := NewHotReloadStorageSyncer(bot, p.opt.syncDuration)
+	go func() { _ = syncer.Sync() }()
 	return nil
 }
 
