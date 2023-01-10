@@ -20,7 +20,6 @@ func (s *SacnLogin) Login(bot *Bot) error {
 // checkLogin 该方法会一直阻塞，直到用户扫码登录，或者二维码过期
 func (s *SacnLogin) checkLogin(bot *Bot, uuid string) error {
 	bot.uuid = uuid
-	bot.uuid = uuid
 	loginChecker := &LoginChecker{
 		Bot: bot,
 		Tip: "0",
