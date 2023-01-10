@@ -248,7 +248,7 @@ func (b *Bot) Block() error {
 	if b.self == nil {
 		return errors.New("`Block` must be called after user login")
 	}
-	<-b.context.Done()
+	<-b.Context().Done()
 	return nil
 }
 
@@ -296,6 +296,11 @@ func (b *Bot) IsHot() bool {
 // UUID returns current uuid of bot
 func (b *Bot) UUID() string {
 	return b.uuid
+}
+
+// Context returns current context of bot
+func (b *Bot) Context() context.Context {
+	return b.context
 }
 
 func (b *Bot) reload() error {
