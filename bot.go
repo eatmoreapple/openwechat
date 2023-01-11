@@ -4,11 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os/exec"
 	"runtime"
 	"sync"
+
+	goqrcode "github.com/skip2/go-qrcode"
 )
 
 type Bot struct {
@@ -408,4 +411,17 @@ func open(url string) error {
 	}
 	args = append(args, url)
 	return exec.Command(cmd, args...).Start()
+}
+
+// PrintlnConsoleQrcode 终端打印登录二维码
+func PrintlnConsoleQrcode(uuid string) {
+	qrcodeUrl := GetQrcodeUrl(uuid)
+	fmt.Printf("扫描终端二维码或浏览器打开连接扫码登录: \n%s\n\n", qrcodeUrl)
+
+	qr, err := goqrcode.New(qrcodePreifx+uuid, goqrcode.High)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(qr.ToSmallString(false))
 }
