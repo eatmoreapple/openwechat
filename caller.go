@@ -50,8 +50,8 @@ func (c *Caller) GetLoginUUID() (string, error) {
 }
 
 // CheckLogin 检查是否登录成功
-func (c *Caller) CheckLogin(uuid string) (*CheckLoginResponse, error) {
-	resp, err := c.Client.CheckLogin(uuid)
+func (c *Caller) CheckLogin(uuid, tip string) (*CheckLoginResponse, error) {
+	resp, err := c.Client.CheckLogin(uuid, tip)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +147,7 @@ func (c *Caller) SyncCheck(request *BaseRequest, info *LoginInfo, response *WebI
 	if len(results) != 3 {
 		return nil, errors.New("parse sync key failed")
 	}
-	retCode, selector := string(results[1]), string(results[2])
+	retCode, selector := string(results[1]), Selector(results[2])
 	syncCheckResponse := &SyncCheckResponse{RetCode: retCode, Selector: selector}
 	return syncCheckResponse, nil
 }
@@ -260,7 +260,12 @@ func (c *Caller) UploadMedia(file *os.File, request *BaseRequest, info *LoginInf
 }
 
 // WebWxSendImageMsg 发送图片消息接口
-func (c *Caller) WebWxSendImageMsg(file *os.File, request *BaseRequest, info *LoginInfo, fromUserName, toUserName string) (*SentMessage, error) {
+func (c *Caller) WebWxSendImageMsg(reader io.Reader, request *BaseRequest, info *LoginInfo, fromUserName, toUserName string) (*SentMessage, error) {
+	file, cb, err := readerToFile(reader)
+	if err != nil {
+		return nil, err
+	}
+	defer cb()
 	// 首先尝试上传图片
 	var mediaId string
 	{
@@ -282,7 +287,12 @@ func (c *Caller) WebWxSendImageMsg(file *os.File, request *BaseRequest, info *Lo
 	return parser.SentMessage(msg)
 }
 
-func (c *Caller) WebWxSendFile(file *os.File, req *BaseRequest, info *LoginInfo, fromUserName, toUserName string) (*SentMessage, error) {
+func (c *Caller) WebWxSendFile(reader io.Reader, req *BaseRequest, info *LoginInfo, fromUserName, toUserName string) (*SentMessage, error) {
+	file, cb, err := readerToFile(reader)
+	if err != nil {
+		return nil, err
+	}
+	defer cb()
 	resp, err := c.UploadMedia(file, req, info, fromUserName, toUserName)
 	if err != nil {
 		return nil, err
@@ -298,7 +308,12 @@ func (c *Caller) WebWxSendFile(file *os.File, req *BaseRequest, info *LoginInfo,
 	return c.WebWxSendAppMsg(msg, req)
 }
 
-func (c *Caller) WebWxSendVideoMsg(file *os.File, request *BaseRequest, info *LoginInfo, fromUserName, toUserName string) (*SentMessage, error) {
+func (c *Caller) WebWxSendVideoMsg(reader io.Reader, request *BaseRequest, info *LoginInfo, fromUserName, toUserName string) (*SentMessage, error) {
+	file, cb, err := readerToFile(reader)
+	if err != nil {
+		return nil, err
+	}
+	defer cb()
 	var mediaId string
 	{
 		resp, err := c.UploadMedia(file, request, info, fromUserName, toUserName)
@@ -413,7 +428,7 @@ func (c *Caller) WebWxRelationPin(request *BaseRequest, user *User, op uint8) er
 }
 
 // WebWxPushLogin 免扫码登陆接口
-func (c *Caller) WebWxPushLogin(uin int) (*PushLoginResponse, error) {
+func (c *Caller) WebWxPushLogin(uin int64) (*PushLoginResponse, error) {
 	resp, err := c.Client.WebWxPushLogin(uin)
 	if err != nil {
 		return nil, err
@@ -499,4 +514,33 @@ func (p *MessageResponseParser) SentMessage(msg *SendMessage) (*SentMessage, err
 		return nil, err
 	}
 	return &SentMessage{MsgId: msgID, SendMessage: msg}, nil
+}
+
+func readerToFile(reader io.Reader) (file *os.File, cb func(), err error) {
+	if file, ok := reader.(*os.File); ok {
+		return file, func() {}, nil
+	}
+	file, err = os.CreateTemp("", "*")
+	if err != nil {
+		return nil, nil, err
+	}
+	_, err = io.Copy(file, reader)
+	if err != nil {
+		_ = file.Close()
+		_ = os.Remove(file.Name())
+		return nil, nil, err
+	}
+	if err = file.Close(); err != nil {
+		_ = os.Remove(file.Name())
+		return nil, nil, err
+	}
+	file, err = os.Open(file.Name())
+	if err != nil {
+		_ = os.Remove(file.Name())
+		return nil, nil, err
+	}
+	return file, func() {
+		_ = file.Close()
+		_ = os.Remove(file.Name())
+	}, nil
 }

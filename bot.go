@@ -66,102 +66,41 @@ func (b *Bot) GetCurrentUser() (*Self, error) {
 	return b.self, nil
 }
 
-// HotLogin 热登录,可实现重复登录,
-// retry设置为true可在热登录失效后进行普通登录行为
-//
-//	Storage := NewJsonFileHotReloadStorage("Storage.json")
-//	err := bot.HotLogin(Storage, true)
-//	fmt.Println(err)
-func (b *Bot) HotLogin(storage HotReloadStorage, retries ...bool) error {
-	err := b.hotLogin(storage)
-	// 判断是否为需要重新登录
-	if errors.Is(err, ErrInvalidStorage) {
-		return b.Login()
-	}
-	if err != nil {
-		if len(retries) > 0 && retries[0] {
-			retErr, ok := err.(Ret)
-			if !ok {
-				return err
-			}
-			// TODO add more error code handle here
-			switch retErr {
-			case cookieInvalid:
-				return b.Login()
-			}
-			return err
-		}
-	}
-	return err
-}
-
-func (b *Bot) hotLogin(storage HotReloadStorage) error {
-	b.hotReloadStorage = storage
-	var item HotReloadStorageItem
-	err := json.NewDecoder(storage).Decode(&item)
-	if err != nil {
-		return err
-	}
-	if err = b.hotLoginInit(&item); err != nil {
-		return err
-	}
-	return b.WebInit()
-}
-
-// 热登陆初始化
-func (b *Bot) hotLoginInit(item *HotReloadStorageItem) error {
-	b.Caller.Client.Jar = item.Jar.AsCookieJar()
-	b.Storage.LoginInfo = item.LoginInfo
-	b.Storage.Request = item.BaseRequest
-	b.Caller.Client.Domain = item.WechatDomain
-	b.uuid = item.UUID
-	return nil
+func (b *Bot) login(login BotLogin) error {
+	return login.Login(b)
 }
 
 // Login 用户登录
 func (b *Bot) Login() error {
-	uuid, err := b.Caller.GetLoginUUID()
-	if err != nil {
-		return err
-	}
-	return b.LoginWithUUID(uuid)
+	scanLogin := &SacnLogin{}
+	return b.login(scanLogin)
 }
 
-// LoginWithUUID 用户登录
-// 该方法会一直阻塞，直到用户扫码登录，或者二维码过期
-func (b *Bot) LoginWithUUID(uuid string) error {
-	b.uuid = uuid
-	// 二维码获取回调
-	if b.UUIDCallback != nil {
-		b.UUIDCallback(uuid)
+// HotLogin 热登录,可实现在单位时间内免重复扫码登录
+func (b *Bot) HotLogin(storage HotReloadStorage, opts ...HotLoginOptionFunc) error {
+	hotLogin := &HotLogin{storage: storage}
+	// 进行相关设置。
+	// 如果相对默认的行为进行修改，在opts里面进行追加即可。
+	opts = append(defaultHotLoginOpts[:], opts...)
+	for _, opt := range opts {
+		opt(&hotLogin.opt)
 	}
-	for {
-		// 长轮询检查是否扫码登录
-		resp, err := b.Caller.CheckLogin(uuid)
-		if err != nil {
-			return err
-		}
-		switch resp.Code {
-		case StatusSuccess:
-			// 判断是否有登录回调，如果有执行它
-			if err = b.HandleLogin(resp.Raw); err != nil {
-				return err
-			}
-			if b.LoginCallBack != nil {
-				b.LoginCallBack(resp.Raw)
-			}
-			return nil
-		case StatusScanned:
-			// 执行扫码回调
-			if b.ScanCallBack != nil {
-				b.ScanCallBack(resp.Raw)
-			}
-		case StatusTimeout:
-			return ErrLoginTimeout
-		case StatusWait:
-			continue
-		}
+	return b.login(hotLogin)
+}
+
+// PushLogin 免扫码登录
+// 免扫码登录需要先扫码登录一次才可以进行扫码登录
+// 扫码登录成功后需要利用微信号发送一条消息，然后在手机上进行主动退出。
+// 这时候在进行一次 PushLogin 即可。
+func (b *Bot) PushLogin(storage HotReloadStorage, opts ...PushLoginOptionFunc) error {
+	pushLogin := &PushLogin{storage: storage}
+	// 进行相关设置。
+	// 如果相对默认的行为进行修改，在opts里面进行追加即可。
+	opts = append(defaultPushLoginOpts[:], opts...)
+	for _, opt := range opts {
+		opt(&pushLogin.opt)
 	}
+	return b.login(pushLogin)
 }
 
 // Logout 用户退出
@@ -171,7 +110,7 @@ func (b *Bot) Logout() error {
 		if err := b.Caller.Logout(info); err != nil {
 			return err
 		}
-		b.stopSyncCheck(errors.New("logout"))
+		b.Exit()
 		return nil
 	}
 	return errors.New("user not login")
@@ -223,9 +162,9 @@ func (b *Bot) WebInit() error {
 		return err
 	}
 	// 设置当前的用户
-	b.self = &Self{Bot: b, User: &resp.User}
+	b.self = &Self{bot: b, User: &resp.User}
 	b.self.formatEmoji()
-	b.self.Self = b.self
+	b.self.self = b.self
 	b.Storage.Response = resp
 
 	// 通知手机客户端已经登录
@@ -237,7 +176,7 @@ func (b *Bot) WebInit() error {
 	// FIX: 当bot在线的情况下执行热登录,会开启多次事件监听
 	go b.once.Do(func() {
 		if b.MessageErrorHandler == nil {
-			b.MessageErrorHandler = b.stopSyncCheck
+			b.MessageErrorHandler = defaultSyncCheckErrHandler(b)
 		}
 		for {
 			err := b.syncCheck()
@@ -246,6 +185,7 @@ func (b *Bot) WebInit() error {
 			}
 			// 判断是否继续, 如果不继续则退出
 			if goon := b.MessageErrorHandler(err); !goon {
+				b.err = err
 				break
 			}
 		}
@@ -295,13 +235,6 @@ func (b *Bot) syncCheck() error {
 	return err
 }
 
-// 当获取消息发生错误时, 默认的错误处理行为
-func (b *Bot) stopSyncCheck(err error) bool {
-	b.err = err
-	b.Exit()
-	return false
-}
-
 // 获取新的消息
 func (b *Bot) syncMessage() ([]*Message, error) {
 	resp, err := b.Caller.WebWxSync(b.Storage.Request, b.Storage.Response, b.Storage.LoginInfo)
@@ -318,7 +251,7 @@ func (b *Bot) Block() error {
 	if b.self == nil {
 		return errors.New("`Block` must be called after user login")
 	}
-	<-b.context.Done()
+	<-b.Context().Done()
 	return nil
 }
 
@@ -334,16 +267,6 @@ func (b *Bot) Exit() {
 // CrashReason 获取当前Bot崩溃的原因
 func (b *Bot) CrashReason() error {
 	return b.err
-}
-
-// MessageOnSuccess setter for Bot.MessageHandler
-func (b *Bot) MessageOnSuccess(h func(msg *Message)) {
-	b.MessageHandler = h
-}
-
-// MessageOnError setter for Bot.GetMessageErrorHandler
-func (b *Bot) MessageOnError(h func(err error) bool) {
-	b.MessageErrorHandler = h
 }
 
 // DumpHotReloadStorage 写入HotReloadStorage
@@ -368,40 +291,54 @@ func (b *Bot) DumpTo(writer io.Writer) error {
 	return json.NewEncoder(writer).Encode(item)
 }
 
-// OnLogin is a setter for LoginCallBack
-func (b *Bot) OnLogin(f func(body []byte)) {
-	b.LoginCallBack = f
+// IsHot returns true if is hot login otherwise false
+func (b *Bot) IsHot() bool {
+	return b.hotReloadStorage != nil
 }
 
-// OnScanned is a setter for ScanCallBack
-func (b *Bot) OnScanned(f func(body []byte)) {
-	b.ScanCallBack = f
+// UUID returns current uuid of bot
+func (b *Bot) UUID() string {
+	return b.uuid
 }
 
-// OnLogout is a setter for LogoutCallBack
-func (b *Bot) OnLogout(f func(bot *Bot)) {
-	b.LogoutCallBack = f
+// Context returns current context of bot
+func (b *Bot) Context() context.Context {
+	return b.context
+}
+
+func (b *Bot) reload() error {
+	if b.hotReloadStorage == nil {
+		return errors.New("hotReloadStorage is nil")
+	}
+	var item HotReloadStorageItem
+	err := json.NewDecoder(b.hotReloadStorage).Decode(&item)
+	if err != nil {
+		return err
+	}
+	b.Caller.Client.Jar = item.Jar.AsCookieJar()
+	b.Storage.LoginInfo = item.LoginInfo
+	b.Storage.Request = item.BaseRequest
+	b.Caller.Client.Domain = item.WechatDomain
+	b.uuid = item.UUID
+	return nil
 }
 
 // NewBot Bot的构造方法
 // 接收外部的 context.Context，用于控制Bot的存活
 func NewBot(c context.Context) *Bot {
 	caller := DefaultCaller()
-	// 默认行为为桌面模式
-	caller.Client.SetMode(Normal)
+	// 默认行为为网页版微信模式
+	caller.Client.SetMode(normal)
 	ctx, cancel := context.WithCancel(c)
 	return &Bot{Caller: caller, Storage: &Storage{}, context: ctx, cancel: cancel}
 }
 
 // DefaultBot 默认的Bot的构造方法,
-// mode不传入默认为 openwechat.Desktop,详情见mode
+// mode不传入默认为 openwechat.Normal,详情见mode
 //
 //	bot := openwechat.DefaultBot(openwechat.Desktop)
-func DefaultBot(modes ...Mode) *Bot {
+func DefaultBot(opts ...BotOptionFunc) *Bot {
 	bot := NewBot(context.Background())
-	if len(modes) > 0 {
-		bot.Caller.Client.SetMode(modes[0])
-	}
 	// 获取二维码回调
 	bot.UUIDCallback = PrintlnQrcodeUrl
 	// 扫码回调
@@ -417,7 +354,25 @@ func DefaultBot(modes ...Mode) *Bot {
 	bot.SyncCheckCallback = func(resp SyncCheckResponse) {
 		log.Printf("RetCode:%s  Selector:%s", resp.RetCode, resp.Selector)
 	}
+	for _, opt := range opts {
+		opt(bot)
+	}
 	return bot
+}
+
+// defaultSyncCheckErrHandler 默认的SyncCheck错误处理函数
+func defaultSyncCheckErrHandler(bot *Bot) func(error) bool {
+	return func(err error) bool {
+		var ret Ret
+		if errors.As(err, &ret) {
+			switch ret {
+			case failedLoginCheck, cookieInvalid, failedLoginWarn:
+				_ = bot.Logout()
+				return false
+			}
+		}
+		return true
+	}
 }
 
 // GetQrcodeUrl 通过uuid获取登录二维码的url
@@ -453,14 +408,4 @@ func open(url string) error {
 	}
 	args = append(args, url)
 	return exec.Command(cmd, args...).Start()
-}
-
-// IsHot returns true if is hot login otherwise false
-func (b *Bot) IsHot() bool {
-	return b.hotReloadStorage != nil
-}
-
-// UUID returns current uuid of bot
-func (b *Bot) UUID() string {
-	return b.uuid
 }

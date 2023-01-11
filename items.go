@@ -2,7 +2,6 @@ package openwechat
 
 import (
 	"errors"
-	"strconv"
 )
 
 /*
@@ -91,30 +90,6 @@ func NewUserDetailItemList(members Members) UserDetailItemList {
 	return list
 }
 
-type SyncCheckResponse struct {
-	RetCode  string
-	Selector string
-}
-
-func (s SyncCheckResponse) Success() bool {
-	return s.RetCode == "0"
-}
-
-func (s SyncCheckResponse) NorMal() bool {
-	return s.Success() && s.Selector == "0"
-}
-
-func (s SyncCheckResponse) Err() error {
-	if s.Success() {
-		return nil
-	}
-	i, err := strconv.ParseInt(s.RetCode, 16, 10)
-	if err != nil {
-		return errors.New("sync check unknown error")
-	}
-	return errors.New(Ret(i).String())
-}
-
 type WebWxSyncResponse struct {
 	AddMsgCount            int
 	ContinueFlag           int
@@ -166,4 +141,11 @@ type PushLoginResponse struct {
 
 func (p PushLoginResponse) Ok() bool {
 	return p.Ret == "0" && p.UUID != ""
+}
+
+func (p PushLoginResponse) Err() error {
+	if p.Ok() {
+		return nil
+	}
+	return errors.New(p.Msg)
 }

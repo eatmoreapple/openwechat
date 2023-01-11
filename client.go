@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -43,7 +45,6 @@ type Client struct {
 	mode          Mode
 	mu            sync.Mutex
 	MaxRetryTimes int
-	cookies       map[string][]*http.Cookie
 }
 
 func NewClient() *Client {
@@ -117,7 +118,7 @@ func (c *Client) GetLoginQrcode(uuid string) (*http.Response, error) {
 }
 
 // CheckLogin 检查是否登录
-func (c *Client) CheckLogin(uuid string) (*http.Response, error) {
+func (c *Client) CheckLogin(uuid, tip string) (*http.Response, error) {
 	path, _ := url.Parse(login)
 	now := time.Now().Unix()
 	params := url.Values{}
@@ -125,7 +126,7 @@ func (c *Client) CheckLogin(uuid string) (*http.Response, error) {
 	params.Add("_", strconv.FormatInt(now, 10))
 	params.Add("loginicon", "true")
 	params.Add("uuid", uuid)
-	params.Add("tip", "0")
+	params.Add("tip", tip)
 	path.RawQuery = params.Encode()
 	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
 	return c.Do(req)
@@ -279,7 +280,7 @@ func (c *Client) WebWxGetHeadImg(user *User) (*http.Response, error) {
 	} else {
 		params := url.Values{}
 		params.Add("username", user.UserName)
-		params.Add("skey", user.Self.Bot.Storage.Request.Skey)
+		params.Add("skey", user.self.bot.Storage.Request.Skey)
 		params.Add("type", "big")
 		params.Add("chatroomid", user.EncryChatRoomId)
 		params.Add("seq", "0")
@@ -311,15 +312,22 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 		return nil, err
 	}
 
-	fileMd5 := fmt.Sprintf("%x", h.Sum(nil))
+	fileMd5 := hex.EncodeToString(h.Sum(nil))
 
 	sate, err := file.Stat()
 	if err != nil {
 		return nil, err
 	}
 
+	filename := sate.Name()
+
+	if ext := filepath.Ext(filename); ext == "" {
+		names := strings.Split(contentType, "/")
+		filename = filename + "." + names[len(names)-1]
+	}
+
 	// 获取文件的类型
-	mediaType := getMessageType(sate.Name())
+	mediaType := getMessageType(filename)
 
 	path, _ := url.Parse(c.Domain.FileHost() + webwxuploadmedia)
 	params := url.Values{}
@@ -363,7 +371,7 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 
 	content := map[string]string{
 		"id":                "WU_FILE_0",
-		"name":              file.Name(),
+		"name":              filename,
 		"type":              contentType,
 		"lastModifiedDate":  sate.ModTime().Format(TimeFormat),
 		"size":              strconv.FormatInt(sate.Size(), 10),
@@ -565,13 +573,12 @@ func (c *Client) WebWxGetMedia(msg *Message, info *LoginInfo) (*http.Response, e
 	params.Add("sender", msg.FromUserName)
 	params.Add("mediaid", msg.MediaId)
 	params.Add("encryfilename", msg.EncryFileName)
-	params.Add("fromuser", fmt.Sprintf("%d", info.WxUin))
+	params.Add("fromuser", strconv.FormatInt(info.WxUin, 10))
 	params.Add("pass_ticket", info.PassTicket)
 	params.Add("webwx_data_ticket", getWebWxDataTicket(c.Jar.Cookies(path)))
 	path.RawQuery = params.Encode()
 	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
-	req.Header.Add("Referer", path.String())
-	req.Header.Add("Range", "bytes=0-")
+	req.Header.Add("Referer", c.Domain.BaseHost()+"/")
 	return c.Do(req)
 }
 
@@ -700,12 +707,8 @@ func (c *Client) WebWxRelationPin(request *BaseRequest, op uint8, user *User) (*
 }
 
 // WebWxPushLogin 免扫码登陆接口
-func (c *Client) WebWxPushLogin(uin int) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxpushloginurl)
-	params := url.Values{"uin": {strconv.Itoa(uin)}}
-	path.RawQuery = params.Encode()
-	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
-	return c.Do(req)
+func (c *Client) WebWxPushLogin(uin int64) (*http.Response, error) {
+	return c.mode.PushLogin(c, uin)
 }
 
 // WebWxSendVideoMsg 发送视频消息接口
