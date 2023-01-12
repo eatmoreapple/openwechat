@@ -66,41 +66,48 @@ func (b *Bot) GetCurrentUser() (*Self, error) {
 	return b.self, nil
 }
 
-func (b *Bot) login(login BotLogin) error {
-	return login.Login(b)
+// login 这里对进行一些对登录前后的hook
+func (b *Bot) login(login BotLogin, opts ...BotLoginOption) (err error) {
+	opt := BotOptionGroup(opts)
+	opt.Prepare(b)
+	if err = login.Login(b); err != nil {
+		err = opt.OnError(b, err)
+	}
+	if err != nil {
+		return err
+	}
+	return opt.OnSuccess(b)
 }
 
 // Login 用户登录
 func (b *Bot) Login() error {
-	scanLogin := &SacnLogin{}
+	scanLogin := &SacnLogin{
+		UUIDCallback:  b.UUIDCallback,
+		ScanCallBack:  b.ScanCallBack,
+		LoginCallBack: b.LoginCallBack,
+	}
 	return b.login(scanLogin)
 }
 
 // HotLogin 热登录,可实现在单位时间内免重复扫码登录
-func (b *Bot) HotLogin(storage HotReloadStorage, opts ...HotLoginOptionFunc) error {
+func (b *Bot) HotLogin(storage HotReloadStorage, opts ...BotLoginOption) error {
 	hotLogin := &HotLogin{storage: storage}
 	// 进行相关设置。
 	// 如果相对默认的行为进行修改，在opts里面进行追加即可。
-	opts = append(defaultHotLoginOpts[:], opts...)
-	for _, opt := range opts {
-		opt(&hotLogin.opt)
-	}
-	return b.login(hotLogin)
+	opts = append(hotLoginDefaultOptions[:], opts...)
+	return b.login(hotLogin, opts...)
 }
 
 // PushLogin 免扫码登录
 // 免扫码登录需要先扫码登录一次才可以进行扫码登录
 // 扫码登录成功后需要利用微信号发送一条消息，然后在手机上进行主动退出。
 // 这时候在进行一次 PushLogin 即可。
-func (b *Bot) PushLogin(storage HotReloadStorage, opts ...PushLoginOptionFunc) error {
+func (b *Bot) PushLogin(storage HotReloadStorage, opts ...BotLoginOption) error {
 	pushLogin := &PushLogin{storage: storage}
 	// 进行相关设置。
 	// 如果相对默认的行为进行修改，在opts里面进行追加即可。
-	opts = append(defaultPushLoginOpts[:], opts...)
-	for _, opt := range opts {
-		opt(&pushLogin.opt)
-	}
-	return b.login(pushLogin)
+	opts = append(pushLoginDefaultOptions[:], opts...)
+	return b.login(pushLogin, opts...)
 }
 
 // Logout 用户退出
@@ -337,7 +344,7 @@ func NewBot(c context.Context) *Bot {
 // mode不传入默认为 openwechat.Normal,详情见mode
 //
 //	bot := openwechat.DefaultBot(openwechat.Desktop)
-func DefaultBot(opts ...BotOptionFunc) *Bot {
+func DefaultBot(prepares ...BotPreparer) *Bot {
 	bot := NewBot(context.Background())
 	// 获取二维码回调
 	bot.UUIDCallback = PrintlnQrcodeUrl
@@ -354,8 +361,8 @@ func DefaultBot(opts ...BotOptionFunc) *Bot {
 	bot.SyncCheckCallback = func(resp SyncCheckResponse) {
 		log.Printf("RetCode:%s  Selector:%s", resp.RetCode, resp.Selector)
 	}
-	for _, opt := range opts {
-		opt(bot)
+	for _, prepare := range prepares {
+		prepare.Prepare(bot)
 	}
 	return bot
 }
