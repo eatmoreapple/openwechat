@@ -621,6 +621,19 @@ func (s *Self) SendVideoToGroups(video io.Reader, delay time.Duration, groups ..
 // Members 抽象的用户组
 type Members []*User
 
+// Uniq Members 去重
+func (m Members) Uniq() Members {
+	var uniqMembers = make(map[string]*User)
+	for _, member := range m {
+		uniqMembers[member.UserName] = member
+	}
+	var members Members
+	for _, member := range uniqMembers {
+		members = append(members, member)
+	}
+	return members
+}
+
 // Count 统计数量
 func (m Members) Count() int {
 	return len(m)
