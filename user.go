@@ -130,14 +130,38 @@ func (u *User) IsFriend() bool {
 	return !u.IsGroup() && strings.HasPrefix(u.UserName, "@") && u.VerifyFlag == 0
 }
 
+// AsFriend 将当前用户转换为好友类型
+func (u *User) AsFriend() (*Friend, bool) {
+	if u.IsFriend() {
+		return &Friend{User: u}, true
+	}
+	return nil, false
+}
+
 // IsGroup 判断是否为群组
 func (u *User) IsGroup() bool {
 	return strings.HasPrefix(u.UserName, "@@") && u.VerifyFlag == 0
 }
 
+// AsGroup 将当前用户转换为群组类型
+func (u *User) AsGroup() (*Group, bool) {
+	if u.IsGroup() {
+		return &Group{User: u}, true
+	}
+	return nil, false
+}
+
 // IsMP  判断是否为公众号
 func (u *User) IsMP() bool {
 	return u.VerifyFlag == 8 || u.VerifyFlag == 24 || u.VerifyFlag == 136
+}
+
+// AsMP 将当前用户转换为公众号类型
+func (u *User) AsMP() (*Mp, bool) {
+	if u.IsMP() {
+		return &Mp{User: u}, true
+	}
+	return nil, false
 }
 
 // Pin 将联系人置顶
