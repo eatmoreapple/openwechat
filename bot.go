@@ -29,6 +29,7 @@ type Bot struct {
 	hotReloadStorage    HotReloadStorage
 	uuid                string
 	deviceId            string // 设备Id
+	loginOptionGroup    BotOptionGroup
 }
 
 // Alive 判断当前用户是否正常在线
@@ -67,8 +68,8 @@ func (b *Bot) GetCurrentUser() (*Self, error) {
 }
 
 // login 这里对进行一些对登录前后的hook
-func (b *Bot) login(login BotLogin, opts ...BotLoginOption) (err error) {
-	opt := BotOptionGroup(opts)
+func (b *Bot) login(login BotLogin) (err error) {
+	opt := b.loginOptionGroup
 	opt.Prepare(b)
 	if err = login.Login(b); err != nil {
 		err = opt.OnError(b, err)
@@ -81,11 +82,7 @@ func (b *Bot) login(login BotLogin, opts ...BotLoginOption) (err error) {
 
 // Login 用户登录
 func (b *Bot) Login() error {
-	scanLogin := &SacnLogin{
-		UUIDCallback:  b.UUIDCallback,
-		ScanCallBack:  b.ScanCallBack,
-		LoginCallBack: b.LoginCallBack,
-	}
+	scanLogin := &SacnLogin{}
 	return b.login(scanLogin)
 }
 
@@ -94,8 +91,8 @@ func (b *Bot) HotLogin(storage HotReloadStorage, opts ...BotLoginOption) error {
 	hotLogin := &HotLogin{storage: storage}
 	// 进行相关设置。
 	// 如果相对默认的行为进行修改，在opts里面进行追加即可。
-	opts = append(hotLoginDefaultOptions[:], opts...)
-	return b.login(hotLogin, opts...)
+	b.loginOptionGroup = append(hotLoginDefaultOptions[:], opts...)
+	return b.login(hotLogin)
 }
 
 // PushLogin 免扫码登录
@@ -106,8 +103,8 @@ func (b *Bot) PushLogin(storage HotReloadStorage, opts ...BotLoginOption) error 
 	pushLogin := &PushLogin{storage: storage}
 	// 进行相关设置。
 	// 如果相对默认的行为进行修改，在opts里面进行追加即可。
-	opts = append(pushLoginDefaultOptions[:], opts...)
-	return b.login(pushLogin, opts...)
+	b.loginOptionGroup = append(pushLoginDefaultOptions[:], opts...)
+	return b.login(pushLogin)
 }
 
 // Logout 用户退出

@@ -64,24 +64,22 @@ var DoNothingBotLoginOption = &BaseBotLoginOption{}
 // RetryLoginOption 在登录失败后进行扫码登录
 type RetryLoginOption struct {
 	BaseBotLoginOption
-	SacnLogin
-}
-
-// Prepare 实现了 BotLoginOption 接口
-func (r *RetryLoginOption) Prepare(bot *Bot) {
-	r.UUIDCallback = bot.UUIDCallback
-	r.LoginCallBack = bot.LoginCallBack
-	r.ScanCallBack = bot.ScanCallBack
+	MaxRetryCount    int
+	currentRetryTime int
 }
 
 // OnError 实现了 BotLoginOption 接口
 // 当登录失败后，会调用此方法进行扫码登录
-func (r *RetryLoginOption) OnError(bot *Bot, _ error) error {
-	return r.Login(bot)
+func (r *RetryLoginOption) OnError(bot *Bot, err error) error {
+	if r.currentRetryTime >= r.MaxRetryCount {
+		return err
+	}
+	r.currentRetryTime++
+	return bot.Login()
 }
 
 func NewRetryLoginOption() BotLoginOption {
-	return &RetryLoginOption{}
+	return &RetryLoginOption{MaxRetryCount: 1}
 }
 
 // SyncReloadDataLoginOption 在登录成功后进行数据定时同步到指定的storage中
@@ -103,38 +101,6 @@ func (s SyncReloadDataLoginOption) OnSuccess(bot *Bot) error {
 
 func NewSyncReloadDataLoginOption(duration time.Duration) BotLoginOption {
 	return &SyncReloadDataLoginOption{SyncLoopDuration: duration}
-}
-
-// WithoutLoginCallbackOption 不使用登录回调
-type WithoutLoginCallbackOption struct{ BaseBotLoginOption }
-
-// Prepare 实现了 BotLoginOption 接口
-// 将设置的 LoginCallback 置为 nil
-func (w WithoutLoginCallbackOption) Prepare(b *Bot) { b.LoginCallBack = nil }
-
-func NewWithoutLoginCallbackOption() BotLoginOption {
-	return &WithoutLoginCallbackOption{}
-}
-
-// WithoutScanCallbackOption 不使用扫码回调
-type WithoutScanCallbackOption struct{ BaseBotLoginOption }
-
-// Prepare 实现了 BotLoginOption 接口
-func (w WithoutScanCallbackOption) Prepare(b *Bot) { b.ScanCallBack = nil }
-
-func NewWithoutScanCallbackOption() BotLoginOption {
-	return &WithoutScanCallbackOption{}
-}
-
-// WithoutUUIDCallbackOption 不使用UUID回调
-type WithoutUUIDCallbackOption struct{ BaseBotLoginOption }
-
-// Prepare 实现了 BotLoginOption 接口
-// 将设置的 UUIDCallback 置为 nil
-func (w WithoutUUIDCallbackOption) Prepare(bot *Bot) { bot.UUIDCallback = nil }
-
-func NewWithoutUUIDCallbackOption() BotLoginOption {
-	return &WithoutUUIDCallbackOption{}
 }
 
 // WithModeOption 指定使用哪种客户端模式
@@ -168,11 +134,7 @@ type BotLogin interface {
 }
 
 // SacnLogin 扫码登录
-type SacnLogin struct {
-	UUIDCallback  func(uuid string)
-	LoginCallBack func(body []byte)
-	ScanCallBack  func(body []byte)
-}
+type SacnLogin struct{}
 
 // Login 实现了 BotLogin 接口
 func (s *SacnLogin) Login(bot *Bot) error {
@@ -189,9 +151,9 @@ func (s *SacnLogin) checkLogin(bot *Bot, uuid string) error {
 	loginChecker := &LoginChecker{
 		Bot:           bot,
 		Tip:           "0",
-		UUIDCallback:  s.UUIDCallback,
-		LoginCallBack: s.LoginCallBack,
-		ScanCallBack:  s.ScanCallBack,
+		UUIDCallback:  bot.UUIDCallback,
+		LoginCallBack: bot.LoginCallBack,
+		ScanCallBack:  bot.ScanCallBack,
 	}
 	return loginChecker.CheckLogin()
 }
@@ -200,10 +162,7 @@ var (
 	hotLoginDefaultOptions = [...]BotLoginOption{
 		NewSyncReloadDataLoginOption(defaultHotStorageSyncDuration),
 	}
-	pushLoginDefaultOptions = [...]BotLoginOption{
-		NewSyncReloadDataLoginOption(defaultHotStorageSyncDuration),
-		NewWithoutScanCallbackOption(),
-	}
+	pushLoginDefaultOptions = hotLoginDefaultOptions
 )
 
 // HotLogin 热登录模式
@@ -252,12 +211,12 @@ func (p *PushLogin) pushLoginInit(bot *Bot) error {
 // checkLogin 登录检查
 func (p *PushLogin) checkLogin(bot *Bot, uuid string) error {
 	bot.uuid = uuid
+	// 为什么把 UUIDCallback 和 ScanCallBack 置为nil呢?
+	// 因为这两个对用户是无感知的。
 	loginChecker := &LoginChecker{
 		Bot:           bot,
 		Tip:           "1",
-		UUIDCallback:  bot.UUIDCallback,
 		LoginCallBack: bot.LoginCallBack,
-		ScanCallBack:  bot.ScanCallBack,
 	}
 	return loginChecker.CheckLogin()
 }
@@ -327,33 +286,6 @@ func HotLoginWithRetry(flag bool) BotLoginOption {
 // HotLoginWithSyncReloadData 定时同步热登录数据
 func HotLoginWithSyncReloadData(duration time.Duration) BotLoginOption {
 	return NewSyncReloadDataLoginOption(duration)
-}
-
-// Deprecated: 请使用 NewWithoutLoginCallbackOption 代替
-// PushLoginWithoutUUIDCallback 免扫码登录模式，不执行UUID回调
-func PushLoginWithoutUUIDCallback(flag bool) BotLoginOption {
-	if !flag {
-		return DoNothingBotLoginOption
-	}
-	return NewWithoutLoginCallbackOption()
-}
-
-// Deprecated: 请使用 NewWithoutScanCallbackOption 代替
-// PushLoginWithoutScanCallback 免扫码登录模式，不执行扫码回调
-func PushLoginWithoutScanCallback(flag bool) BotLoginOption {
-	if !flag {
-		return DoNothingBotLoginOption
-	}
-	return NewWithoutScanCallbackOption()
-}
-
-// Deprecated: 请使用 NewWithoutLoginCallbackOption 代替
-// PushLoginWithoutLoginCallback 免扫码登录模式，不执行登录回调
-func PushLoginWithoutLoginCallback(flag bool) BotLoginOption {
-	if !flag {
-		return DoNothingBotLoginOption
-	}
-	return NewWithoutLoginCallbackOption()
 }
 
 // Deprecated: 请使用 NewRetryLoginOption 代替
