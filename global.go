@@ -98,14 +98,6 @@ const (
 	AppMsgTypeReaderType            AppMessageType = 100001 //自定义的消息
 )
 
-// 登录状态
-const (
-	StatusSuccess = "200"
-	StatusScanned = "201"
-	StatusTimeout = "400"
-	StatusWait    = "408"
-)
-
 // ALL 跟search函数搭配
 //
 //	friends.Search(openwechat.ALL, )
