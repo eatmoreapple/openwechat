@@ -3,10 +3,13 @@ package openwechat
 import (
 	"errors"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -212,6 +215,25 @@ func (u *User) Self() *Self {
 // IsSelf 判断是否为当前用户
 func (u *User) IsSelf() bool {
 	return u.UserName == u.Self().UserName
+}
+
+// OrderSymbol 获取用户的排序标识
+func (u *User) OrderSymbol() string {
+	var symbol string
+	if u.RemarkPYQuanPin != "" {
+		symbol = u.RemarkPYQuanPin
+	} else if u.PYQuanPin != "" {
+		symbol = u.PYQuanPin
+	} else {
+		symbol = u.NickName
+	}
+	symbol = html.UnescapeString(symbol)
+	symbol = strings.ToUpper(symbol)
+	symbol = regexp.MustCompile("/\\W/ig").ReplaceAllString(symbol, "")
+	if len(symbol) > 0 && symbol[0] < 'A' {
+		return "~"
+	}
+	return symbol
 }
 
 // 格式化emoji表情
@@ -645,6 +667,19 @@ func (s *Self) SendVideoToGroups(video io.Reader, delay time.Duration, groups ..
 // Members 抽象的用户组
 type Members []*User
 
+func (m Members) Len() int {
+	return len(m)
+}
+
+// Less 按照微信的规则排序
+func (m Members) Less(i, j int) bool {
+	return m[i].OrderSymbol() < m[j].OrderSymbol()
+}
+
+func (m Members) Swap(i, j int) {
+	m[i], m[j] = m[j], m[i]
+}
+
 // Uniq Members 去重
 func (m Members) Uniq() Members {
 	var uniqMembers = make(map[string]*User)
@@ -656,6 +691,12 @@ func (m Members) Uniq() Members {
 		members = append(members, member)
 	}
 	return members
+}
+
+// Sort 对联系人进行排序
+func (m Members) Sort() Members {
+	sort.Sort(m)
+	return m
 }
 
 // Count 统计数量
