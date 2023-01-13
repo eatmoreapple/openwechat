@@ -15,7 +15,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -33,30 +32,42 @@ func (u UserAgentHook) BeforeRequest(req *http.Request) {
 	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36")
 }
 
-func (u UserAgentHook) AfterRequest(response *http.Response, err error) {}
+func (u UserAgentHook) AfterRequest(_ *http.Response, _ error) {}
 
 // Client http请求客户端
 // 客户端需要维持Session会话
-// 并且客户端不允许跳转
 type Client struct {
+	// 设置一些client的请求行为
+	// see normalMode desktopMode
+	mode Mode
+
+	// client http客户端
+	client *http.Client
+
+	// Domain 微信服务器请求域名
+	// 这个参数会在登录成功后被赋值
+	// 之后所有的请求都会使用这个域名
+	// 在登录热登录和扫码登录时会被重新赋值
+	Domain WechatDomain
+
+	// HttpHooks 请求上下文钩子
 	HttpHooks HttpHooks
-	*http.Client
-	Domain        WechatDomain
-	mode          Mode
-	mu            sync.Mutex
+
+	// MaxRetryTimes 最大重试次数
 	MaxRetryTimes int
 }
 
 func NewClient() *Client {
-	timeout := 30 * time.Second
-	return &Client{
-		Client: &http.Client{
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				return http.ErrUseLastResponse
-			},
-			Jar:     newCookieJar(),
-			Timeout: timeout,
-		}}
+	httpClient := &http.Client{
+		// 设置客户端不自动跳转
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+		Timeout: 30 * time.Second,
+	}
+	client := &Client{client: httpClient}
+	client.SetCookieJar(&Jar{})
+	return client
 }
 
 // DefaultClient 自动存储cookie
@@ -81,7 +92,7 @@ func (c *Client) do(req *http.Request) (*http.Response, error) {
 		err  error
 	)
 	for i := 0; i < c.MaxRetryTimes; i++ {
-		resp, err = c.Client.Do(req)
+		resp, err = c.client.Do(req)
 		if err == nil {
 			break
 		}
@@ -101,9 +112,21 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	return c.do(req)
 }
 
-// GetCookieJar 获取当前client的所有的有效的client
-func (c *Client) GetCookieJar() *Jar {
-	return fromCookieJar(c.Client.Jar)
+// Jar 返回当前client的 http.CookieJar
+// this http.CookieJar must be *Jar type
+func (c *Client) Jar() http.CookieJar {
+	return c.client.Jar
+}
+
+// SetCookieJar 设置cookieJar
+// 这里限制了cookieJar必须是Jar类型
+// 否则进行cookie序列化的时候因为字段的私有性无法进行所有字段的导出
+func (c *Client) SetCookieJar(jar *Jar) {
+	c.client.Jar = jar.AsCookieJar()
+}
+
+func (c *Client) SetDomain(domain WechatDomain) {
+	c.Domain = domain
 }
 
 // GetLoginUUID 获取登录的uuid
@@ -114,7 +137,7 @@ func (c *Client) GetLoginUUID() (*http.Response, error) {
 // GetLoginQrcode 获取登录的二维吗
 func (c *Client) GetLoginQrcode(uuid string) (*http.Response, error) {
 	path := qrcode + uuid
-	return c.Get(path)
+	return c.client.Get(path)
 }
 
 // CheckLogin 检查是否登录
@@ -336,7 +359,7 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 
 	path.RawQuery = params.Encode()
 
-	cookies := c.Jar.Cookies(path)
+	cookies := c.Jar().Cookies(path)
 	webWxDataTicket := getWebWxDataTicket(cookies)
 
 	uploadMediaRequest := map[string]interface{}{
@@ -576,7 +599,7 @@ func (c *Client) WebWxGetMedia(msg *Message, info *LoginInfo) (*http.Response, e
 	params.Add("encryfilename", msg.EncryFileName)
 	params.Add("fromuser", strconv.FormatInt(info.WxUin, 10))
 	params.Add("pass_ticket", info.PassTicket)
-	params.Add("webwx_data_ticket", getWebWxDataTicket(c.Jar.Cookies(path)))
+	params.Add("webwx_data_ticket", getWebWxDataTicket(c.Jar().Cookies(path)))
 	path.RawQuery = params.Encode()
 	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
 	req.Header.Add("Referer", c.Domain.BaseHost()+"/")
