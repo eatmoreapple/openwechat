@@ -16,7 +16,7 @@ type Jar struct {
 	mu sync.Mutex
 
 	// Entries is a set of entries, keyed by their eTLD+1 and subkeyed by
-	// their name/domain/path.
+	// their name/Domain/path.
 	Entries map[string]map[string]entry
 
 	// nextSeqNum is the next sequence number assigned to a new cookie
@@ -29,13 +29,13 @@ func (j *Jar) AsCookieJar() http.CookieJar {
 	return (*cookiejar.Jar)(unsafe.Pointer(j))
 }
 
-func newCookieJar() http.CookieJar {
-	jar, _ := cookiejar.New(nil)
-	return jar
-}
-
 func fromCookieJar(jar http.CookieJar) *Jar {
 	return (*Jar)(unsafe.Pointer(jar.(*cookiejar.Jar)))
+}
+
+func NewJar() *Jar {
+	jar, _ := cookiejar.New(nil)
+	return fromCookieJar(jar)
 }
 
 type entry struct {
