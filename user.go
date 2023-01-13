@@ -394,6 +394,7 @@ func (s *Self) SetRemarkNameToFriend(friend *Friend, remarkName string) error {
 // topic 群昵称,可以传递字符串
 // friends 群员,最少为2个，加上自己3个,三人才能成群
 func (s *Self) CreateGroup(topic string, friends ...*Friend) (*Group, error) {
+	friends = Friends(friends).Uniq()
 	if len(friends) < 2 {
 		return nil, errors.New("a group must be at least 2 members")
 	}
@@ -414,6 +415,7 @@ func (s *Self) AddFriendsIntoGroup(group *Group, friends ...*Friend) error {
 	if len(friends) == 0 {
 		return nil
 	}
+	friends = Friends(friends).Uniq()
 	// 获取群的所有的群员
 	groupMembers, err := group.Members()
 	if err != nil {
@@ -466,6 +468,7 @@ func (s *Self) RemoveMemberFromGroup(group *Group, members Members) error {
 // AddFriendIntoManyGroups 拉好友进多个群聊
 // AddFriendIntoGroups, 名字和上面的有点像
 func (s *Self) AddFriendIntoManyGroups(friend *Friend, groups ...*Group) error {
+	groups = Groups(groups).Uniq()
 	for _, group := range groups {
 		if err := s.AddFriendsIntoGroup(group, friend); err != nil {
 			return err
