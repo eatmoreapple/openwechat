@@ -776,8 +776,8 @@ func (m Members) GetByNickName(nickname string) (*User, bool) {
 func (m Members) Friends() Friends {
 	friends := make(Friends, 0)
 	for _, mb := range m {
-		if mb.IsFriend() {
-			friend := &Friend{mb}
+		friend, ok := mb.AsFriend()
+		if ok {
 			friends = append(friends, friend)
 		}
 	}
@@ -787,8 +787,8 @@ func (m Members) Friends() Friends {
 func (m Members) Groups() Groups {
 	groups := make(Groups, 0)
 	for _, mb := range m {
-		if mb.IsGroup() {
-			group := &Group{mb}
+		group, ok := mb.AsGroup()
+		if ok {
 			groups = append(groups, group)
 		}
 	}
@@ -798,8 +798,8 @@ func (m Members) Groups() Groups {
 func (m Members) MPs() Mps {
 	mps := make(Mps, 0)
 	for _, mb := range m {
-		if mb.IsMP() {
-			mp := &Mp{mb}
+		mp, ok := mb.AsMP()
+		if ok {
 			mps = append(mps, mp)
 		}
 	}
