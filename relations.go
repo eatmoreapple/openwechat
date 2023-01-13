@@ -103,6 +103,16 @@ func (f Friends) AsMembers() Members {
 	return members
 }
 
+// Sort 对好友进行排序
+func (f Friends) Sort() Friends {
+	return f.AsMembers().Sort().Friends()
+}
+
+// Uniq 对好友进行去重
+func (f Friends) Uniq() Friends {
+	return f.AsMembers().Uniq().Friends()
+}
+
 // SendText 向slice的好友依次发送文本消息
 func (f Friends) SendText(text string, delays ...time.Duration) error {
 	if f.Count() == 0 {
@@ -180,6 +190,7 @@ func (g *Group) Members() (Members, error) {
 
 // AddFriendsIn 拉好友入群
 func (g *Group) AddFriendsIn(friends ...*Friend) error {
+	friends = Friends(friends).Uniq()
 	return g.self.AddFriendsIntoGroup(g, friends...)
 }
 
@@ -316,6 +327,16 @@ func (g Groups) AsMembers() Members {
 	return members
 }
 
+// Sort 对群组进行排序
+func (g Groups) Sort() Groups {
+	return g.AsMembers().Sort().Groups()
+}
+
+// Uniq 对群组进行去重
+func (g Groups) Uniq() Groups {
+	return g.AsMembers().Uniq().Groups()
+}
+
 // Mp 公众号对象
 type Mp struct{ *User }
 
@@ -367,6 +388,16 @@ func (m Mps) AsMembers() Members {
 		members = append(members, mp.User)
 	}
 	return members
+}
+
+// Sort 对公众号进行排序
+func (m Mps) Sort() Mps {
+	return m.AsMembers().Sort().MPs()
+}
+
+// Uniq 对公众号进行去重
+func (m Mps) Uniq() Mps {
+	return m.AsMembers().Uniq().MPs()
 }
 
 // SearchByUserName 根据用户名查找
