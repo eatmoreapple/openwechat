@@ -225,8 +225,8 @@ type LoginChecker struct {
 	Bot           *Bot
 	Tip           string
 	UUIDCallback  func(uuid string)
-	LoginCallBack func(body []byte)
-	ScanCallBack  func(body []byte)
+	LoginCallBack func(body CheckLoginResponse)
+	ScanCallBack  func(body CheckLoginResponse)
 }
 
 func (l *LoginChecker) CheckLogin() error {
@@ -242,23 +242,31 @@ func (l *LoginChecker) CheckLogin() error {
 		if err != nil {
 			return err
 		}
+		code, err := resp.Code()
+		if err != nil {
+			return err
+		}
 		if tip == "1" {
 			tip = "0"
 		}
-		switch resp.Code {
+		switch code {
 		case StatusSuccess:
 			// 判断是否有登录回调，如果有执行它
-			if err = l.Bot.HandleLogin(resp.Raw); err != nil {
+			redirectURL, err := resp.RedirectURL()
+			if err != nil {
+				return err
+			}
+			if err = l.Bot.HandleLogin(redirectURL); err != nil {
 				return err
 			}
 			if cb := l.LoginCallBack; cb != nil {
-				cb(resp.Raw)
+				cb(resp)
 			}
 			return nil
 		case StatusScanned:
 			// 执行扫码回调
 			if cb := l.ScanCallBack; cb != nil {
-				cb(resp.Raw)
+				cb(resp)
 			}
 		case StatusTimeout:
 			return ErrLoginTimeout

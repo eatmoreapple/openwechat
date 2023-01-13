@@ -6,19 +6,20 @@ import (
 	"errors"
 	"io"
 	"log"
+	"net/url"
 	"os/exec"
 	"runtime"
 	"sync"
 )
 
 type Bot struct {
-	ScanCallBack        func(body []byte)            // 扫码回调,可获取扫码用户的头像
-	LoginCallBack       func(body []byte)            // 登陆回调
-	LogoutCallBack      func(bot *Bot)               // 退出回调
-	UUIDCallback        func(uuid string)            // 获取UUID的回调函数
-	SyncCheckCallback   func(resp SyncCheckResponse) // 心跳回调
-	MessageHandler      MessageHandler               // 获取消息成功的handle
-	MessageErrorHandler func(err error) bool         // 获取消息发生错误的handle, 返回true则尝试继续监听
+	ScanCallBack        func(body CheckLoginResponse) // 扫码回调,可获取扫码用户的头像
+	LoginCallBack       func(body CheckLoginResponse) // 登陆回调
+	LogoutCallBack      func(bot *Bot)                // 退出回调
+	UUIDCallback        func(uuid string)             // 获取UUID的回调函数
+	SyncCheckCallback   func(resp SyncCheckResponse)  // 心跳回调
+	MessageHandler      MessageHandler                // 获取消息成功的handle
+	MessageErrorHandler func(err error) bool          // 获取消息发生错误的handle, 返回true则尝试继续监听
 	once                sync.Once
 	err                 error
 	context             context.Context
@@ -121,9 +122,9 @@ func (b *Bot) Logout() error {
 }
 
 // HandleLogin 登录逻辑
-func (b *Bot) HandleLogin(data []byte) error {
+func (b *Bot) HandleLogin(path *url.URL) error {
 	// 获取登录的一些基本的信息
-	info, err := b.Caller.GetLoginInfo(data)
+	info, err := b.Caller.GetLoginInfo(path)
 	if err != nil {
 		return err
 	}
@@ -346,11 +347,11 @@ func DefaultBot(prepares ...BotPreparer) *Bot {
 	// 获取二维码回调
 	bot.UUIDCallback = PrintlnQrcodeUrl
 	// 扫码回调
-	bot.ScanCallBack = func(body []byte) {
+	bot.ScanCallBack = func(_ CheckLoginResponse) {
 		log.Println("扫码成功,请在手机上确认登录")
 	}
 	// 登录回调
-	bot.LoginCallBack = func(body []byte) {
+	bot.LoginCallBack = func(_ CheckLoginResponse) {
 		log.Println("登录成功")
 	}
 	// 心跳回调函数

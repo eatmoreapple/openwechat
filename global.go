@@ -7,6 +7,7 @@ import (
 var (
 	uuidRegexp        = regexp.MustCompile(`uuid = "(.*?)";`)
 	statusCodeRegexp  = regexp.MustCompile(`window.code=(\d+);`)
+	avatarRegexp      = regexp.MustCompile(`window.userAvatar = '(.*)';`)
 	syncCheckRegexp   = regexp.MustCompile(`window.synccheck=\{retcode:"(\d+)",selector:"(\d+)"\}`)
 	redirectUriRegexp = regexp.MustCompile(`window.redirect_uri="(.*?)"`)
 )
