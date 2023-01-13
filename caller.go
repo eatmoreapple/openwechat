@@ -50,7 +50,7 @@ func (c *Caller) GetLoginUUID() (string, error) {
 }
 
 // CheckLogin 检查是否登录成功
-func (c *Caller) CheckLogin(uuid, tip string) (*CheckLoginResponse, error) {
+func (c *Caller) CheckLogin(uuid, tip string) (CheckLoginResponse, error) {
 	resp, err := c.Client.CheckLogin(uuid, tip)
 	if err != nil {
 		return nil, err
@@ -61,29 +61,13 @@ func (c *Caller) CheckLogin(uuid, tip string) (*CheckLoginResponse, error) {
 	if _, err := buffer.ReadFrom(resp.Body); err != nil {
 		return nil, err
 	}
-	// 正则匹配检测的code
-	// 具体code参考global.go
-	results := statusCodeRegexp.FindSubmatch(buffer.Bytes())
-	if len(results) != 2 {
-		return nil, errors.New("error status code match")
-	}
-	code := string(results[1])
-	return &CheckLoginResponse{Code: code, Raw: buffer.Bytes()}, nil
+	return buffer.Bytes(), nil
 }
 
 // GetLoginInfo 获取登录信息
-func (c *Caller) GetLoginInfo(body []byte) (*LoginInfo, error) {
+func (c *Caller) GetLoginInfo(path *url.URL) (*LoginInfo, error) {
 	// 从响应体里面获取需要跳转的url
-	results := redirectUriRegexp.FindSubmatch(body)
-	if len(results) != 2 {
-		return nil, errors.New("redirect url does not match")
-	}
-	path, err := url.Parse(string(results[1]))
-	if err != nil {
-		return nil, err
-	}
-	c.Client.Domain = WechatDomain(path.Host)
-	resp, err := c.Client.GetLoginInfo(path.String())
+	resp, err := c.Client.GetLoginInfo(path)
 	if err != nil {
 		return nil, err
 	}

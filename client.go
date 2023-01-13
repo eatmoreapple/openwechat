@@ -133,8 +133,9 @@ func (c *Client) CheckLogin(uuid, tip string) (*http.Response, error) {
 }
 
 // GetLoginInfo 请求获取LoginInfo
-func (c *Client) GetLoginInfo(path string) (*http.Response, error) {
-	return c.mode.GetLoginInfo(c, path)
+func (c *Client) GetLoginInfo(path *url.URL) (*http.Response, error) {
+	c.Domain = WechatDomain(path.Host)
+	return c.mode.GetLoginInfo(c, path.String())
 }
 
 // WebInit 请求获取初始化信息

@@ -2,6 +2,8 @@ package openwechat
 
 import (
 	"errors"
+	"fmt"
+	"net/url"
 )
 
 /*
@@ -117,9 +119,49 @@ type WebWxBatchContactResponse struct {
 	ContactList  []*User
 }
 
-type CheckLoginResponse struct {
-	Code string
-	Raw  []byte
+// CheckLoginResponse 检查登录状态的响应body
+type CheckLoginResponse []byte
+
+// RedirectURL 重定向的URL
+func (c CheckLoginResponse) RedirectURL() (*url.URL, error) {
+	code, err := c.Code()
+	if err != nil {
+		return nil, err
+	}
+	if code != StatusSuccess {
+		return nil, fmt.Errorf("expect status code %s, but got %s", StatusSuccess, code)
+	}
+	results := redirectUriRegexp.FindSubmatch(c)
+	if len(results) != 2 {
+		return nil, errors.New("redirect url does not match")
+	}
+	return url.Parse(string(results[1]))
+}
+
+// Code 获取当前的登录检查状态的代码
+func (c CheckLoginResponse) Code() (string, error) {
+	results := statusCodeRegexp.FindSubmatch(c)
+	if len(results) != 2 {
+		return "", errors.New("error status code match")
+	}
+	code := string(results[1])
+	return code, nil
+}
+
+// Avatar 获取扫码后的用户头像, base64编码
+func (c CheckLoginResponse) Avatar() (string, error) {
+	code, err := c.Code()
+	if err != nil {
+		return "", err
+	}
+	if code != StatusScanned {
+		return "", nil
+	}
+	results := avatarRegexp.FindSubmatch(c)
+	if len(results) != 2 {
+		return "", errors.New("avatar does not match")
+	}
+	return string(results[1]), nil
 }
 
 type MessageResponse struct {
