@@ -63,10 +63,12 @@ func NewClient() *Client {
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
+		// 设置30秒超时
+		// 因为微信同步消息时是一个时间长达25秒的长轮训
 		Timeout: 30 * time.Second,
 	}
 	client := &Client{client: httpClient}
-	client.SetCookieJar(&Jar{})
+	client.SetCookieJar(NewJar())
 	return client
 }
 
@@ -123,10 +125,6 @@ func (c *Client) Jar() http.CookieJar {
 // 否则进行cookie序列化的时候因为字段的私有性无法进行所有字段的导出
 func (c *Client) SetCookieJar(jar *Jar) {
 	c.client.Jar = jar.AsCookieJar()
-}
-
-func (c *Client) SetDomain(domain WechatDomain) {
-	c.Domain = domain
 }
 
 // GetLoginUUID 获取登录的uuid

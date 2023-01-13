@@ -285,10 +285,10 @@ func (b *Bot) DumpHotReloadStorage() error {
 // DumpTo 将热登录需要的数据写入到指定的 io.Writer 中
 // 注: 写之前最好先清空之前的数据
 func (b *Bot) DumpTo(writer io.Writer) error {
-	cookies := b.Caller.Client.Jar()
+	jar := b.Caller.Client.Jar()
 	item := HotReloadStorageItem{
 		BaseRequest:  b.Storage.Request,
-		Jar:          cookies,
+		Jar:          fromCookieJar(jar),
 		LoginInfo:    b.Storage.LoginInfo,
 		WechatDomain: b.Caller.Client.Domain,
 		UUID:         b.uuid,
@@ -320,7 +320,7 @@ func (b *Bot) reload() error {
 	if err != nil {
 		return err
 	}
-	b.Caller.Client.SetCookieJar(fromCookieJar(item.Jar))
+	b.Caller.Client.SetCookieJar(item.Jar)
 	b.Storage.LoginInfo = item.LoginInfo
 	b.Storage.Request = item.BaseRequest
 	b.Caller.Client.Domain = item.WechatDomain

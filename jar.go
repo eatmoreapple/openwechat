@@ -33,6 +33,11 @@ func fromCookieJar(jar http.CookieJar) *Jar {
 	return (*Jar)(unsafe.Pointer(jar.(*cookiejar.Jar)))
 }
 
+func NewJar() *Jar {
+	jar, _ := cookiejar.New(nil)
+	return fromCookieJar(jar)
+}
+
 type entry struct {
 	Name       string
 	Value      string
