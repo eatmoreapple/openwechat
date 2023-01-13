@@ -191,6 +191,7 @@ func (b *Bot) WebInit() error {
 			// 判断是否继续, 如果不继续则退出
 			if goon := b.MessageErrorHandler(err); !goon {
 				b.err = err
+				b.Exit()
 				break
 			}
 		}
