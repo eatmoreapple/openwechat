@@ -4,6 +4,35 @@ import (
 	"time"
 )
 
+// LoginCode 定义登录状态码
+type LoginCode string
+
+const (
+	// LoginCodeSuccess 登录成功
+	LoginCodeSuccess LoginCode = "200"
+	// LoginCodeScanned 已扫码
+	LoginCodeScanned LoginCode = "201"
+	// LoginCodeTimeout 登录超时
+	LoginCodeTimeout LoginCode = "400"
+	// LoginCodeWait 等待扫码
+	LoginCodeWait LoginCode = "408"
+)
+
+func (l LoginCode) String() string {
+	switch l {
+	case LoginCodeSuccess:
+		return "登录成功"
+	case LoginCodeScanned:
+		return "已扫码"
+	case LoginCodeTimeout:
+		return "登录超时"
+	case LoginCodeWait:
+		return "等待扫码"
+	default:
+		return "未知状态"
+	}
+}
+
 type BotPreparer interface {
 	Prepare(*Bot)
 }
@@ -250,7 +279,7 @@ func (l *LoginChecker) CheckLogin() error {
 			tip = "0"
 		}
 		switch code {
-		case StatusSuccess:
+		case LoginCodeSuccess:
 			// 判断是否有登录回调，如果有执行它
 			redirectURL, err := resp.RedirectURL()
 			if err != nil {
@@ -263,14 +292,14 @@ func (l *LoginChecker) CheckLogin() error {
 				cb(resp)
 			}
 			return nil
-		case StatusScanned:
+		case LoginCodeScanned:
 			// 执行扫码回调
 			if cb := l.ScanCallBack; cb != nil {
 				cb(resp)
 			}
-		case StatusTimeout:
+		case LoginCodeTimeout:
 			return ErrLoginTimeout
-		case StatusWait:
+		case LoginCodeWait:
 			continue
 		}
 	}
