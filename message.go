@@ -791,7 +791,7 @@ func (m *Message) IsAt() bool {
 // IsPaiYiPai 判断消息是否为拍一拍
 // 不要问我为什么取名为PaiYiPai，因为我也不知道取啥名字好
 func (m *Message) IsPaiYiPai() bool {
-	return m.IsSystem() && strings.Contains(m.Content, "拍了拍")
+	return m.IsTickled()
 }
 
 // IsJoinGroup 判断是否有人加入了群聊
@@ -801,7 +801,12 @@ func (m *Message) IsJoinGroup() bool {
 
 // IsTickled 判断消息是否为拍一拍
 func (m *Message) IsTickled() bool {
-	return m.IsPaiYiPai()
+	return m.IsSystem() && strings.Contains(m.Content, "拍了拍")
+}
+
+// IsTickledMe 判断消息是否拍了拍自己
+func (m *Message) IsTickledMe() bool {
+	return m.IsSystem() && strings.HasSuffix(m.Content, "拍了拍我")
 }
 
 // IsVoipInvite 判断消息是否为语音或视频通话邀请
