@@ -501,30 +501,27 @@ func (p *MessageResponseParser) SentMessage(msg *SendMessage) (*SentMessage, err
 }
 
 func readerToFile(reader io.Reader) (file *os.File, cb func(), err error) {
-	if file, ok := reader.(*os.File); ok {
+	var ok bool
+	if file, ok = reader.(*os.File); ok {
 		return file, func() {}, nil
 	}
 	file, err = os.CreateTemp("", "*")
 	if err != nil {
 		return nil, nil, err
 	}
+	cb = func() {
+		_ = file.Close()
+		_ = os.Remove(file.Name())
+	}
 	_, err = io.Copy(file, reader)
 	if err != nil {
-		_ = file.Close()
-		_ = os.Remove(file.Name())
+		cb()
 		return nil, nil, err
 	}
-	if err = file.Close(); err != nil {
-		_ = os.Remove(file.Name())
-		return nil, nil, err
-	}
-	file, err = os.Open(file.Name())
+	_, err = file.Seek(0, io.SeekStart)
 	if err != nil {
-		_ = os.Remove(file.Name())
+		cb()
 		return nil, nil, err
 	}
-	return file, func() {
-		_ = file.Close()
-		_ = os.Remove(file.Name())
-	}, nil
+	return file, cb, nil
 }
