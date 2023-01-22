@@ -806,7 +806,7 @@ func (m *Message) IsTickled() bool {
 
 // IsTickledMe 判断消息是否拍了拍自己
 func (m *Message) IsTickledMe() bool {
-	return m.IsSystem() && strings.HasSuffix(m.Content, "拍了拍我")
+	return m.IsSystem() && strings.Count(m.Content, "拍了拍我") == 1
 }
 
 // IsVoipInvite 判断消息是否为语音或视频通话邀请
