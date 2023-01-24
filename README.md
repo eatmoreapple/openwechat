@@ -4,16 +4,16 @@
 
 [![Go Doc](https://pkg.go.dev/badge/github.com/eatMoreApple/openwechat)](https://godoc.org/github.com/eatMoreApple/openwechat)[![Release](https://img.shields.io/github/v/release/eatmoreapple/openwechat.svg?style=flat-square)](https://github.com/eatmoreapple/openwechat/releases)[![Go Report Card](https://goreportcard.com/badge/github.com/eatmoreapple/openwechat)](https://goreportcard.com/badge/github.com/eatmoreapple/openwechat)[![Stars](https://img.shields.io/github/stars/eatmoreapple/openwechat.svg?style=flat-square)](https://img.shields.io/github/stars/eatmoreapple/openwechat.svg?style=flat-square)[![Forks](https://img.shields.io/github/forks/eatmoreapple/openwechat.svg?style=flat-square)](https://img.shields.io/github/forks/eatmoreapple/openwechat.svg?style=flat-square)
 
-> golang版个人微信号API, 突破网页版限制，类似开发公众号一样，开发个人微信号
+> golang版个人微信号API, 突破登录限制，类似开发公众号一样，开发个人微信号
 
 
 
 微信机器人:smiling_imp:，利用微信号完成一些功能的定制化开发⭐
 
 
-
+* 模块简单易用，易于扩展
 * 支持定制化开发，如日志记录，自动回复
-* 突破网页版登录限制&#x1F4E3;
+* 突破登录限制&#x1F4E3;
 * 无需重复扫码登录
 * 支持多个微信号同时登陆
 
@@ -115,7 +115,7 @@ func main() {
 
 ### 添加微信(EatMoreApple):apple:（备注: openwechat），进群交流:smiling_imp:
 
-**如果二维码图片没显示出来，请添加微信号 EatMoreApple**
+**如果二维码图片没显示出来，请添加微信号 eatmoreapple**
 
 <img width="210px"  src="https://raw.githubusercontent.com/eatmoreapple/eatMoreApple/main/img/wechat.jpg" align="left">
 

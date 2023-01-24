@@ -84,6 +84,8 @@ bot.Login()
 // 创建热存储容器对象
 reloadStorage := openwechat.NewJsonFileHotReloadStorage("storage.json")
 
+defer reloadStorage.Close()
+
 // 执行热登录
 bot.HotLogin(reloadStorage)
 ```
@@ -95,7 +97,7 @@ bot.HotLogin(reloadStorage)
 我们只需要在`HotLogin`增加一个参数，让它在失败后执行扫码登录即可
 
 ```go
-bot.HotLogin(reloadStorage, openwechat.HotLoginWithRetry(true))
+bot.HotLogin(reloadStorage, openwechat.NewRetryLoginOption())
 ```
 
 当扫码登录成功后，会将会话信息写入到`热存储容器`中，下次再执行热登录的时候就会从`热存储容器`中读取会话信息，直接登录成功。
@@ -119,29 +121,23 @@ type HotReloadStorage io.ReadWriter
 openwechat也提供了这样的功能。
 
 ```go
-bot.PushLogin(storage HotReloadStorage, opts ...PushLoginOptionFunc) error 
+bot.PushLogin(storage HotReloadStorage, opts ...openwechat.BotLoginOption) error 
 ```
 
 `PushLogin`需要传入一个`热存储容器`，和一些可选参数。
 
 `HotReloadStorage` 跟上面一样，用来保存会话信息，必要参数。
 
-`PushLoginOptionFunc`是一个可选参数，用来设置一些额外的行为。
+`openwechat.BotLoginOption`是一个可选参数，用来设置一些额外的行为。
 
 目前有下面几个可选参数：
 
 ```go
-// PushLoginWithoutUUIDCallback 设置 PushLogin 不执行二维码回调, 默认为 true
-func PushLoginWithoutUUIDCallback(flag bool) PushLoginOptionFunc 
+// NewSyncReloadDataLoginOption 登录成功后定时同步热存储容器数据
+func NewSyncReloadDataLoginOption(duration time.Duration) BotLoginOption
 
-// PushLoginWithoutScanCallback 设置 PushLogin 不执行扫码回调， 默认为true
-func PushLoginWithoutScanCallback(flag bool) PushLoginOptionFunc 
-
-// PushLoginWithoutLoginCallback 设置 PushLogin 不执行登录回调，默认为false
-func PushLoginWithoutLoginCallback(flag bool) PushLoginOptionFunc 
-
-// PushLoginWithRetry 设置 PushLogin 失败后执行扫码登录，默认为false
-func PushLoginWithRetry(flag bool) PushLoginOptionFunc 
+//  NewRetryLoginOption 登录失败后进行扫码登录
+func NewRetryLoginOption() BotLoginOption
 ```
 
 注意：如果是第一次登录，``PushLogin`` 一定会失败的，因为我们的`HotReloadStorage`里面没有会话信息，你需要设置失败会进行扫码登录。
@@ -149,7 +145,8 @@ func PushLoginWithRetry(flag bool) PushLoginOptionFunc
 ```go
 bot := openwechat.DefaultBot()
 reloadStorage := openwechat.NewJsonFileHotReloadStorage("storage.json")
-err = bot.PushLogin(reloadStorage, openwechat.PushLoginWithRetry(true))
+defer reloadStorage.Close()
+err = bot.PushLogin(reloadStorage, openwechat.NewRetryLoginOption())
 ```
 
 这样当第一次登录失败的时候，会自动执行扫码登录。
@@ -164,12 +161,20 @@ err = bot.PushLogin(reloadStorage, openwechat.PushLoginWithRetry(true))
 通过对`bot`对象绑定扫码回调即可实现对应的功能。
 
 ```go
-bot.ScanCallBack = func(body []byte) { fmt.Println(string(body)) }
+bot.ScanCallBack = func(body openwechat.CheckLoginResponse) { fmt.Println(string(body)) }
 ```
 
 用户扫码后，body里面会携带用户的头像信息。
 
 **注**：绑定扫码回调须在登录前执行。
+
+`CheckLoginResponse` 是一个`[]byte`包装类型, 扫码成功后可以通过该类型获取用户的头像信息。
+
+```go
+type CheckLoginResponse []byte
+
+func (c CheckLoginResponse) Avatar() (string, error)
+```
 
 
 
@@ -178,13 +183,13 @@ bot.ScanCallBack = func(body []byte) { fmt.Println(string(body)) }
 对`bot`对象绑定登录
 
 ```go
-bot.LoginCallBack = func(body []byte) {
+bot.LoginCallBack = func(body openwechat.CheckLoginResponse) {
 		fmt.Println(string(body))
 		// to do your business
 }
 ```
 
-登录回调的参数就是当前客户端需要跳转的链接，可以不用关心它。
+登录回调的参数就是当前客户端需要跳转的链接，用户可以不用关心它。（其实可以拿来做一些骚操作😈）
 
 登录回调函数可以当做一个信号处理，表示当前扫码登录的用户已经确认登录。
 
