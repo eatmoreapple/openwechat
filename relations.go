@@ -9,7 +9,7 @@ import (
 type Friend struct{ *User }
 
 // implement fmt.Stringer
-func (f Friend) String() string {
+func (f *Friend) String() string {
 	return fmt.Sprintf("<Friend:%s>", f.NickName)
 }
 
@@ -53,7 +53,7 @@ func (f Friends) Count() int {
 // First 获取第一个好友
 func (f Friends) First() *Friend {
 	if f.Count() > 0 {
-		return f[0]
+		return f.Sort()[0]
 	}
 	return nil
 }
@@ -61,7 +61,7 @@ func (f Friends) First() *Friend {
 // Last 获取最后一个好友
 func (f Friends) Last() *Friend {
 	if f.Count() > 0 {
-		return f[f.Count()-1]
+		return f.Sort()[f.Count()-1]
 	}
 	return nil
 }
@@ -155,7 +155,7 @@ func (f Friends) SendFile(file io.Reader, delay ...time.Duration) error {
 type Group struct{ *User }
 
 // implement fmt.Stringer
-func (g Group) String() string {
+func (g *Group) String() string {
 	return fmt.Sprintf("<Group:%s>", g.NickName)
 }
 
@@ -238,7 +238,7 @@ func (g Groups) Count() int {
 // First 获取第一个群组
 func (g Groups) First() *Group {
 	if g.Count() > 0 {
-		return g[0]
+		return g.Sort()[0]
 	}
 	return nil
 }
@@ -246,7 +246,7 @@ func (g Groups) First() *Group {
 // Last 获取最后一个群组
 func (g Groups) Last() *Group {
 	if g.Count() > 0 {
-		return g[g.Count()-1]
+		return g.Sort()[g.Count()-1]
 	}
 	return nil
 }
@@ -340,7 +340,7 @@ func (g Groups) Uniq() Groups {
 // Mp 公众号对象
 type Mp struct{ *User }
 
-func (m Mp) String() string {
+func (m *Mp) String() string {
 	return fmt.Sprintf("<Mp:%s>", m.NickName)
 }
 
@@ -355,7 +355,7 @@ func (m Mps) Count() int {
 // First 获取第一个
 func (m Mps) First() *Mp {
 	if m.Count() > 0 {
-		return m[0]
+		return m.Sort()[0]
 	}
 	return nil
 }
@@ -363,7 +363,7 @@ func (m Mps) First() *Mp {
 // Last 获取最后一个
 func (m Mps) Last() *Mp {
 	if m.Count() > 0 {
-		return m[m.Count()-1]
+		return m.Sort()[m.Count()-1]
 	}
 	return nil
 }
