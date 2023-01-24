@@ -263,6 +263,7 @@ func (s *Self) Members(update ...bool) (Members, error) {
 			return nil, err
 		}
 	}
+	s.members.Sort()
 	return s.members, nil
 }
 
