@@ -618,6 +618,14 @@ func (c *Client) Logout(info *LoginInfo) (*http.Response, error) {
 
 // AddMemberIntoChatRoom 添加用户进群聊
 func (c *Client) AddMemberIntoChatRoom(req *BaseRequest, info *LoginInfo, group *Group, friends ...*Friend) (*http.Response, error) {
+	if len(group.MemberList) >= 40 {
+		return c.InviteMemberIntoChatRoom(req, info, group, friends...)
+	}
+	return c.addMemberIntoChatRoom(req, info, group, friends...)
+}
+
+// addMemberIntoChatRoom 添加用户进群聊
+func (c *Client) addMemberIntoChatRoom(req *BaseRequest, info *LoginInfo, group *Group, friends ...*Friend) (*http.Response, error) {
 	path, _ := url.Parse(c.Domain.BaseHost() + webwxupdatechatroom)
 	params := url.Values{}
 	params.Add("fun", "addmember")
@@ -632,6 +640,29 @@ func (c *Client) AddMemberIntoChatRoom(req *BaseRequest, info *LoginInfo, group 
 		"ChatRoomName":  group.UserName,
 		"BaseRequest":   req,
 		"AddMemberList": strings.Join(addMemberList, ","),
+	}
+	buffer, _ := ToBuffer(content)
+	requ, _ := http.NewRequest(http.MethodPost, path.String(), buffer)
+	requ.Header.Set("Content-Type", jsonContentType)
+	return c.Do(requ)
+}
+
+// InviteMemberIntoChatRoom 邀请用户进群聊
+func (c *Client) InviteMemberIntoChatRoom(req *BaseRequest, info *LoginInfo, group *Group, friends ...*Friend) (*http.Response, error) {
+	path, _ := url.Parse(c.Domain.BaseHost() + webwxupdatechatroom)
+	params := url.Values{}
+	params.Add("fun", "invitemember")
+	params.Add("pass_ticket", info.PassTicket)
+	params.Add("lang", "zh_CN")
+	path.RawQuery = params.Encode()
+	addMemberList := make([]string, len(friends))
+	for index, friend := range friends {
+		addMemberList[index] = friend.UserName
+	}
+	content := map[string]interface{}{
+		"ChatRoomName":     group.UserName,
+		"BaseRequest":      req,
+		"InviteMemberList": strings.Join(addMemberList, ","),
 	}
 	buffer, _ := ToBuffer(content)
 	requ, _ := http.NewRequest(http.MethodPost, path.String(), buffer)
