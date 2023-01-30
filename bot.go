@@ -29,6 +29,7 @@ type Bot struct {
 	Storage             *Storage
 	hotReloadStorage    HotReloadStorage
 	uuid                string
+	loginUUID           *string
 	deviceId            string // 设备Id
 	loginOptionGroup    BotOptionGroup
 }
@@ -312,7 +313,7 @@ func (b *Bot) UUID() string {
 // @receiver b
 // @param uuid
 func (b *Bot) SetUUID(uuid string) {
-	b.uuid = uuid
+	b.loginUUID = &uuid
 }
 
 // Context returns current context of bot

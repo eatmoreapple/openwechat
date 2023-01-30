@@ -167,13 +167,15 @@ type SacnLogin struct{}
 
 // Login 实现了 BotLogin 接口
 func (s *SacnLogin) Login(bot *Bot) error {
-	uuid := bot.uuid
-	if uuid == "" {
+	var uuid string
+	if bot.loginUUID == nil {
 		var err error
 		uuid, err = bot.Caller.GetLoginUUID()
 		if err != nil {
 			return err
 		}
+	} else {
+		uuid = *bot.loginUUID
 	}
 	return s.checkLogin(bot, uuid)
 }
