@@ -307,6 +307,14 @@ func (b *Bot) UUID() string {
 	return b.uuid
 }
 
+// SetUUID
+// @description: 设置UUID，可以用来手动登录用
+// @receiver b
+// @param uuid
+func (b *Bot) SetUUID(uuid string) {
+	b.uuid = uuid
+}
+
 // Context returns current context of bot
 func (b *Bot) Context() context.Context {
 	return b.context
