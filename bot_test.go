@@ -128,4 +128,30 @@ func TestSender(t *testing.T) {
 	bot.Block()
 }
 
+// TestGetUUID
+// @description: 获取登录二维码(UUID)
+// @param t
+func TestGetUUID(t *testing.T) {
+	bot := DefaultBot(Desktop)
 
+	uuid, err := bot.Caller.GetLoginUUID()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(uuid)
+}
+
+// TestLoginWithUUID
+// @description: 使用UUID登录
+// @param t
+func TestLoginWithUUID(t *testing.T) {
+	uuid := "oZZsO0Qv8Q=="
+	bot := DefaultBot(Desktop)
+	bot.SetUUID(uuid)
+	err := bot.Login()
+	if err != nil {
+		t.Errorf("登录失败: %v", err.Error())
+		return
+	}
+}
