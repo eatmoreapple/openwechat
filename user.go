@@ -3,10 +3,13 @@ package openwechat
 import (
 	"errors"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -130,14 +133,38 @@ func (u *User) IsFriend() bool {
 	return !u.IsGroup() && strings.HasPrefix(u.UserName, "@") && u.VerifyFlag == 0
 }
 
+// AsFriend 将当前用户转换为好友类型
+func (u *User) AsFriend() (*Friend, bool) {
+	if u.IsFriend() {
+		return &Friend{User: u}, true
+	}
+	return nil, false
+}
+
 // IsGroup 判断是否为群组
 func (u *User) IsGroup() bool {
 	return strings.HasPrefix(u.UserName, "@@") && u.VerifyFlag == 0
 }
 
+// AsGroup 将当前用户转换为群组类型
+func (u *User) AsGroup() (*Group, bool) {
+	if u.IsGroup() {
+		return &Group{User: u}, true
+	}
+	return nil, false
+}
+
 // IsMP  判断是否为公众号
 func (u *User) IsMP() bool {
 	return u.VerifyFlag == 8 || u.VerifyFlag == 24 || u.VerifyFlag == 136
+}
+
+// AsMP 将当前用户转换为公众号类型
+func (u *User) AsMP() (*Mp, bool) {
+	if u.IsMP() {
+		return &Mp{User: u}, true
+	}
+	return nil, false
 }
 
 // Pin 将联系人置顶
@@ -190,6 +217,25 @@ func (u *User) IsSelf() bool {
 	return u.UserName == u.Self().UserName
 }
 
+// OrderSymbol 获取用户的排序标识
+func (u *User) OrderSymbol() string {
+	var symbol string
+	if u.RemarkPYQuanPin != "" {
+		symbol = u.RemarkPYQuanPin
+	} else if u.PYQuanPin != "" {
+		symbol = u.PYQuanPin
+	} else {
+		symbol = u.NickName
+	}
+	symbol = html.UnescapeString(symbol)
+	symbol = strings.ToUpper(symbol)
+	symbol = regexp.MustCompile("/\\W/ig").ReplaceAllString(symbol, "")
+	if len(symbol) > 0 && symbol[0] < 'A' {
+		return "~"
+	}
+	return symbol
+}
+
 // 格式化emoji表情
 func (u *User) formatEmoji() {
 	u.NickName = FormatEmoji(u.NickName)
@@ -217,6 +263,7 @@ func (s *Self) Members(update ...bool) (Members, error) {
 			return nil, err
 		}
 	}
+	s.members.Sort()
 	return s.members, nil
 }
 
@@ -348,6 +395,7 @@ func (s *Self) SetRemarkNameToFriend(friend *Friend, remarkName string) error {
 // topic 群昵称,可以传递字符串
 // friends 群员,最少为2个，加上自己3个,三人才能成群
 func (s *Self) CreateGroup(topic string, friends ...*Friend) (*Group, error) {
+	friends = Friends(friends).Uniq()
 	if len(friends) < 2 {
 		return nil, errors.New("a group must be at least 2 members")
 	}
@@ -368,6 +416,7 @@ func (s *Self) AddFriendsIntoGroup(group *Group, friends ...*Friend) error {
 	if len(friends) == 0 {
 		return nil
 	}
+	friends = Friends(friends).Uniq()
 	// 获取群的所有的群员
 	groupMembers, err := group.Members()
 	if err != nil {
@@ -420,6 +469,7 @@ func (s *Self) RemoveMemberFromGroup(group *Group, members Members) error {
 // AddFriendIntoManyGroups 拉好友进多个群聊
 // AddFriendIntoGroups, 名字和上面的有点像
 func (s *Self) AddFriendIntoManyGroups(friend *Friend, groups ...*Group) error {
+	groups = Groups(groups).Uniq()
 	for _, group := range groups {
 		if err := s.AddFriendsIntoGroup(group, friend); err != nil {
 			return err
@@ -621,6 +671,38 @@ func (s *Self) SendVideoToGroups(video io.Reader, delay time.Duration, groups ..
 // Members 抽象的用户组
 type Members []*User
 
+func (m Members) Len() int {
+	return len(m)
+}
+
+// Less 按照微信的规则排序
+func (m Members) Less(i, j int) bool {
+	return m[i].OrderSymbol() < m[j].OrderSymbol()
+}
+
+func (m Members) Swap(i, j int) {
+	m[i], m[j] = m[j], m[i]
+}
+
+// Uniq Members 去重
+func (m Members) Uniq() Members {
+	var uniqMembers = make(map[string]*User)
+	for _, member := range m {
+		uniqMembers[member.UserName] = member
+	}
+	var members Members
+	for _, member := range uniqMembers {
+		members = append(members, member)
+	}
+	return members
+}
+
+// Sort 对联系人进行排序
+func (m Members) Sort() Members {
+	sort.Sort(m)
+	return m
+}
+
 // Count 统计数量
 func (m Members) Count() int {
 	return len(m)
@@ -695,8 +777,8 @@ func (m Members) GetByNickName(nickname string) (*User, bool) {
 func (m Members) Friends() Friends {
 	friends := make(Friends, 0)
 	for _, mb := range m {
-		if mb.IsFriend() {
-			friend := &Friend{mb}
+		friend, ok := mb.AsFriend()
+		if ok {
 			friends = append(friends, friend)
 		}
 	}
@@ -706,8 +788,8 @@ func (m Members) Friends() Friends {
 func (m Members) Groups() Groups {
 	groups := make(Groups, 0)
 	for _, mb := range m {
-		if mb.IsGroup() {
-			group := &Group{mb}
+		group, ok := mb.AsGroup()
+		if ok {
 			groups = append(groups, group)
 		}
 	}
@@ -717,8 +799,8 @@ func (m Members) Groups() Groups {
 func (m Members) MPs() Mps {
 	mps := make(Mps, 0)
 	for _, mb := range m {
-		if mb.IsMP() {
-			mp := &Mp{mb}
+		mp, ok := mb.AsMP()
+		if ok {
 			mps = append(mps, mp)
 		}
 	}

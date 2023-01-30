@@ -7,6 +7,7 @@ import (
 var (
 	uuidRegexp        = regexp.MustCompile(`uuid = "(.*?)";`)
 	statusCodeRegexp  = regexp.MustCompile(`window.code=(\d+);`)
+	avatarRegexp      = regexp.MustCompile(`window.userAvatar = '(.*)';`)
 	syncCheckRegexp   = regexp.MustCompile(`window.synccheck=\{retcode:"(\d+)",selector:"(\d+)"\}`)
 	redirectUriRegexp = regexp.MustCompile(`window.redirect_uri="(.*?)"`)
 )
@@ -95,14 +96,6 @@ const (
 	AppMsgTypeTransfers             AppMessageType = 2000   // 转账消息
 	AppMsgTypeRedEnvelopes          AppMessageType = 2001   // 红包消息
 	AppMsgTypeReaderType            AppMessageType = 100001 //自定义的消息
-)
-
-// 登录状态
-const (
-	StatusSuccess = "200"
-	StatusScanned = "201"
-	StatusTimeout = "400"
-	StatusWait    = "408"
 )
 
 // ALL 跟search函数搭配
