@@ -2,7 +2,6 @@ package openwechat
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"io"
 	"log"
@@ -20,13 +19,14 @@ type Bot struct {
 	SyncCheckCallback   func(resp SyncCheckResponse)  // 心跳回调
 	MessageHandler      MessageHandler                // 获取消息成功的handle
 	MessageErrorHandler func(err error) bool          // 获取消息发生错误的handle, 返回true则尝试继续监听
+	Serializer          Serializer                    // 序列化器, 默认为json
+	Storage             *Storage
+	Caller              *Caller
 	once                sync.Once
 	err                 error
 	context             context.Context
 	cancel              context.CancelFunc
-	Caller              *Caller
 	self                *Self
-	Storage             *Storage
 	hotReloadStorage    HotReloadStorage
 	uuid                string
 	loginUUID           *string
@@ -296,7 +296,7 @@ func (b *Bot) DumpTo(writer io.Writer) error {
 		WechatDomain: b.Caller.Client.Domain,
 		UUID:         b.uuid,
 	}
-	return json.NewEncoder(writer).Encode(item)
+	return b.Serializer.Encode(writer, item)
 }
 
 // IsHot returns true if is hot login otherwise false
@@ -328,8 +328,7 @@ func (b *Bot) reload() error {
 		return errors.New("hotReloadStorage is nil")
 	}
 	var item HotReloadStorageItem
-	err := json.NewDecoder(b.hotReloadStorage).Decode(&item)
-	if err != nil {
+	if err := b.Serializer.Decode(b.hotReloadStorage, &item); err != nil {
 		return err
 	}
 	b.Caller.Client.SetCookieJar(item.Jar)
@@ -347,7 +346,13 @@ func NewBot(c context.Context) *Bot {
 	// 默认行为为网页版微信模式
 	caller.Client.SetMode(normal)
 	ctx, cancel := context.WithCancel(c)
-	return &Bot{Caller: caller, Storage: &Storage{}, context: ctx, cancel: cancel}
+	return &Bot{
+		Caller:     caller,
+		Storage:    &Storage{},
+		Serializer: &JsonSerializer{},
+		context:    ctx,
+		cancel:     cancel,
+	}
 }
 
 // DefaultBot 默认的Bot的构造方法,
