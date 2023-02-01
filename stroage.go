@@ -3,6 +3,7 @@ package openwechat
 import (
 	"io"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -29,9 +30,12 @@ type HotReloadStorage io.ReadWriter
 type jsonFileHotReloadStorage struct {
 	filename string
 	file     *os.File
+	lock     sync.Mutex
 }
 
 func (j *jsonFileHotReloadStorage) Read(p []byte) (n int, err error) {
+	j.lock.Lock()
+	defer j.lock.Unlock()
 	if j.file == nil {
 		j.file, err = os.OpenFile(j.filename, os.O_RDWR, 0600)
 		if os.IsNotExist(err) {
@@ -45,21 +49,22 @@ func (j *jsonFileHotReloadStorage) Read(p []byte) (n int, err error) {
 }
 
 func (j *jsonFileHotReloadStorage) Write(p []byte) (n int, err error) {
+	j.lock.Lock()
+	defer j.lock.Unlock()
 	if j.file == nil {
 		j.file, err = os.Create(j.filename)
 		if err != nil {
 			return 0, err
 		}
 	}
-	// 为什么这里要对文件进行Truncate操作呢?
-	// 这是为了方便每次Dump的时候对文件进行重新写入, 而不是追加
-	// json序列化写入只会调用一次Write方法, 所以不要把这个方法当成io.Writer的Write方法
+	// reset offset and truncate file
 	if _, err = j.file.Seek(0, io.SeekStart); err != nil {
 		return
 	}
 	if err = j.file.Truncate(0); err != nil {
 		return
 	}
+	// json decode only write once
 	return j.file.Write(p)
 }
 
