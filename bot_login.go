@@ -1,6 +1,7 @@
 package openwechat
 
 import (
+	"context"
 	"time"
 )
 
@@ -132,16 +133,16 @@ func NewSyncReloadDataLoginOption(duration time.Duration) BotLoginOption {
 	return &SyncReloadDataLoginOption{SyncLoopDuration: duration}
 }
 
-// WithModeOption 指定使用哪种客户端模式
-type WithModeOption struct {
+// withModeOption 指定使用哪种客户端模式
+type withModeOption struct {
 	mode Mode
 }
 
 // Prepare 实现了 BotLoginOption 接口
-func (w WithModeOption) Prepare(b *Bot) { b.Caller.Client.SetMode(w.mode) }
+func (w withModeOption) Prepare(b *Bot) { b.Caller.Client.SetMode(w.mode) }
 
 func withMode(mode Mode) BotPreparer {
-	return WithModeOption{mode: mode}
+	return withModeOption{mode: mode}
 }
 
 // btw, 这两个变量已经变了4回了, 但是为了兼容以前的代码, 还是得想着法儿让用户无感知的更新
@@ -152,6 +153,19 @@ var (
 	// Desktop 桌面微信模式
 	Desktop = withMode(desktop)
 )
+
+// WithContextOption 指定一个 context.Context 用于Bot的生命周期
+type WithContextOption struct {
+	Ctx context.Context
+}
+
+// Prepare 实现了 BotLoginOption 接口
+func (w WithContextOption) Prepare(b *Bot) {
+	if w.Ctx == nil {
+		panic("context is nil")
+	}
+	b.context, b.cancel = context.WithCancel(w.Ctx)
+}
 
 const (
 	defaultHotStorageSyncDuration = time.Minute * 5
