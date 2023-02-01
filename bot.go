@@ -51,6 +51,7 @@ func (b *Bot) Alive() bool {
 // @description: 设置设备Id
 // @receiver b
 // @param deviceId
+// TODO ADD INTO LOGIN OPTION
 func (b *Bot) SetDeviceId(deviceId string) {
 	b.deviceId = deviceId
 }
@@ -84,7 +85,7 @@ func (b *Bot) login(login BotLogin) (err error) {
 
 // Login 用户登录
 func (b *Bot) Login() error {
-	scanLogin := &SacnLogin{}
+	scanLogin := &SacnLogin{UUID: b.loginUUID}
 	return b.login(scanLogin)
 }
 
@@ -303,7 +304,7 @@ func (b *Bot) IsHot() bool {
 	return b.hotReloadStorage != nil
 }
 
-// UUID returns current uuid of bot
+// UUID returns current UUID of bot
 func (b *Bot) UUID() string {
 	return b.uuid
 }
@@ -311,7 +312,8 @@ func (b *Bot) UUID() string {
 // SetUUID
 // @description: 设置UUID，可以用来手动登录用
 // @receiver b
-// @param uuid
+// @param UUID
+// TODO ADD INTO LOGIN OPTION
 func (b *Bot) SetUUID(uuid string) {
 	b.loginUUID = &uuid
 }

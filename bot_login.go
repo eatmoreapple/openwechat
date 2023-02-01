@@ -177,19 +177,21 @@ type BotLogin interface {
 }
 
 // SacnLogin 扫码登录
-type SacnLogin struct{}
+type SacnLogin struct {
+	UUID *string
+}
 
 // Login 实现了 BotLogin 接口
 func (s *SacnLogin) Login(bot *Bot) error {
 	var uuid string
-	if bot.loginUUID == nil {
+	if s.UUID == nil {
 		var err error
 		uuid, err = bot.Caller.GetLoginUUID()
 		if err != nil {
 			return err
 		}
 	} else {
-		uuid = *bot.loginUUID
+		uuid = *s.UUID
 	}
 	return s.checkLogin(bot, uuid)
 }
