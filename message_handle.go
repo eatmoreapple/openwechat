@@ -11,14 +11,6 @@ type MessageDispatcher interface {
 	Dispatch(msg *Message)
 }
 
-// DispatchMessage 跟 MessageDispatcher 结合封装成 MessageHandler
-// Deprecated: use MessageMatchDispatcher.AsMessageHandler instead
-func DispatchMessage(dispatcher MessageDispatcher) func(msg *Message) {
-	return func(msg *Message) { dispatcher.Dispatch(msg) }
-}
-
-// MessageDispatcher impl
-
 // MessageContextHandler 消息处理函数
 type MessageContextHandler func(ctx *MessageContext)
 

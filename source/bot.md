@@ -241,7 +241,7 @@ dispatcher.OnText(func(ctx *openwechat.MessageContext){
 })
 
 // 注册消息回调函数
-bot.MessageHandler = openwechat.DispatchMessage(dispatcher)
+bot.MessageHandler = dispatcher.AsMessageHandler()
 ```
 
 `openwechat.DispatchMessage`会将消息转发给`dispatcher`对象处理
