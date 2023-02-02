@@ -69,6 +69,8 @@ func (j *fileHotReloadStorage) Write(p []byte) (n int, err error) {
 }
 
 func (j *fileHotReloadStorage) Close() error {
+	j.lock.Lock()
+	defer j.lock.Unlock()
 	if j.file == nil {
 		return nil
 	}
