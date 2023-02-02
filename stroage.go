@@ -25,15 +25,15 @@ type HotReloadStorageItem struct {
 // HotReloadStorage 热登陆存储接口
 type HotReloadStorage io.ReadWriter
 
-// jsonFileHotReloadStorage 实现HotReloadStorage接口
-// 默认以json文件的形式存储
-type jsonFileHotReloadStorage struct {
+// fileHotReloadStorage 实现HotReloadStorage接口
+// 以文件的形式存储
+type fileHotReloadStorage struct {
 	filename string
 	file     *os.File
 	lock     sync.Mutex
 }
 
-func (j *jsonFileHotReloadStorage) Read(p []byte) (n int, err error) {
+func (j *fileHotReloadStorage) Read(p []byte) (n int, err error) {
 	j.lock.Lock()
 	defer j.lock.Unlock()
 	if j.file == nil {
@@ -48,7 +48,7 @@ func (j *jsonFileHotReloadStorage) Read(p []byte) (n int, err error) {
 	return j.file.Read(p)
 }
 
-func (j *jsonFileHotReloadStorage) Write(p []byte) (n int, err error) {
+func (j *fileHotReloadStorage) Write(p []byte) (n int, err error) {
 	j.lock.Lock()
 	defer j.lock.Unlock()
 	if j.file == nil {
@@ -68,19 +68,27 @@ func (j *jsonFileHotReloadStorage) Write(p []byte) (n int, err error) {
 	return j.file.Write(p)
 }
 
-func (j *jsonFileHotReloadStorage) Close() error {
+func (j *fileHotReloadStorage) Close() error {
+	j.lock.Lock()
+	defer j.lock.Unlock()
 	if j.file == nil {
 		return nil
 	}
 	return j.file.Close()
 }
 
-// NewJsonFileHotReloadStorage 创建JsonFileHotReloadStorage
+// Deprecated: use NewFileHotReloadStorage instead
+// 不再单纯以json的格式存储，支持了用户自定义序列化方式
 func NewJsonFileHotReloadStorage(filename string) io.ReadWriteCloser {
-	return &jsonFileHotReloadStorage{filename: filename}
+	return NewFileHotReloadStorage(filename)
 }
 
-var _ HotReloadStorage = (*jsonFileHotReloadStorage)(nil)
+// NewFileHotReloadStorage implements HotReloadStorage
+func NewFileHotReloadStorage(filename string) io.ReadWriteCloser {
+	return &fileHotReloadStorage{filename: filename}
+}
+
+var _ HotReloadStorage = (*fileHotReloadStorage)(nil)
 
 type HotReloadStorageSyncer struct {
 	duration time.Duration
