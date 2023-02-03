@@ -314,6 +314,8 @@ func (c *Client) WebWxGetHeadImg(user *User) (*http.Response, error) {
 	return c.Do(req)
 }
 
+// WebWxUploadMediaByChunk 分块上传文件
+// TODO 优化掉这个函数
 func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, info *LoginInfo, forUserName, toUserName string) (*http.Response, error) {
 	// 获取文件上传的类型
 	contentType, err := GetFileContentType(file)
@@ -410,16 +412,17 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 		return nil, err
 	}
 
+	var chunkBuff = make([]byte, chunkSize)
+
+	var formBuffer = bytes.NewBuffer(nil)
+
 	// 分块上传
 	for chunk := 0; int64(chunk) < chunks; chunk++ {
-
-		isLastTime := int64(chunk)+1 == chunks
-
 		if chunks > 1 {
 			content["chunk"] = strconv.Itoa(chunk)
 		}
 
-		var formBuffer = bytes.NewBuffer(nil)
+		formBuffer.Reset()
 
 		writer := multipart.NewWriter(formBuffer)
 
@@ -434,34 +437,33 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 		}
 
 		w, err := writer.CreateFormFile("filename", file.Name())
-
 		if err != nil {
 			return nil, err
 		}
 
-		chunkData := make([]byte, chunkSize)
-
-		n, err := file.Read(chunkData)
+		n, err := file.Read(chunkBuff)
 
 		if err != nil && err != io.EOF {
 			return nil, err
 		}
-
-		if _, err = w.Write(chunkData[:n]); err != nil {
+		if _, err = w.Write(chunkBuff[:n]); err != nil {
 			return nil, err
 		}
-
 		ct := writer.FormDataContentType()
 		if err = writer.Close(); err != nil {
 			return nil, err
 		}
+
 		req, _ := http.NewRequest(http.MethodPost, path.String(), formBuffer)
 		req.Header.Set("Content-Type", ct)
+
 		// 发送数据
 		resp, err = c.Do(req)
 		if err != nil {
 			return nil, err
 		}
+
+		isLastTime := int64(chunk)+1 == chunks
 		// 如果不是最后一次, 解析有没有错误
 		if !isLastTime {
 			parser := MessageResponseParser{Reader: resp.Body}
