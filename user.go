@@ -58,14 +58,14 @@ type User struct {
 // implement fmt.Stringer
 func (u *User) String() string {
 	format := "User"
-	if u.IsFriend() {
+	if u.IsSelf() {
+		format = "Self"
+	} else if u.IsFriend() {
 		format = "Friend"
 	} else if u.IsGroup() {
 		format = "Group"
 	} else if u.IsMP() {
 		format = "MP"
-	} else if u.IsSelf() {
-		format = "Self"
 	}
 	return fmt.Sprintf("<%s:%s>", format, u.NickName)
 }

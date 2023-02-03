@@ -10,7 +10,11 @@ type Friend struct{ *User }
 
 // implement fmt.Stringer
 func (f *Friend) String() string {
-	return fmt.Sprintf("<Friend:%s>", f.NickName)
+	display := f.NickName
+	if f.RemarkName != "" {
+		display = f.RemarkName
+	}
+	return fmt.Sprintf("<Friend:%s>", display)
 }
 
 // SetRemarkName 重命名当前好友
@@ -156,7 +160,11 @@ type Group struct{ *User }
 
 // implement fmt.Stringer
 func (g *Group) String() string {
-	return fmt.Sprintf("<Group:%s>", g.NickName)
+	display := g.NickName
+	if g.RemarkName != "" {
+		display = g.RemarkName
+	}
+	return fmt.Sprintf("<Group:%s>", display)
 }
 
 // SendText 发行文本消息给当前的群组
