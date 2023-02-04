@@ -57,9 +57,9 @@ type WebInitResponse struct {
 	SKey                string
 	BaseResponse        BaseResponse
 	SyncKey             SyncKey
-	User                User
-	MPSubscribeMsgList  []MPSubscribeMsg
-	ContactList         []User
+	User                *User
+	MPSubscribeMsgList  []*MPSubscribeMsg
+	ContactList         Members
 }
 
 // MPSubscribeMsg 公众号的订阅信息
@@ -68,12 +68,14 @@ type MPSubscribeMsg struct {
 	Time           int64
 	UserName       string
 	NickName       string
-	MPArticleList  []struct {
-		Title  string
-		Cover  string
-		Digest string
-		Url    string
-	}
+	MPArticleList  []*MPArticle
+}
+
+type MPArticle struct {
+	Title  string
+	Cover  string
+	Digest string
+	Url    string
 }
 
 type UserDetailItem struct {

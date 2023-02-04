@@ -668,6 +668,16 @@ func (s *Self) SendVideoToGroups(video io.Reader, delay time.Duration, groups ..
 	return s.sendVideoToMembers(video, delay, members...)
 }
 
+// ContactList 获取最近的联系人列表
+func (s *Self) ContactList() Members {
+	return s.Bot().Storage.Response.ContactList
+}
+
+// MPSubscribeList 获取部分公众号文章列表
+func (s *Self) MPSubscribeList() []*MPSubscribeMsg {
+	return s.Bot().Storage.Response.MPSubscribeMsgList
+}
+
 // Members 抽象的用户组
 type Members []*User
 

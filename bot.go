@@ -169,9 +169,10 @@ func (b *Bot) WebInit() error {
 		return err
 	}
 	// 设置当前的用户
-	b.self = &Self{bot: b, User: &resp.User}
+	b.self = &Self{bot: b, User: resp.User}
 	b.self.formatEmoji()
 	b.self.self = b.self
+	resp.ContactList.init(b.self)
 	b.Storage.Response = resp
 
 	// 通知手机客户端已经登录
