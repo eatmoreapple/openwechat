@@ -224,8 +224,6 @@ func (b *Bot) syncCheck() error {
 			return resp.Err()
 		}
 		switch resp.Selector {
-		case SelectorNormal:
-			continue
 		case SelectorNewMsg:
 			messages, err := b.syncMessage()
 			if err != nil {
