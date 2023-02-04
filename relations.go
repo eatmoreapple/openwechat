@@ -308,11 +308,6 @@ func (g Groups) SearchByNickName(limit int, nickName string) (results Groups) {
 	return g.Search(limit, func(group *Group) bool { return group.NickName == nickName })
 }
 
-// SearchByRemarkName 根据备注查找群组
-func (g Groups) SearchByRemarkName(limit int, remarkName string) (results Groups) {
-	return g.Search(limit, func(group *Group) bool { return group.RemarkName == remarkName })
-}
-
 // Search 根据自定义条件查找群组
 func (g Groups) Search(limit int, searchFuncList ...func(group *Group) bool) (results Groups) {
 	return g.AsMembers().Search(limit, func(user *User) bool {
@@ -451,11 +446,6 @@ func (f Friends) GetByNickName(nickname string) *Friend {
 // GetByUsername 根据username查询一个Group
 func (g Groups) GetByUsername(username string) *Group {
 	return g.SearchByUserName(1, username).First()
-}
-
-// GetByRemarkName 根据remarkName查询一个Group
-func (g Groups) GetByRemarkName(remarkName string) *Group {
-	return g.SearchByRemarkName(1, remarkName).First()
 }
 
 // GetByNickName 根据nickname查询一个Group
