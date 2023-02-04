@@ -32,6 +32,9 @@ var (
 
 	// ErrLoginTimeout define login timeout error
 	ErrLoginTimeout = errors.New("login timeout")
+
+	// ErrWebWxDataTicketNotFound define webwx_data_ticket not found error
+	ErrWebWxDataTicketNotFound = errors.New("webwx_data_ticket not found")
 )
 
 // Error impl error interface

@@ -360,7 +360,11 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 	path.RawQuery = params.Encode()
 
 	cookies := c.Jar().Cookies(path)
-	webWxDataTicket := getWebWxDataTicket(cookies)
+
+	webWxDataTicket, err := getWebWxDataTicket(cookies)
+	if err != nil {
+		return nil, err
+	}
 
 	uploadMediaRequest := map[string]interface{}{
 		"UploadType":    2,
@@ -593,13 +597,18 @@ func (c *Client) WebWxGetVideo(msg *Message, info *LoginInfo) (*http.Response, e
 // WebWxGetMedia 获取文件消息的文件响应
 func (c *Client) WebWxGetMedia(msg *Message, info *LoginInfo) (*http.Response, error) {
 	path, _ := url.Parse(c.Domain.FileHost() + webwxgetmedia)
+	cookies := c.Jar().Cookies(path)
+	webWxDataTicket, err := getWebWxDataTicket(cookies)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("sender", msg.FromUserName)
 	params.Add("mediaid", msg.MediaId)
 	params.Add("encryfilename", msg.EncryFileName)
 	params.Add("fromuser", strconv.FormatInt(info.WxUin, 10))
 	params.Add("pass_ticket", info.PassTicket)
-	params.Add("webwx_data_ticket", getWebWxDataTicket(c.Jar().Cookies(path)))
+	params.Add("webwx_data_ticket", webWxDataTicket)
 	path.RawQuery = params.Encode()
 	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
 	req.Header.Add("Referer", c.Domain.BaseHost()+"/")

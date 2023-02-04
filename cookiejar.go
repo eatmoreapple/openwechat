@@ -9,6 +9,7 @@ import (
 )
 
 // Jar is a struct which as same as cookiejar.Jar
+// cookiejar.Jar's fields are private, so we can't use it directly
 type Jar struct {
 	PsList cookiejar.PublicSuffixList
 
@@ -56,4 +57,25 @@ type entry struct {
 	// deterministic order, even for cookies that have equal Path length and
 	// equal Creation time. This simplifies testing.
 	seqNum uint64
+}
+
+// CookieGroup is a group of cookies
+type CookieGroup []*http.Cookie
+
+func (c CookieGroup) GetByName(cookieName string) (cookie *http.Cookie, exist bool) {
+	for _, cookie := range c {
+		if cookie.Name == cookieName {
+			return cookie, true
+		}
+	}
+	return nil, false
+}
+
+func getWebWxDataTicket(cookies []*http.Cookie) (string, error) {
+	cookieGroup := CookieGroup(cookies)
+	cookie, exist := cookieGroup.GetByName("webwx_data_ticket")
+	if !exist {
+		return "", ErrWebWxDataTicketNotFound
+	}
+	return cookie.Value, nil
 }

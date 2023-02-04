@@ -38,15 +38,6 @@ func GetRandomDeviceId() string {
 	return builder.String()
 }
 
-func getWebWxDataTicket(cookies []*http.Cookie) string {
-	for _, cookie := range cookies {
-		if cookie.Name == "webwx_data_ticket" {
-			return cookie.Value
-		}
-	}
-	return ""
-}
-
 // GetFileContentType 获取文件上传的类型
 func GetFileContentType(file multipart.File) (string, error) {
 	data := make([]byte, 512)
