@@ -288,13 +288,18 @@ func (s *Self) FileHelper() *Friend {
 	}
 	return s.fileHelper
 }
+func (s *Self) ChkFrdGrpMpNil() bool {
+	return s.friends == nil && s.groups == nil && s.mps == nil
+}
 
 // Friends 获取所有的好友
 func (s *Self) Friends(update ...bool) (Friends, error) {
-	if s.friends == nil || (len(update) > 0 && update[0]) {
+	if (len(update) > 0 && update[0]) || s.ChkFrdGrpMpNil() {
 		if _, err := s.Members(true); err != nil {
 			return nil, err
 		}
+	}
+	if s.friends == nil || (len(update) > 0 && update[0]) {
 		s.friends = s.members.Friends()
 	}
 	return s.friends, nil
@@ -302,10 +307,14 @@ func (s *Self) Friends(update ...bool) (Friends, error) {
 
 // Groups 获取所有的群组
 func (s *Self) Groups(update ...bool) (Groups, error) {
-	if s.groups == nil || (len(update) > 0 && update[0]) {
+
+	if (len(update) > 0 && update[0]) || s.ChkFrdGrpMpNil() {
 		if _, err := s.Members(true); err != nil {
 			return nil, err
 		}
+
+	}
+	if s.groups == nil || (len(update) > 0 && update[0]) {
 		s.groups = s.members.Groups()
 	}
 	return s.groups, nil
@@ -313,10 +322,12 @@ func (s *Self) Groups(update ...bool) (Groups, error) {
 
 // Mps 获取所有的公众号
 func (s *Self) Mps(update ...bool) (Mps, error) {
-	if s.mps == nil || (len(update) > 0 && update[0]) {
+	if (len(update) > 0 && update[0]) || s.ChkFrdGrpMpNil() {
 		if _, err := s.Members(true); err != nil {
 			return nil, err
 		}
+	}
+	if s.mps == nil || (len(update) > 0 && update[0]) {
 		s.mps = s.members.MPs()
 	}
 	return s.mps, nil
