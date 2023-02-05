@@ -71,7 +71,7 @@ func (m *Message) Sender() (*User, error) {
 	user, exist := members.GetByUserName(m.FromUserName)
 	if !exist {
 		// 找不到, 从服务器获取
-		user = &User{self: m.bot.self, UserName: m.FromUserName}
+		user = newFriend(m.FromUserName, m.bot.self).User
 		err = user.Detail()
 	}
 	if m.IsSendByGroup() && len(user.MemberList) == 0 {
