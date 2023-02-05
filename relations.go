@@ -160,11 +160,7 @@ type Group struct{ *User }
 
 // implement fmt.Stringer
 func (g *Group) String() string {
-	display := g.NickName
-	if g.RemarkName != "" {
-		display = g.RemarkName
-	}
-	return fmt.Sprintf("<Group:%s>", display)
+	return fmt.Sprintf("<Group:%s>", g.NickName)
 }
 
 // SendText 发行文本消息给当前的群组
