@@ -25,7 +25,11 @@ func (s SyncCheckResponse) Success() bool {
 }
 
 func (s SyncCheckResponse) NorMal() bool {
-	return s.Success() && s.Selector == "0"
+	return s.Success() && s.Selector == SelectorNormal
+}
+
+func (s SyncCheckResponse) HasNewMessage() bool {
+	return s.Success() && s.Selector == SelectorNewMsg
 }
 
 func (s SyncCheckResponse) Err() error {

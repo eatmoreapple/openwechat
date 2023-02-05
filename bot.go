@@ -223,8 +223,8 @@ func (b *Bot) syncCheck() error {
 		if !resp.Success() {
 			return resp.Err()
 		}
-		// 如果Selector不为0，则获取消息
-		if !resp.NorMal() {
+		switch resp.Selector {
+		case SelectorNewMsg:
 			messages, err := b.syncMessage()
 			if err != nil {
 				return err
@@ -237,8 +237,12 @@ func (b *Bot) syncCheck() error {
 				// 默认同步调用
 				// 如果异步调用则需自行处理
 				// 如配合 openwechat.MessageMatchDispatcher 使用
+				// NOTE: 请确保 MessageHandler 不会阻塞，否则会导致收不到后续的消息
 				b.MessageHandler(message)
 			}
+		case SelectorModContact:
+		case SelectorAddOrDelContact:
+		case SelectorModChatRoom:
 		}
 	}
 	return err
