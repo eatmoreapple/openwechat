@@ -116,14 +116,10 @@ func (u *User) Detail() error {
 		return nil
 	}
 	members := Members{u}
-	request := u.self.bot.Storage.Request
-	newMembers, err := u.self.bot.Caller.WebWxBatchGetContact(members, request)
-	if err != nil {
+	if err := members.Detail(); err != nil {
 		return err
 	}
-	newMembers.init(u.self)
-	user := newMembers.First()
-	*u = *user
+	*u = *members.First()
 	u.MemberList.init(u.self)
 	return nil
 }
@@ -340,7 +336,7 @@ func (s *Self) UpdateMembersDetail() error {
 	if err != nil {
 		return err
 	}
-	return members.detail(s)
+	return members.Detail()
 }
 
 func (s *Self) sendTextToUser(user *User, text string) (*SentMessage, error) {
@@ -828,52 +824,80 @@ func (m Members) MPs() Mps {
 	return mps
 }
 
-// 获取当前Members的详情
-func (m Members) detail(self *Self) error {
-	// 获取他们的数量
-	members := m
+type membersUpdater struct {
+	self       *Self
+	members    Members
+	max        int
+	index      int
+	updateTime int
+	current    Members
+}
 
-	count := members.Count()
-	// 一次更新50个,分情况讨论
-
-	// 获取总的需要更新的次数
-	var times int
-	if count < 50 {
-		times = 1
+func (m *membersUpdater) init() {
+	if m.members.Count() > 0 {
+		m.self = m.members.First().Self()
+	}
+	if m.members.Count() <= m.max {
+		m.updateTime = 1
 	} else {
-		times = count / 50
-	}
-	var newMembers Members
-	request := self.bot.Storage.Request
-	var pMembers Members
-	// 分情况依次更新
-	for i := 1; i <= times; i++ {
-		if times == 1 {
-			pMembers = members
-		} else {
-			pMembers = members[(i-1)*50 : i*50]
+		m.updateTime = m.members.Count() / m.max
+		if m.members.Count()%m.max != 0 {
+			m.updateTime++
 		}
-		nMembers, err := self.bot.Caller.WebWxBatchGetContact(pMembers, request)
-		if err != nil {
+	}
+}
+
+func (m *membersUpdater) Next() bool {
+	if m.index >= m.updateTime {
+		return false
+	}
+	m.index++
+	return true
+}
+
+func (m *membersUpdater) Update() error {
+	start := m.max * (m.index - 1)
+
+	end := m.max * m.index
+
+	if m.index == m.updateTime {
+		end = m.members.Count()
+	}
+
+	// 获取需要更新的联系人
+	m.current = m.members[start:end]
+	members, err := m.self.Bot().Caller.WebWxBatchGetContact(m.current, m.self.Bot().Storage.Request)
+	if err != nil {
+		return err
+	}
+
+	// 更新联系人
+	for i, member := range members {
+		member.self = m.self
+		member.formatEmoji()
+		m.members[start+i] = member
+	}
+	return nil
+}
+
+func newMembersUpdater(members Members) *membersUpdater {
+	return &membersUpdater{
+		members: members,
+		max:     50,
+	}
+}
+
+// Detail 获取当前 Members 的详情
+func (m Members) Detail() error {
+	if m.Len() == 0 {
+		return nil
+	}
+	updater := newMembersUpdater(m)
+	updater.init()
+	for updater.Next() {
+		if err := updater.Update(); err != nil {
 			return err
 		}
-		newMembers = append(newMembers, nMembers...)
-	}
-	// 最后判断是否全部更新完毕
-	total := times * 50
-	if total < count {
-		// 将全部剩余的更新完毕
-		left := count - total
-		pMembers = members[total : total+left]
-		nMembers, err := self.bot.Caller.WebWxBatchGetContact(pMembers, request)
-		if err != nil {
-			return err
-		}
-		newMembers = append(newMembers, nMembers...)
-	}
-	if len(newMembers) > 0 {
-		newMembers.init(self)
-		self.members = newMembers
 	}
 	return nil
 }
