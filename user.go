@@ -275,6 +275,11 @@ func (s *Self) updateMembers() error {
 	return nil
 }
 
+// append
+func (m Members) Apppend(user *User) (results Members) {
+	return append(m, []*User{user}...)
+}
+
 // FileHelper 获取文件传输助手对象，封装成Friend返回
 //
 //	fh := self.FileHelper() // or fh := openwechat.NewFriendHelper(self)
