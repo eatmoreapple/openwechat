@@ -223,8 +223,11 @@ func (b *Bot) syncCheck() error {
 		if !resp.Success() {
 			return resp.Err()
 		}
+		// TODO 添加更多的状态码处理
 		switch resp.Selector {
-		case SelectorNewMsg:
+		case SelectorNormal:
+			continue
+		default:
 			messages, err := b.syncMessage()
 			if err != nil {
 				return err
@@ -240,9 +243,6 @@ func (b *Bot) syncCheck() error {
 				// NOTE: 请确保 MessageHandler 不会阻塞，否则会导致收不到后续的消息
 				b.MessageHandler(message)
 			}
-		case SelectorModContact:
-		case SelectorAddOrDelContact:
-		case SelectorModChatRoom:
 		}
 	}
 	return err
