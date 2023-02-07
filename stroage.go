@@ -19,6 +19,7 @@ type HotReloadStorageItem struct {
 	BaseRequest  *BaseRequest
 	LoginInfo    *LoginInfo
 	WechatDomain WechatDomain
+	SyncKey      *SyncKey
 	UUID         string
 }
 
