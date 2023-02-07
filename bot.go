@@ -173,6 +173,10 @@ func (b *Bot) WebInit() error {
 	b.self.formatEmoji()
 	b.self.self = b.self
 	resp.ContactList.init(b.self)
+	// 读取和装载SyncKey
+	if b.Storage.Response != nil {
+		resp.SyncKey = b.Storage.Response.SyncKey
+	}
 	b.Storage.Response = resp
 
 	// 通知手机客户端已经登录
@@ -321,6 +325,7 @@ func (b *Bot) DumpTo(writer io.Writer) error {
 		Jar:          fromCookieJar(jar),
 		LoginInfo:    b.Storage.LoginInfo,
 		WechatDomain: b.Caller.Client.Domain,
+		SyncKey:      &b.Storage.Response.SyncKey,
 		UUID:         b.uuid,
 	}
 	return b.Serializer.Encode(writer, item)
@@ -363,6 +368,12 @@ func (b *Bot) reload() error {
 	b.Storage.Request = item.BaseRequest
 	b.Caller.Client.Domain = item.WechatDomain
 	b.uuid = item.UUID
+	if item.SyncKey != nil {
+		if b.Storage.Response == nil {
+			b.Storage.Response = &WebInitResponse{}
+		}
+		b.Storage.Response.SyncKey = *item.SyncKey
+	}
 	return nil
 }
 
