@@ -94,7 +94,7 @@ func (b *Bot) HotLogin(storage HotReloadStorage, opts ...BotLoginOption) error {
 	hotLogin := &HotLogin{storage: storage}
 	// 进行相关设置。
 	// 如果相对默认的行为进行修改，在opts里面进行追加即可。
-	b.loginOptionGroup = append(hotLoginDefaultOptions[:], opts...)
+	b.loginOptionGroup = opts
 	return b.login(hotLogin)
 }
 
@@ -106,7 +106,7 @@ func (b *Bot) PushLogin(storage HotReloadStorage, opts ...BotLoginOption) error 
 	pushLogin := &PushLogin{storage: storage}
 	// 进行相关设置。
 	// 如果相对默认的行为进行修改，在opts里面进行追加即可。
-	b.loginOptionGroup = append(pushLoginDefaultOptions[:], opts...)
+	b.loginOptionGroup = opts
 	return b.login(pushLogin)
 }
 

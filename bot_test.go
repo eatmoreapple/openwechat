@@ -8,8 +8,8 @@ import (
 
 func TestLogin(t *testing.T) {
 	bot := DefaultBot(Desktop)
-	bot.LoginCallBack = func(body []byte) {
-		t.Log("login success")
+	bot.LoginCallBack = func(body CheckLoginResponse) {
+		t.Log("login")
 	}
 	if err := bot.Login(); err != nil {
 		t.Error(err)
@@ -18,8 +18,8 @@ func TestLogin(t *testing.T) {
 
 func TestLogout(t *testing.T) {
 	bot := DefaultBot(Desktop)
-	bot.LoginCallBack = func(body []byte) {
-		t.Log("login success")
+	bot.LoginCallBack = func(body CheckLoginResponse) {
+		t.Log("login")
 	}
 	bot.LogoutCallBack = func(bot *Bot) {
 		t.Log("logout")
