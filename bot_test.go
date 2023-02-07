@@ -2,6 +2,7 @@ package openwechat
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 	"testing"
 	"time"
 )
@@ -152,6 +153,21 @@ func TestLoginWithUUID(t *testing.T) {
 	err := bot.Login()
 	if err != nil {
 		t.Errorf("登录失败: %v", err.Error())
+		return
+	}
+}
+
+// TestLog
+// @description: 测试log模块
+// @param t
+func TestLog(t *testing.T) {
+	uuid := "oZZsO0Qv8Q=="
+	bot := DefaultBot(Desktop)
+	bot.SetUUID(uuid)
+	GetLogger().Info("TestLog", zap.String("uuid", *(bot.loginUUID)))
+	err := bot.Login()
+	if err != nil {
+		GetLogger().Error("登陆失败", zap.Error(err))
 		return
 	}
 }
