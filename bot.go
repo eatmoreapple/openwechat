@@ -3,8 +3,8 @@ package openwechat
 import (
 	"context"
 	"errors"
+	"go.uber.org/zap"
 	"io"
-	"log"
 	"net/url"
 	"os/exec"
 	"runtime"
@@ -398,21 +398,22 @@ func NewBot(c context.Context) *Bot {
 //
 //	bot := openwechat.DefaultBot(openwechat.Desktop)
 func DefaultBot(prepares ...BotPreparer) *Bot {
+	NewLoggerServer()
 	bot := NewBot(context.Background())
 	// 获取二维码回调
 	bot.UUIDCallback = PrintlnQrcodeUrl
 	// 扫码回调
 	bot.ScanCallBack = func(_ CheckLoginResponse) {
-		log.Println("扫码成功,请在手机上确认登录")
+		GetLogger().Info("扫码成功,请在手机上确认登录")
 	}
 	// 登录回调
 	bot.LoginCallBack = func(_ CheckLoginResponse) {
-		log.Println("登录成功")
+		GetLogger().Info("登录成功")
 	}
 	// 心跳回调函数
 	// 默认的行为打印SyncCheckResponse
 	bot.SyncCheckCallback = func(resp SyncCheckResponse) {
-		log.Printf("RetCode:%s  Selector:%s", resp.RetCode, resp.Selector)
+		GetLogger().Info("DefaultBot", zap.String("RetCode", resp.RetCode), zap.Any("Selector", resp.Selector))
 	}
 	for _, prepare := range prepares {
 		prepare.Prepare(bot)
@@ -442,9 +443,9 @@ func GetQrcodeUrl(uuid string) string {
 
 // PrintlnQrcodeUrl 打印登录二维码
 func PrintlnQrcodeUrl(uuid string) {
-	println("访问下面网址扫描二维码登录")
+	GetLogger().Info("访问下面网址扫描二维码登录")
 	qrcodeUrl := GetQrcodeUrl(uuid)
-	println(qrcodeUrl)
+	GetLogger().Info(qrcodeUrl)
 
 	// browser open the login url
 	_ = open(qrcodeUrl)
