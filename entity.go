@@ -56,7 +56,7 @@ type WebInitResponse struct {
 	ChatSet             string
 	SKey                string
 	BaseResponse        BaseResponse
-	SyncKey             SyncKey
+	SyncKey             *SyncKey
 	User                *User
 	MPSubscribeMsgList  []*MPSubscribeMsg
 	ContactList         Members
@@ -102,7 +102,7 @@ type WebWxSyncResponse struct {
 	ModContactCount        int
 	Skey                   string
 	SyncCheckKey           SyncKey
-	SyncKey                SyncKey
+	SyncKey                *SyncKey
 	BaseResponse           BaseResponse
 	ModChatRoomMemberList  Members
 	AddMsgList             []*Message
