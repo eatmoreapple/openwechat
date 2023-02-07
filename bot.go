@@ -94,7 +94,7 @@ func (b *Bot) HotLogin(storage HotReloadStorage, opts ...BotLoginOption) error {
 	hotLogin := &HotLogin{storage: storage}
 	// 进行相关设置。
 	// 如果相对默认的行为进行修改，在opts里面进行追加即可。
-	b.loginOptionGroup = append(hotLoginDefaultOptions[:], opts...)
+	b.loginOptionGroup = opts
 	return b.login(hotLogin)
 }
 
@@ -106,7 +106,7 @@ func (b *Bot) PushLogin(storage HotReloadStorage, opts ...BotLoginOption) error 
 	pushLogin := &PushLogin{storage: storage}
 	// 进行相关设置。
 	// 如果相对默认的行为进行修改，在opts里面进行追加即可。
-	b.loginOptionGroup = append(pushLoginDefaultOptions[:], opts...)
+	b.loginOptionGroup = opts
 	return b.login(pushLogin)
 }
 
@@ -149,13 +149,6 @@ func (b *Bot) HandleLogin(path *url.URL) error {
 	// 将BaseRequest存到storage里面方便后续调用
 	b.Storage.Request = request
 
-	// 如果是热登陆,则将当前的重要信息写入hotReloadStorage
-	if b.hotReloadStorage != nil {
-		if err = b.DumpHotReloadStorage(); err != nil {
-			return err
-		}
-	}
-
 	return b.WebInit()
 }
 
@@ -173,7 +166,15 @@ func (b *Bot) WebInit() error {
 	b.self.formatEmoji()
 	b.self.self = b.self
 	resp.ContactList.init(b.self)
+	// 读取和装载SyncKey
+	if b.Storage.Response != nil {
+		resp.SyncKey = b.Storage.Response.SyncKey
+	}
 	b.Storage.Response = resp
+
+	if err = b.DumpHotReloadStorage(); err != nil {
+		return err
+	}
 
 	// 通知手机客户端已经登录
 	if err = b.Caller.WebWxStatusNotify(req, resp, info); err != nil {
@@ -253,6 +254,9 @@ func (b *Bot) syncCheck() error {
 			if err != nil {
 				return err
 			}
+			// todo 将这个错误处理交给用户
+			_ = b.DumpHotReloadStorage()
+
 			if b.MessageHandler == nil {
 				continue
 			}
@@ -321,6 +325,7 @@ func (b *Bot) DumpTo(writer io.Writer) error {
 		Jar:          fromCookieJar(jar),
 		LoginInfo:    b.Storage.LoginInfo,
 		WechatDomain: b.Caller.Client.Domain,
+		SyncKey:      b.Storage.Response.SyncKey,
 		UUID:         b.uuid,
 	}
 	return b.Serializer.Encode(writer, item)
@@ -363,6 +368,12 @@ func (b *Bot) reload() error {
 	b.Storage.Request = item.BaseRequest
 	b.Caller.Client.Domain = item.WechatDomain
 	b.uuid = item.UUID
+	if item.SyncKey != nil {
+		if b.Storage.Response == nil {
+			b.Storage.Response = &WebInitResponse{}
+		}
+		b.Storage.Response.SyncKey = item.SyncKey
+	}
 	return nil
 }
 

@@ -2,7 +2,6 @@ package openwechat
 
 import (
 	"context"
-	"time"
 )
 
 // LoginCode 定义登录状态码
@@ -112,27 +111,6 @@ func NewRetryLoginOption() BotLoginOption {
 	return &RetryLoginOption{MaxRetryCount: 1}
 }
 
-// SyncReloadDataLoginOption 在登录成功后进行数据定时同步到指定的storage中
-type SyncReloadDataLoginOption struct {
-	BaseBotLoginOption
-	SyncLoopDuration time.Duration
-}
-
-// OnSuccess 实现了 BotLoginOption 接口
-// 当登录成功后，会调用此方法进行数据定时同步到指定的storage中
-func (s SyncReloadDataLoginOption) OnSuccess(bot *Bot) error {
-	if s.SyncLoopDuration <= 0 {
-		return nil
-	}
-	syncer := NewHotReloadStorageSyncer(bot, s.SyncLoopDuration)
-	go func() { _ = syncer.Sync() }()
-	return nil
-}
-
-func NewSyncReloadDataLoginOption(duration time.Duration) BotLoginOption {
-	return &SyncReloadDataLoginOption{SyncLoopDuration: duration}
-}
-
 // withModeOption 指定使用哪种客户端模式
 type withModeOption struct {
 	mode Mode
@@ -166,10 +144,6 @@ func (w WithContextOption) Prepare(b *Bot) {
 	}
 	b.context, b.cancel = context.WithCancel(w.Ctx)
 }
-
-const (
-	defaultHotStorageSyncDuration = time.Minute * 5
-)
 
 // BotLogin 定义了一个Login的接口
 type BotLogin interface {
@@ -208,13 +182,6 @@ func (s *SacnLogin) checkLogin(bot *Bot, uuid string) error {
 	}
 	return loginChecker.CheckLogin()
 }
-
-var (
-	hotLoginDefaultOptions = [...]BotLoginOption{
-		NewSyncReloadDataLoginOption(defaultHotStorageSyncDuration),
-	}
-	pushLoginDefaultOptions = hotLoginDefaultOptions
-)
 
 // HotLogin 热登录模式
 type HotLogin struct {
@@ -342,22 +309,10 @@ func HotLoginWithRetry(flag bool) BotLoginOption {
 }
 
 // Deprecated: 请使用 NewRetryLoginOption 代替
-// HotLoginWithSyncReloadData 定时同步热登录数据
-func HotLoginWithSyncReloadData(duration time.Duration) BotLoginOption {
-	return NewSyncReloadDataLoginOption(duration)
-}
-
-// Deprecated: 请使用 NewRetryLoginOption 代替
 // PushLoginWithRetry 免扫码登录模式，如果登录失败会重试
 func PushLoginWithRetry(flag bool) BotLoginOption {
 	if !flag {
 		return DoNothingBotLoginOption
 	}
 	return NewRetryLoginOption()
-}
-
-// Deprecated: 请使用 NewSyncReloadDataLoginOption 代替
-// PushLoginWithSyncReloadData 定时同步热登录数据
-func PushLoginWithSyncReloadData(duration time.Duration) BotLoginOption {
-	return NewSyncReloadDataLoginOption(duration)
 }
