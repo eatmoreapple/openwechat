@@ -254,6 +254,9 @@ func (b *Bot) syncCheck() error {
 			if err != nil {
 				return err
 			}
+			// todo 将这个错误处理交给用户
+			_ = b.DumpHotReloadStorage()
+
 			if b.MessageHandler == nil {
 				continue
 			}
