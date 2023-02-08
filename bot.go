@@ -85,7 +85,7 @@ func (b *Bot) login(login BotLogin) (err error) {
 
 // Login 用户登录
 func (b *Bot) Login() error {
-	scanLogin := &SacnLogin{UUID: b.loginUUID}
+	scanLogin := &ScanLogin{UUID: b.loginUUID}
 	return b.login(scanLogin)
 }
 
