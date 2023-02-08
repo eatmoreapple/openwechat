@@ -150,13 +150,13 @@ type BotLogin interface {
 	Login(bot *Bot) error
 }
 
-// SacnLogin 扫码登录
-type SacnLogin struct {
+// ScanLogin 扫码登录
+type ScanLogin struct {
 	UUID *string
 }
 
 // Login 实现了 BotLogin 接口
-func (s *SacnLogin) Login(bot *Bot) error {
+func (s *ScanLogin) Login(bot *Bot) error {
 	var uuid string
 	if s.UUID == nil {
 		var err error
@@ -171,7 +171,7 @@ func (s *SacnLogin) Login(bot *Bot) error {
 }
 
 // checkLogin 该方法会一直阻塞，直到用户扫码登录，或者二维码过期
-func (s *SacnLogin) checkLogin(bot *Bot, uuid string) error {
+func (s *ScanLogin) checkLogin(bot *Bot, uuid string) error {
 	bot.uuid = uuid
 	loginChecker := &LoginChecker{
 		Bot:           bot,
