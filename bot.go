@@ -172,8 +172,10 @@ func (b *Bot) WebInit() error {
 	}
 	b.Storage.Response = resp
 
-	if err = b.DumpHotReloadStorage(); err != nil {
-		return err
+	if b.hotReloadStorage != nil {
+		if err = b.DumpHotReloadStorage(); err != nil {
+			return err
+		}
 	}
 
 	// 通知手机客户端已经登录
