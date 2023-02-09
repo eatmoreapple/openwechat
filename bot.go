@@ -3,7 +3,6 @@ package openwechat
 import (
 	"context"
 	"errors"
-	"io"
 	"log"
 	"net/url"
 	"os/exec"
@@ -172,7 +171,7 @@ func (b *Bot) WebInit() error {
 	}
 	b.Storage.Response = resp
 
-	if b.hotReloadStorage != nil {
+	if b.IsHot() {
 		if err = b.DumpHotReloadStorage(); err != nil {
 			return err
 		}
@@ -257,7 +256,12 @@ func (b *Bot) syncCheck() error {
 				return err
 			}
 			// todo 将这个错误处理交给用户
-			_ = b.DumpHotReloadStorage()
+			// bug-fix 用户scanlogin场景处理
+			if b.IsHot() {
+				if err = b.DumpHotReloadStorage(); err != nil {
+					return err
+				}
+			}
 
 			if b.MessageHandler == nil {
 				continue
@@ -311,16 +315,9 @@ func (b *Bot) CrashReason() error {
 }
 
 // DumpHotReloadStorage 写入HotReloadStorage
-func (b *Bot) DumpHotReloadStorage() error {
-	if b.hotReloadStorage == nil {
-		return errors.New("HotReloadStorage can not be nil")
-	}
-	return b.DumpTo(b.hotReloadStorage)
-}
-
-// DumpTo 将热登录需要的数据写入到指定的 io.Writer 中
+// 将热登录需要的数据写入到指定的 io.Writer 中
 // 注: 写之前最好先清空之前的数据
-func (b *Bot) DumpTo(writer io.Writer) error {
+func (b *Bot) DumpHotReloadStorage() error {
 	jar := b.Caller.Client.Jar()
 	item := HotReloadStorageItem{
 		BaseRequest:  b.Storage.Request,
@@ -330,7 +327,7 @@ func (b *Bot) DumpTo(writer io.Writer) error {
 		SyncKey:      b.Storage.Response.SyncKey,
 		UUID:         b.uuid,
 	}
-	return b.Serializer.Encode(writer, item)
+	return b.Serializer.Encode(b.hotReloadStorage, item)
 }
 
 // IsHot returns true if is hot login otherwise false
