@@ -108,9 +108,9 @@ bot.HotLogin(reloadStorage, openwechat.NewRetryLoginOption())
 type HotReloadStorage io.ReadWriter
 ```
 
-`NewJsonFileHotReloadStorage`简单实现了该接口，它采用`JSON`的方式存储会话信息。
+`NewFileHotReloadStorage`简单实现了该接口，它采用文件的方式存储会话信息。
 
-实现这个接口，实现你自己的存储方式。
+实现这个接口，来定义你自己的存储方式。
 
 #### 免扫码登录
 
@@ -133,9 +133,6 @@ bot.PushLogin(storage HotReloadStorage, opts ...openwechat.BotLoginOption) error
 目前有下面几个可选参数：
 
 ```go
-// NewSyncReloadDataLoginOption 登录成功后定时同步热存储容器数据
-func NewSyncReloadDataLoginOption(duration time.Duration) BotLoginOption
-
 //  NewRetryLoginOption 登录失败后进行扫码登录
 func NewRetryLoginOption() BotLoginOption
 ```
@@ -144,7 +141,7 @@ func NewRetryLoginOption() BotLoginOption
 
 ```go
 bot := openwechat.DefaultBot()
-reloadStorage := openwechat.NewJsonFileHotReloadStorage("storage.json")
+reloadStorage := openwechat.NewFileHotReloadStorage("storage.json")
 defer reloadStorage.Close()
 err = bot.PushLogin(reloadStorage, openwechat.NewRetryLoginOption())
 ```
