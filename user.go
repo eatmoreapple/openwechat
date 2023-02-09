@@ -203,6 +203,19 @@ func (u *User) ID() string {
 	return ""
 }
 
+// Equal 判断两个用户是否相等
+func (u *User) Equal(user *User) bool {
+	// invalid user is not equal to any user
+	if u == nil || user == nil {
+		return false
+	}
+	// not came from same bot
+	if u.Self() != user.Self() {
+		return false
+	}
+	return u.UserName == user.UserName
+}
+
 // Self 返回当前用户
 func (u *User) Self() *Self {
 	return u.self
