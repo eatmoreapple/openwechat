@@ -239,6 +239,13 @@ func (u *User) formatEmoji() {
 	u.DisplayName = FormatEmoji(u.DisplayName)
 }
 
+func newUser(self *Self, username string) *User {
+	return &User{
+		UserName: username,
+		self:     self,
+	}
+}
+
 // Self 自己,当前登录用户对象
 type Self struct {
 	*User
@@ -273,11 +280,6 @@ func (s *Self) updateMembers() error {
 	members.init(s)
 	s.members = members
 	return nil
-}
-
-// append
-func (m Members) Apppend(user *User) (results Members) {
-	return append(m, []*User{user}...)
 }
 
 // FileHelper 获取文件传输助手对象，封装成Friend返回
@@ -748,6 +750,11 @@ func (m Members) Last() *User {
 	return nil
 }
 
+// Append 追加联系人
+func (m Members) Append(user *User) (results Members) {
+	return append(m, user)
+}
+
 // SearchByUserName 根据用户名查找
 func (m Members) SearchByUserName(limit int, username string) (results Members) {
 	return m.Search(limit, func(user *User) bool { return user.UserName == username })
@@ -915,7 +922,7 @@ func (m Members) init(self *Self) {
 }
 
 func newFriend(username string, self *Self) *Friend {
-	return &Friend{&User{UserName: username, self: self}}
+	return &Friend{User: newUser(self, username)}
 }
 
 // NewFriendHelper 创建一个文件传输助手

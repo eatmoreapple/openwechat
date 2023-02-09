@@ -218,9 +218,9 @@ func (b *Bot) updateGroups(msg *Message) {
 		user, exist := members.GetByUserName(msg.FromUserName)
 		if !exist {
 			// 找不到, 从服务器获取
-			user = &User{self: msg.bot.self, UserName: msg.FromUserName}
+			user = newUser(msg.Owner(), msg.FromUserName)
 			err = user.Detail()
-			b.self.members = b.self.members.Apppend(user)
+			b.self.members = b.self.members.Append(user)
 			b.self.groups = b.self.members.Groups()
 		}
 	}
