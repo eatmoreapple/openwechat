@@ -60,8 +60,8 @@ type Message struct {
 
 // Sender 获取消息的发送者
 func (m *Message) Sender() (*User, error) {
-	if m.FromUserName == m.bot.self.User.UserName {
-		return m.bot.self.User, nil
+	if m.IsSendBySelf() {
+		return m.Owner().User, nil
 	}
 	// 首先尝试从缓存里面查找, 如果没有找到则从服务器获取
 	members, err := m.bot.self.Members()
@@ -115,11 +115,11 @@ func (m *Message) Receiver() (*User, error) {
 	}
 	// https://github.com/eatmoreapple/openwechat/issues/113
 	if m.ToUserName == FileHelper {
-		return m.bot.self.FileHelper().User, nil
+		return m.Owner().FileHelper().User, nil
 	}
 
 	if m.IsSendByGroup() {
-		groups, err := m.bot.self.Groups()
+		groups, err := m.Owner().Groups()
 		if err != nil {
 			return nil, err
 		}
@@ -133,7 +133,7 @@ func (m *Message) Receiver() (*User, error) {
 		}
 		return users.First().User, nil
 	} else {
-		user, exist := m.bot.self.MemberList.GetByUserName(m.ToUserName)
+		user, exist := m.Owner().MemberList.GetByUserName(m.ToUserName)
 		if !exist {
 			return nil, ErrNoSuchUserFoundError
 		}
@@ -159,8 +159,8 @@ func (m *Message) IsSendByGroup() bool {
 // ReplyText 回复文本消息
 func (m *Message) ReplyText(content string) (*SentMessage, error) {
 	msg := NewSendMessage(MsgTypeText, content, m.bot.self.User.UserName, m.FromUserName, "")
-	info := m.bot.Storage.LoginInfo
-	request := m.bot.Storage.Request
+	info := m.Bot().Storage.LoginInfo
+	request := m.Bot().Storage.Request
 	sentMessage, err := m.bot.Caller.WebWxSendMsg(msg, info, request)
 	return m.bot.self.sendMessageWrapper(sentMessage, err)
 }
@@ -397,7 +397,7 @@ func (m *Message) Agree(verifyContents ...string) (*Friend, error) {
 	if err != nil {
 		return nil, err
 	}
-	friend := newFriend(m.RecommendInfo.UserName, m.bot.self)
+	friend := newFriend(m.RecommendInfo.UserName, m.Owner())
 	if err = friend.Detail(); err != nil {
 		return nil, err
 	}
