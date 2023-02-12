@@ -1,5 +1,8 @@
 
 
+# 前言
+此项目根据eatMoreApple/openwechat做了自定义改造；若有问题，请反馈。
+
 # openwechat
 
 [![Go Doc](https://pkg.go.dev/badge/github.com/eatMoreApple/openwechat)](https://godoc.org/github.com/eatMoreApple/openwechat)[![Release](https://img.shields.io/github/v/release/eatmoreapple/openwechat.svg?style=flat-square)](https://github.com/eatmoreapple/openwechat/releases)[![Go Report Card](https://goreportcard.com/badge/github.com/eatmoreapple/openwechat)](https://goreportcard.com/badge/github.com/eatmoreapple/openwechat)[![Stars](https://img.shields.io/github/stars/eatmoreapple/openwechat.svg?style=flat-square)](https://img.shields.io/github/stars/eatmoreapple/openwechat.svg?style=flat-square)[![Forks](https://img.shields.io/github/forks/eatmoreapple/openwechat.svg?style=flat-square)](https://img.shields.io/github/forks/eatmoreapple/openwechat.svg?style=flat-square)
