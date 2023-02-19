@@ -26,10 +26,12 @@ type HttpHook interface {
 
 type HttpHooks []HttpHook
 
-type UserAgentHook struct{}
+type UserAgentHook struct {
+	UserAgent string
+}
 
 func (u UserAgentHook) BeforeRequest(req *http.Request) {
-	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36")
+	req.Header.Set("User-Agent", u.UserAgent)
 }
 
 func (u UserAgentHook) AfterRequest(_ *http.Response, _ error) {}
@@ -76,7 +78,7 @@ func NewClient() *Client {
 // 设置客户端不自动跳转
 func DefaultClient() *Client {
 	client := NewClient()
-	client.AddHttpHook(UserAgentHook{})
+	client.AddHttpHook(UserAgentHook{"Mozilla/5.0 (Linux; U; UOS x86_64; zh-cn) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 UOSBrowser/6.0.1.1001"})
 	client.MaxRetryTimes = 5
 	return client
 }
