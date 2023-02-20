@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"os/exec"
 	"runtime"
-	"sync"
 )
 
 type Bot struct {
@@ -22,7 +21,6 @@ type Bot struct {
 	Serializer          Serializer                    // 序列化器, 默认为json
 	Storage             *Storage
 	Caller              *Caller
-	once                sync.Once
 	err                 error
 	context             context.Context
 	cancel              context.CancelFunc
@@ -184,8 +182,7 @@ func (b *Bot) WebInit() error {
 	}
 	// 开启协程，轮询获取是否有新的消息返回
 
-	// FIX: 当bot在线的情况下执行热登录,会开启多次事件监听
-	go b.once.Do(func() {
+	go func() {
 		if b.MessageErrorHandler == nil {
 			b.MessageErrorHandler = defaultSyncCheckErrHandler(b)
 		}
@@ -201,7 +198,7 @@ func (b *Bot) WebInit() error {
 				break
 			}
 		}
-	})
+	}()
 	return nil
 }
 
@@ -293,7 +290,7 @@ func (b *Bot) Block() error {
 		return errors.New("`Block` must be called after user login")
 	}
 	<-b.Context().Done()
-	return nil
+	return b.CrashReason()
 }
 
 // Exit 主动退出，让 Block 不在阻塞
