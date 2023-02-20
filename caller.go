@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"os"
 )
@@ -67,16 +66,23 @@ func (c *Caller) CheckLogin(uuid, tip string) (CheckLoginResponse, error) {
 // GetLoginInfo 获取登录信息
 func (c *Caller) GetLoginInfo(path *url.URL) (*LoginInfo, error) {
 	// 从响应体里面获取需要跳转的url
+	query := path.Query()
+	query.Set("version", "v2")
+	path.RawQuery = query.Encode()
 	resp, err := c.Client.GetLoginInfo(path)
 	if err != nil {
 		return nil, err
 	}
-	// 判断是否重定向
-	if resp.StatusCode != http.StatusMovedPermanently {
-		return nil, fmt.Errorf("%w: try to login with Desktop Mode", ErrForbidden)
-	}
+	// 微信 v2 版本修复了301 response missing Location header 的问题
 	defer func() { _ = resp.Body.Close() }()
 
+	if _, exists := CookieGroup(resp.Cookies()).GetByName("wxuin"); !exists {
+		err = ErrForbidden
+		if c.Client.mode != desktop {
+			err = fmt.Errorf("%w: try to login with desktop mode", err)
+		}
+		return nil, err
+	}
 	var loginInfo LoginInfo
 	// xml结构体序列化储存
 	if err := scanXml(resp.Body, &loginInfo); err != nil {
