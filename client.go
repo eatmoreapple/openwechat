@@ -550,7 +550,7 @@ func (c *Client) WebWxVerifyUser(storage *Storage, info RecommendInfo, verifyCon
 			"VerifyUserTicket": info.Ticket,
 		}},
 		"VerifyUserListSize": 1,
-		"skey":               loginInfo.SKey,
+		"skey":               storage.Request.Skey,
 	}
 	body, _ := ToBuffer(content)
 	req, _ := http.NewRequest(http.MethodPost, path.String(), body)
