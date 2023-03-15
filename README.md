@@ -102,8 +102,6 @@ func main() {
 
 <img width="210px"  src="https://github.com/eatmoreapple/eatmoreapple/blob/main/img/wechat_pay.jpg" align="left">
 
-**如果二维码图片没显示出来，请添加微信号 eatmoreapple**
-
 <img width="210px"  src="https://raw.githubusercontent.com/eatmoreapple/eatMoreApple/main/img/wechat.jpg" align="left">
 
 
