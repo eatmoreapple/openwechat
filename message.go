@@ -133,7 +133,11 @@ func (m *Message) Receiver() (*User, error) {
 		}
 		return users.First().User, nil
 	} else {
-		user, exist := m.Owner().MemberList.GetByUserName(m.ToUserName)
+		members, err := m.Owner().Members()
+		if err != nil {
+			return nil, err
+		}
+		user, exist := members.GetByUserName(m.ToUserName)
 		if !exist {
 			return nil, ErrNoSuchUserFoundError
 		}
