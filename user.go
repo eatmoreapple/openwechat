@@ -546,36 +546,33 @@ func (s *Self) RevokeMessage(msg *SentMessage) error {
 func (s *Self) forwardMessage(msg *SentMessage, delay time.Duration, users ...*User) error {
 	info := s.bot.Storage.LoginInfo
 	req := s.bot.Storage.Request
+	var forwardFunc func() error
 	switch msg.Type {
 	case MsgTypeText:
-		for _, user := range users {
-			msg.FromUserName = s.UserName
-			msg.ToUserName = user.UserName
-			if _, err := s.self.bot.Caller.WebWxSendMsg(msg.SendMessage, info, req); err != nil {
-				return err
-			}
-			time.Sleep(delay)
+		forwardFunc = func() error {
+			_, err := s.bot.Caller.WebWxSendMsg(msg.SendMessage, info, req)
+			return err
 		}
 	case MsgTypeImage:
-		for _, user := range users {
-			msg.FromUserName = s.UserName
-			msg.ToUserName = user.UserName
-			if _, err := s.self.bot.Caller.Client.WebWxSendMsgImg(msg.SendMessage, req, info); err != nil {
-				return err
-			}
-			time.Sleep(delay)
+		forwardFunc = func() error {
+			_, err := s.bot.Caller.Client.WebWxSendMsgImg(msg.SendMessage, req, info)
+			return err
 		}
 	case AppMessage:
-		for _, user := range users {
-			msg.FromUserName = s.UserName
-			msg.ToUserName = user.UserName
-			if _, err := s.self.bot.Caller.Client.WebWxSendAppMsg(msg.SendMessage, req); err != nil {
-				return err
-			}
-			time.Sleep(delay)
+		forwardFunc = func() error {
+			_, err := s.bot.Caller.Client.WebWxSendAppMsg(msg.SendMessage, req)
+			return err
 		}
 	default:
 		return fmt.Errorf("unsupported message type: %s", msg.Type)
+	}
+	for _, user := range users {
+		msg.FromUserName = s.UserName
+		msg.ToUserName = user.UserName
+		if err := forwardFunc(); err != nil {
+			return err
+		}
+		time.Sleep(delay)
 	}
 	return nil
 }
