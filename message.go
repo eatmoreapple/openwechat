@@ -294,19 +294,18 @@ func (m *Message) GetFile() (*http.Response, error) {
 	if !m.HasFile() {
 		return nil, errors.New("invalid message type")
 	}
-	if m.IsPicture() || m.IsEmoticon() {
+	switch {
+	case m.IsPicture() || m.IsEmoticon():
 		return m.bot.Caller.Client.WebWxGetMsgImg(m, m.bot.Storage.LoginInfo)
-	}
-	if m.IsVoice() {
+	case m.IsVoice():
 		return m.bot.Caller.Client.WebWxGetVoice(m, m.bot.Storage.LoginInfo)
-	}
-	if m.IsVideo() {
+	case m.IsVideo():
 		return m.bot.Caller.Client.WebWxGetVideo(m, m.bot.Storage.LoginInfo)
-	}
-	if m.IsMedia() {
+	case m.IsMedia() && m.AppMsgType == AppMsgTypeAttach:
 		return m.bot.Caller.Client.WebWxGetMedia(m, m.bot.Storage.LoginInfo)
+	default:
+		return nil, errors.New("unsupported type")
 	}
-	return nil, errors.New("unsupported type")
 }
 
 // GetPicture 获取图片消息的响应
