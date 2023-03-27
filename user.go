@@ -433,8 +433,12 @@ func (s *Self) CreateGroup(topic string, friends ...*Friend) (*Group, error) {
 		return nil, err
 	}
 	group.self = s
-	err = group.Detail()
-	return group, err
+	if err = group.Detail(); err != nil {
+		return nil, err
+	}
+	// 添加到群组列表
+	s.groups = append(s.groups, group)
+	return group, nil
 }
 
 // AddFriendsIntoGroup 拉多名好友进群
