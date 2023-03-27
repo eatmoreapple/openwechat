@@ -42,3 +42,13 @@ func (s SyncCheckResponse) Err() error {
 	}
 	return Ret(i)
 }
+
+func NewSyncCheckResponse(b []byte) (*SyncCheckResponse, error) {
+	results := syncCheckRegexp.FindSubmatch(b)
+	if len(results) != 3 {
+		return nil, errors.New("parse sync key failed")
+	}
+	retCode, selector := string(results[1]), Selector(results[2])
+	syncCheckResponse := &SyncCheckResponse{RetCode: retCode, Selector: selector}
+	return syncCheckResponse, nil
+}
