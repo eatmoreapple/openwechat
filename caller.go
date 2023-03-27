@@ -3,6 +3,7 @@ package openwechat
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -85,7 +86,7 @@ func (c *Caller) GetLoginInfo(path *url.URL) (*LoginInfo, error) {
 	}
 	var loginInfo LoginInfo
 	// xml结构体序列化储存
-	if err := scanXml(resp.Body, &loginInfo); err != nil {
+	if err = xml.NewDecoder(resp.Body).Decode(&loginInfo); err != nil {
 		return nil, err
 	}
 	if !loginInfo.Ok() {
@@ -102,7 +103,7 @@ func (c *Caller) WebInit(request *BaseRequest) (*WebInitResponse, error) {
 	}
 	var webInitResponse WebInitResponse
 	defer func() { _ = resp.Body.Close() }()
-	if err := scanJson(resp.Body, &webInitResponse); err != nil {
+	if err = json.NewDecoder(resp.Body).Decode(&webInitResponse); err != nil {
 		return nil, err
 	}
 	if !webInitResponse.BaseResponse.Ok() {
@@ -130,16 +131,10 @@ func (c *Caller) SyncCheck(request *BaseRequest, info *LoginInfo, response *WebI
 	}
 	defer func() { _ = resp.Body.Close() }()
 	var buffer bytes.Buffer
-	if _, err := buffer.ReadFrom(resp.Body); err != nil {
+	if _, err = buffer.ReadFrom(resp.Body); err != nil {
 		return nil, err
 	}
-	results := syncCheckRegexp.FindSubmatch(buffer.Bytes())
-	if len(results) != 3 {
-		return nil, errors.New("parse sync key failed")
-	}
-	retCode, selector := string(results[1]), Selector(results[2])
-	syncCheckResponse := &SyncCheckResponse{RetCode: retCode, Selector: selector}
-	return syncCheckResponse, nil
+	return NewSyncCheckResponse(buffer.Bytes())
 }
 
 // WebWxGetContact 获取所有的联系人
@@ -152,7 +147,7 @@ func (c *Caller) WebWxGetContact(info *LoginInfo) (Members, error) {
 			return nil, err
 		}
 		var item WebWxContactResponse
-		if err = scanJson(resp.Body, &item); err != nil {
+		if err = json.NewDecoder(resp.Body).Decode(&item); err != nil {
 			_ = resp.Body.Close()
 			return nil, err
 		}
@@ -181,7 +176,7 @@ func (c *Caller) WebWxBatchGetContact(members Members, request *BaseRequest) (Me
 	}
 	defer func() { _ = resp.Body.Close() }()
 	var item WebWxBatchContactResponse
-	if err := scanJson(resp.Body, &item); err != nil {
+	if err = json.NewDecoder(resp.Body).Decode(&item); err != nil {
 		return nil, err
 	}
 	if !item.BaseResponse.Ok() {
@@ -198,7 +193,7 @@ func (c *Caller) WebWxSync(request *BaseRequest, response *WebInitResponse, info
 	}
 	defer func() { _ = resp.Body.Close() }()
 	var webWxSyncResponse WebWxSyncResponse
-	if err := scanJson(resp.Body, &webWxSyncResponse); err != nil {
+	if err = json.NewDecoder(resp.Body).Decode(&webWxSyncResponse); err != nil {
 		return nil, err
 	}
 	return &webWxSyncResponse, nil
@@ -234,10 +229,8 @@ func (c *Caller) UploadMedia(file *os.File, request *BaseRequest, info *LoginInf
 		return nil, err
 	}
 	defer func() { _ = resp.Body.Close() }()
-
 	var item UploadResponse
-
-	if err := scanJson(resp.Body, &item); err != nil {
+	if err = json.NewDecoder(resp.Body).Decode(&item); err != nil {
 		return &item, err
 	}
 	if !item.BaseResponse.Ok() {
@@ -476,7 +469,7 @@ type MessageResponseParser struct {
 // Err 解析错误
 func (p *MessageResponseParser) Err() error {
 	var item struct{ BaseResponse BaseResponse }
-	if err := scanJson(p.Reader, &item); err != nil {
+	if err := json.NewDecoder(p.Reader).Decode(&item); err != nil {
 		return err
 	}
 	if !item.BaseResponse.Ok() {
@@ -488,7 +481,7 @@ func (p *MessageResponseParser) Err() error {
 // MsgID 解析消息ID
 func (p *MessageResponseParser) MsgID() (string, error) {
 	var messageResp MessageResponse
-	if err := scanJson(p.Reader, &messageResp); err != nil {
+	if err := json.NewDecoder(p.Reader).Decode(&messageResp); err != nil {
 		return "", err
 	}
 	if !messageResp.BaseResponse.Ok() {

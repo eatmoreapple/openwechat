@@ -3,8 +3,6 @@ package openwechat
 import (
 	"bytes"
 	"encoding/json"
-	"encoding/xml"
-	"io"
 	"math/rand"
 	"mime/multipart"
 	"net/http"
@@ -71,14 +69,6 @@ func getMessageType(filename string) string {
 		return video
 	}
 	return doc
-}
-
-func scanXml(reader io.Reader, v interface{}) error {
-	return xml.NewDecoder(reader).Decode(v)
-}
-
-func scanJson(reader io.Reader, v interface{}) error {
-	return json.NewDecoder(reader).Decode(v)
 }
 
 func stringToByte(s string) []byte {
