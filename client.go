@@ -129,6 +129,12 @@ func (c *Client) SetCookieJar(jar *Jar) {
 	c.client.Jar = jar.AsCookieJar()
 }
 
+// HTTPClient 返回http.Client
+// 用于自定义http.Client的行为，如设置超时时间、设置代理、设置TLS配置等
+func (c *Client) HTTPClient() *http.Client {
+	return c.client
+}
+
 // GetLoginUUID 获取登录的uuid
 func (c *Client) GetLoginUUID() (*http.Response, error) {
 	return c.mode.GetLoginUUID(c)
