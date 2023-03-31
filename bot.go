@@ -34,14 +34,11 @@ type Bot struct {
 
 // Alive 判断当前用户是否正常在线
 func (b *Bot) Alive() bool {
-	if b.self == nil {
-		return false
-	}
 	select {
 	case <-b.context.Done():
 		return false
 	default:
-		return true
+		return b.self != nil
 	}
 }
 
