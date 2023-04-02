@@ -97,7 +97,7 @@ func main() {
 
 ### 添加微信(eatmoreapple):apple:（备注: openwechat），进群交流:smiling_imp:
 
-** 如果喜欢的话，可以请作者吃包辣条。谢谢支持 :smile: **
+**如果喜欢的话，可以请作者吃包辣条。谢谢支持 :smile:**
 
 <img width="210px"  src="https://github.com/eatmoreapple/eatmoreapple/blob/main/img/wechat_pay.jpg" align="left">
 
