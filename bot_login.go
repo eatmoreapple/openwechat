@@ -111,16 +111,15 @@ func NewRetryLoginOption() BotLoginOption {
 	return &RetryLoginOption{MaxRetryCount: 1}
 }
 
-// withModeOption 指定使用哪种客户端模式
-type withModeOption struct {
-	mode Mode
+type BotPreparerFunc func(*Bot)
+
+func (f BotPreparerFunc) Prepare(b *Bot) {
+	f(b)
 }
 
-// Prepare 实现了 BotLoginOption 接口
-func (w withModeOption) Prepare(b *Bot) { b.Caller.Client.SetMode(w.mode) }
-
+// withMode 是一个 BotPreparerFunc，用于设置 Bot 的模式
 func withMode(mode Mode) BotPreparer {
-	return withModeOption{mode: mode}
+	return BotPreparerFunc(func(b *Bot) { b.Caller.Client.SetMode(mode) })
 }
 
 // btw, 这两个变量已经变了4回了, 但是为了兼容以前的代码, 还是得想着法儿让用户无感知的更新
@@ -132,17 +131,22 @@ var (
 	Desktop = withMode(desktop)
 )
 
-// WithContextOption 指定一个 context.Context 用于Bot的生命周期
-type WithContextOption struct {
-	Ctx context.Context
-}
-
-// Prepare 实现了 BotLoginOption 接口
-func (w WithContextOption) Prepare(b *Bot) {
-	if w.Ctx == nil {
+// WithContextOption 是一个 BotPreparerFunc，用于设置 Bot 的 context
+func WithContextOption(ctx context.Context) BotPreparer {
+	if ctx == nil {
 		panic("context is nil")
 	}
-	b.context, b.cancel = context.WithCancel(w.Ctx)
+	return BotPreparerFunc(func(b *Bot) { b.context, b.cancel = context.WithCancel(ctx) })
+}
+
+// WithUUIDOption 是一个 BotPreparerFunc，用于设置 Bot 的 登录 uuid
+func WithUUIDOption(uuid string) BotPreparer {
+	return BotPreparerFunc(func(b *Bot) { b.loginUUID = &uuid })
+}
+
+// WithDeviceID 是一个 BotPreparerFunc，用于设置 Bot 的 设备 id
+func WithDeviceID(deviceId string) BotPreparer {
+	return BotPreparerFunc(func(b *Bot) { b.deviceId = deviceId })
 }
 
 // BotLogin 定义了一个Login的接口

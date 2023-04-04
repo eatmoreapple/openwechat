@@ -42,15 +42,6 @@ func (b *Bot) Alive() bool {
 	}
 }
 
-// SetDeviceId
-// @description: 设置设备Id
-// @receiver b
-// @param deviceId
-// TODO ADD INTO LOGIN OPTION
-func (b *Bot) SetDeviceId(deviceId string) {
-	b.deviceId = deviceId
-}
-
 // GetCurrentUser 获取当前的用户
 //
 //	self, err := bot.GetCurrentUser()
@@ -335,15 +326,6 @@ func (b *Bot) IsHot() bool {
 // UUID returns current UUID of bot
 func (b *Bot) UUID() string {
 	return b.uuid
-}
-
-// SetUUID
-// @description: 设置UUID，可以用来手动登录用
-// @receiver b
-// @param UUID
-// TODO ADD INTO LOGIN OPTION
-func (b *Bot) SetUUID(uuid string) {
-	b.loginUUID = &uuid
 }
 
 // Context returns current context of bot
