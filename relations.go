@@ -19,32 +19,32 @@ func (f *Friend) String() string {
 
 // SetRemarkName 重命名当前好友
 func (f *Friend) SetRemarkName(name string) error {
-	return f.self.SetRemarkNameToFriend(f, name)
+	return f.Self().SetRemarkNameToFriend(f, name)
 }
 
 // SendText  发送文本消息
 func (f *Friend) SendText(content string) (*SentMessage, error) {
-	return f.self.SendTextToFriend(f, content)
+	return f.Self().SendTextToFriend(f, content)
 }
 
 // SendImage 发送图片消息
 func (f *Friend) SendImage(file io.Reader) (*SentMessage, error) {
-	return f.self.SendImageToFriend(f, file)
+	return f.Self().SendImageToFriend(f, file)
 }
 
 // SendVideo 发送视频消息
 func (f *Friend) SendVideo(file io.Reader) (*SentMessage, error) {
-	return f.self.SendVideoToFriend(f, file)
+	return f.Self().SendVideoToFriend(f, file)
 }
 
 // SendFile 发送文件消息
 func (f *Friend) SendFile(file io.Reader) (*SentMessage, error) {
-	return f.self.SendFileToFriend(f, file)
+	return f.Self().SendFileToFriend(f, file)
 }
 
 // AddIntoGroup 拉该好友入群
 func (f *Friend) AddIntoGroup(groups ...*Group) error {
-	return f.self.AddFriendIntoManyGroups(f, groups...)
+	return f.Self().AddFriendIntoManyGroups(f, groups...)
 }
 
 type Friends []*Friend
@@ -126,7 +126,7 @@ func (f Friends) SendText(text string, delays ...time.Duration) error {
 	if len(delays) > 0 {
 		delay = delays[0]
 	}
-	self := f.First().self
+	self := f.First().Self()
 	return self.SendTextToFriends(text, delay, f...)
 }
 
@@ -139,7 +139,7 @@ func (f Friends) SendImage(file io.Reader, delays ...time.Duration) error {
 	if len(delays) > 0 {
 		delay = delays[0]
 	}
-	self := f.First().self
+	self := f.First().Self()
 	return self.SendImageToFriends(file, delay, f...)
 }
 
@@ -152,7 +152,7 @@ func (f Friends) SendFile(file io.Reader, delay ...time.Duration) error {
 	if len(delay) > 0 {
 		d = delay[0]
 	}
-	self := f.First().self
+	self := f.First().Self()
 	return self.SendFileToFriends(file, d, f...)
 }
 
@@ -165,22 +165,22 @@ func (g *Group) String() string {
 
 // SendText 发行文本消息给当前的群组
 func (g *Group) SendText(content string) (*SentMessage, error) {
-	return g.self.SendTextToGroup(g, content)
+	return g.Self().SendTextToGroup(g, content)
 }
 
 // SendImage 发行图片消息给当前的群组
 func (g *Group) SendImage(file io.Reader) (*SentMessage, error) {
-	return g.self.SendImageToGroup(g, file)
+	return g.Self().SendImageToGroup(g, file)
 }
 
 // SendVideo 发行视频消息给当前的群组
 func (g *Group) SendVideo(file io.Reader) (*SentMessage, error) {
-	return g.self.SendVideoToGroup(g, file)
+	return g.Self().SendVideoToGroup(g, file)
 }
 
 // SendFile 发送文件给当前的群组
 func (g *Group) SendFile(file io.Reader) (*SentMessage, error) {
-	return g.self.SendFileToGroup(g, file)
+	return g.Self().SendFileToGroup(g, file)
 }
 
 // Members 获取所有的群成员
@@ -188,7 +188,7 @@ func (g *Group) Members() (Members, error) {
 	if err := g.Detail(); err != nil {
 		return nil, err
 	}
-	g.MemberList.init(g.self)
+	g.MemberList.init(g.Self())
 	return g.MemberList, nil
 }
 
@@ -202,12 +202,12 @@ func (g *Group) AddFriendsIn(friends ...*Friend) error {
 // Deprecated
 // 无论是网页版，还是程序上都不起作用
 func (g *Group) RemoveMembers(members Members) error {
-	return g.self.RemoveMemberFromGroup(g, members)
+	return g.Self().RemoveMemberFromGroup(g, members)
 }
 
 // Rename 群组重命名
 func (g *Group) Rename(name string) error {
-	return g.self.RenameGroup(g, name)
+	return g.Self().RenameGroup(g, name)
 }
 
 // SearchMemberByUsername 根据用户名查找群成员
@@ -264,7 +264,7 @@ func (g Groups) SendText(text string, delay ...time.Duration) error {
 	if len(delay) > 0 {
 		d = delay[0]
 	}
-	self := g.First().self
+	self := g.First().Self()
 	return self.SendTextToGroups(text, d, g...)
 }
 
@@ -277,7 +277,7 @@ func (g Groups) SendImage(file io.Reader, delay ...time.Duration) error {
 	if len(delay) > 0 {
 		d = delay[0]
 	}
-	self := g.First().self
+	self := g.First().Self()
 	return self.SendImageToGroups(file, d, g...)
 }
 
@@ -290,7 +290,7 @@ func (g Groups) SendFile(file io.Reader, delay ...time.Duration) error {
 	if len(delay) > 0 {
 		d = delay[0]
 	}
-	self := g.First().self
+	self := g.First().Self()
 	return self.SendFileToGroups(file, d, g...)
 }
 
@@ -368,7 +368,7 @@ func (m Mps) Last() *Mp {
 }
 
 // Search 根据自定义条件查找
-func (m Mps) Search(limit int, searchFuncList ...func(group *Mp) bool) (results Mps) {
+func (m Mps) Search(limit int, searchFuncList ...func(*Mp) bool) (results Mps) {
 	return m.AsMembers().Search(limit, func(user *User) bool {
 		var mp = &Mp{user}
 		for _, searchFunc := range searchFuncList {
@@ -401,27 +401,27 @@ func (m Mps) Uniq() Mps {
 
 // SearchByUserName 根据用户名查找
 func (m Mps) SearchByUserName(limit int, userName string) (results Mps) {
-	return m.Search(limit, func(group *Mp) bool { return group.UserName == userName })
+	return m.Search(limit, func(mp *Mp) bool { return mp.UserName == userName })
 }
 
 // SearchByNickName 根据昵称查找
 func (m Mps) SearchByNickName(limit int, nickName string) (results Mps) {
-	return m.Search(limit, func(group *Mp) bool { return group.NickName == nickName })
+	return m.Search(limit, func(mp *Mp) bool { return mp.NickName == nickName })
 }
 
 // SendText 发送文本消息给公众号
 func (m *Mp) SendText(content string) (*SentMessage, error) {
-	return m.self.SendTextToMp(m, content)
+	return m.Self().SendTextToMp(m, content)
 }
 
 // SendImage 发送图片消息给公众号
 func (m *Mp) SendImage(file io.Reader) (*SentMessage, error) {
-	return m.self.SendImageToMp(m, file)
+	return m.Self().SendImageToMp(m, file)
 }
 
 // SendFile 发送文件消息给公众号
 func (m *Mp) SendFile(file io.Reader) (*SentMessage, error) {
-	return m.self.SendFileToMp(m, file)
+	return m.Self().SendFileToMp(m, file)
 }
 
 // GetByUsername 根据username查询一个Friend
@@ -460,7 +460,7 @@ func (m Mps) GetByUserName(username string) *Mp {
 }
 
 // search 根据自定义条件查找
-func search(searchList Members, limit int, searchFunc func(group *User) bool) (results Members) {
+func search(searchList Members, limit int, searchFunc func(*User) bool) (results Members) {
 	if limit <= 0 {
 		limit = searchList.Count()
 	}
