@@ -709,26 +709,13 @@ func (s *Self) MPSubscribeList() []*MPSubscribeMsg {
 // Members 抽象的用户组
 type Members []*User
 
-func (m Members) Len() int {
-	return len(m)
-}
-
-// Less 按照微信的规则排序
-func (m Members) Less(i, j int) bool {
-	return m[i].OrderSymbol() < m[j].OrderSymbol()
-}
-
-func (m Members) Swap(i, j int) {
-	m[i], m[j] = m[j], m[i]
-}
-
 // Uniq Members 去重
 func (m Members) Uniq() Members {
 	var uniqMembers = make(map[string]*User)
 	for _, member := range m {
 		uniqMembers[member.UserName] = member
 	}
-	var members Members
+	var members = make(Members, 0, len(uniqMembers))
 	for _, member := range uniqMembers {
 		members = append(members, member)
 	}
@@ -737,7 +724,7 @@ func (m Members) Uniq() Members {
 
 // Sort 对联系人进行排序
 func (m Members) Sort() Members {
-	sort.Sort(m)
+	sort.Slice(m, func(i, j int) bool { return m[i].OrderSymbol() < m[j].OrderSymbol() })
 	return m
 }
 
@@ -915,7 +902,7 @@ func newMembersUpdater(members Members) *membersUpdater {
 
 // Detail 获取当前 Members 的详情
 func (m Members) Detail() error {
-	if m.Len() == 0 {
+	if m.Count() == 0 {
 		return nil
 	}
 	updater := newMembersUpdater(m)
