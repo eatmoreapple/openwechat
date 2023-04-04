@@ -147,8 +147,7 @@ func TestGetUUID(t *testing.T) {
 // @param t
 func TestLoginWithUUID(t *testing.T) {
 	uuid := "oZZsO0Qv8Q=="
-	bot := DefaultBot(Desktop)
-	bot.SetUUID(uuid)
+	bot := DefaultBot(Desktop, WithUUIDOption(uuid))
 	err := bot.Login()
 	if err != nil {
 		t.Errorf("登录失败: %v", err.Error())
