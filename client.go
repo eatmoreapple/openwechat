@@ -148,7 +148,10 @@ func (c *Client) GetLoginQrcode(uuid string) (*http.Response, error) {
 
 // CheckLogin 检查是否登录
 func (c *Client) CheckLogin(uuid, tip string) (*http.Response, error) {
-	path, _ := url.Parse(login)
+	path, err := url.Parse(login)
+	if err != nil {
+		return nil, err
+	}
 	now := time.Now().Unix()
 	params := url.Values{}
 	params.Add("r", strconv.FormatInt(now/1579, 10))
@@ -169,23 +172,32 @@ func (c *Client) GetLoginInfo(path *url.URL) (*http.Response, error) {
 
 // WebInit 请求获取初始化信息
 func (c *Client) WebInit(request *BaseRequest) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxinit)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxinit)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("_", fmt.Sprintf("%d", time.Now().Unix()))
 	path.RawQuery = params.Encode()
 	content := struct{ BaseRequest *BaseRequest }{BaseRequest: request}
-	body, err := ToBuffer(content)
+	body, err := jsonEncode(content)
 	if err != nil {
 		return nil, err
 	}
-	req, _ := http.NewRequest(http.MethodPost, path.String(), body)
+	req, err := http.NewRequest(http.MethodPost, path.String(), body)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Content-Type", jsonContentType)
 	return c.Do(req)
 }
 
 // WebWxStatusNotify 通知手机已登录
 func (c *Client) WebWxStatusNotify(request *BaseRequest, response *WebInitResponse, info *LoginInfo) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxstatusnotify)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxstatusnotify)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("lang", "zh_CN")
 	params.Add("pass_ticket", info.PassTicket)
@@ -198,15 +210,24 @@ func (c *Client) WebWxStatusNotify(request *BaseRequest, response *WebInitRespon
 		"ToUserName":   username,
 	}
 	path.RawQuery = params.Encode()
-	buffer, _ := ToBuffer(content)
-	req, _ := http.NewRequest(http.MethodPost, path.String(), buffer)
+	buffer, err := jsonEncode(content)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPost, path.String(), buffer)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Content-Type", jsonContentType)
 	return c.Do(req)
 }
 
 // SyncCheck 异步检查是否有新的消息返回
 func (c *Client) SyncCheck(request *BaseRequest, info *LoginInfo, response *WebInitResponse) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.SyncHost() + synccheck)
+	path, err := url.Parse(c.Domain.SyncHost() + synccheck)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("r", strconv.FormatInt(time.Now().UnixNano()/1e6, 10))
 	params.Add("skey", info.SKey)
@@ -223,25 +244,37 @@ func (c *Client) SyncCheck(request *BaseRequest, info *LoginInfo, response *WebI
 	syncKey := strings.Join(syncKeyStringSlice, "|")
 	params.Add("synckey", syncKey)
 	path.RawQuery = params.Encode()
-	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 	return c.Do(req)
 }
 
 // WebWxGetContact 获取联系人信息
 func (c *Client) WebWxGetContact(info *LoginInfo, reqs int64) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxgetcontact)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxgetcontact)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("r", strconv.FormatInt(time.Now().UnixNano()/1e6, 10))
 	params.Add("skey", info.SKey)
 	params.Add("seq", strconv.FormatInt(reqs, 10))
 	path.RawQuery = params.Encode()
-	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 	return c.Do(req)
 }
 
 // WebWxBatchGetContact 获取联系人详情
 func (c *Client) WebWxBatchGetContact(members Members, request *BaseRequest) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxbatchgetcontact)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxbatchgetcontact)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("type", "ex")
 	params.Add("r", strconv.FormatInt(time.Now().UnixNano()/1e6, 10))
@@ -252,15 +285,24 @@ func (c *Client) WebWxBatchGetContact(members Members, request *BaseRequest) (*h
 		"Count":       members.Count(),
 		"List":        list,
 	}
-	body, _ := ToBuffer(content)
-	req, _ := http.NewRequest(http.MethodPost, path.String(), body)
+	body, err := jsonEncode(content)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPost, path.String(), body)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Content-Type", jsonContentType)
 	return c.Do(req)
 }
 
 // WebWxSync 获取消息接口
 func (c *Client) WebWxSync(request *BaseRequest, response *WebInitResponse, info *LoginInfo) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxsync)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxsync)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("sid", info.WxSid)
 	params.Add("skey", info.SKey)
@@ -271,9 +313,14 @@ func (c *Client) WebWxSync(request *BaseRequest, response *WebInitResponse, info
 		"SyncKey":     response.SyncKey,
 		"rr":          strconv.FormatInt(time.Now().Unix(), 10),
 	}
-	data, _ := json.Marshal(content)
-	body := bytes.NewBuffer(data)
-	req, _ := http.NewRequest(http.MethodPost, path.String(), body)
+	reader, err := jsonEncode(content)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPost, path.String(), reader)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Content-Type", jsonContentType)
 	return c.Do(req)
 }
@@ -285,8 +332,14 @@ func (c *Client) sendMessage(request *BaseRequest, url string, msg *SendMessage)
 		"Msg":         msg,
 		"Scene":       0,
 	}
-	body, _ := ToBuffer(content)
-	req, _ := http.NewRequest(http.MethodPost, url, body)
+	body, err := jsonEncode(content)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPost, url, body)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Content-Type", jsonContentType)
 	return c.Do(req)
 }
@@ -294,7 +347,10 @@ func (c *Client) sendMessage(request *BaseRequest, url string, msg *SendMessage)
 // WebWxSendMsg 发送文本消息
 func (c *Client) WebWxSendMsg(msg *SendMessage, info *LoginInfo, request *BaseRequest) (*http.Response, error) {
 	msg.Type = MsgTypeText
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxsendmsg)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxsendmsg)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("lang", "zh_CN")
 	params.Add("pass_ticket", info.PassTicket)
@@ -314,11 +370,17 @@ func (c *Client) WebWxGetHeadImg(user *User) (*http.Response, error) {
 		params.Add("type", "big")
 		params.Add("chatroomid", user.EncryChatRoomId)
 		params.Add("seq", "0")
-		URL, _ := url.Parse(c.Domain.BaseHost() + webwxgeticon)
+		URL, err := url.Parse(c.Domain.BaseHost() + webwxgeticon)
+		if err != nil {
+			return nil, err
+		}
 		URL.RawQuery = params.Encode()
 		path = URL.String()
 	}
-	req, _ := http.NewRequest(http.MethodGet, path, nil)
+	req, err := http.NewRequest(http.MethodGet, path, nil)
+	if err != nil {
+		return nil, err
+	}
 	return c.Do(req)
 }
 
@@ -361,7 +423,10 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 	// 获取文件的类型
 	mediaType := getMessageType(filename)
 
-	path, _ := url.Parse(c.Domain.FileHost() + webwxuploadmedia)
+	path, err := url.Parse(c.Domain.FileHost() + webwxuploadmedia)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("f", "json")
 
@@ -497,7 +562,10 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 // 发送的图片必须是已经成功上传的图片
 func (c *Client) WebWxSendMsgImg(msg *SendMessage, request *BaseRequest, info *LoginInfo) (*http.Response, error) {
 	msg.Type = MsgTypeImage
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxsendmsgimg)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxsendmsgimg)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("fun", "async")
 	params.Add("f", "json")
@@ -510,7 +578,10 @@ func (c *Client) WebWxSendMsgImg(msg *SendMessage, request *BaseRequest, info *L
 // WebWxSendAppMsg 发送文件信息
 func (c *Client) WebWxSendAppMsg(msg *SendMessage, request *BaseRequest) (*http.Response, error) {
 	msg.Type = AppMessage
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxsendappmsg)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxsendappmsg)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("fun", "async")
 	params.Add("f", "json")
@@ -520,7 +591,10 @@ func (c *Client) WebWxSendAppMsg(msg *SendMessage, request *BaseRequest) (*http.
 
 // WebWxOplog 用户重命名接口
 func (c *Client) WebWxOplog(request *BaseRequest, remarkName, userName string) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxoplog)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxoplog)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("lang", "zh_CN")
 	path.RawQuery = params.Encode()
@@ -530,8 +604,14 @@ func (c *Client) WebWxOplog(request *BaseRequest, remarkName, userName string) (
 		"RemarkName":  remarkName,
 		"UserName":    userName,
 	}
-	body, _ := ToBuffer(content)
-	req, _ := http.NewRequest(http.MethodPost, path.String(), body)
+	body, err := jsonEncode(content)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPost, path.String(), body)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Content-Type", jsonContentType)
 	return c.Do(req)
 }
@@ -539,7 +619,10 @@ func (c *Client) WebWxOplog(request *BaseRequest, remarkName, userName string) (
 // WebWxVerifyUser 添加用户为好友接口
 func (c *Client) WebWxVerifyUser(storage *Storage, info RecommendInfo, verifyContent string) (*http.Response, error) {
 	loginInfo := storage.LoginInfo
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxverifyuser)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxverifyuser)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("r", strconv.FormatInt(time.Now().UnixNano()/1e6, 10))
 	params.Add("lang", "zh_CN")
@@ -558,32 +641,50 @@ func (c *Client) WebWxVerifyUser(storage *Storage, info RecommendInfo, verifyCon
 		"VerifyUserListSize": 1,
 		"skey":               storage.Request.Skey,
 	}
-	body, _ := ToBuffer(content)
-	req, _ := http.NewRequest(http.MethodPost, path.String(), body)
+	body, err := jsonEncode(content)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPost, path.String(), body)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Content-Type", jsonContentType)
 	return c.Do(req)
 }
 
 // WebWxGetMsgImg 获取图片消息的图片响应
 func (c *Client) WebWxGetMsgImg(msg *Message, info *LoginInfo) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxgetmsgimg)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxgetmsgimg)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("MsgID", msg.MsgId)
 	params.Add("skey", info.SKey)
 	// params.Add("type", "slave")
 	path.RawQuery = params.Encode()
-	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 	return c.Do(req)
 }
 
 // WebWxGetVoice 获取语音消息的语音响应
 func (c *Client) WebWxGetVoice(msg *Message, info *LoginInfo) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxgetvoice)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxgetvoice)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("msgid", msg.MsgId)
 	params.Add("skey", info.SKey)
 	path.RawQuery = params.Encode()
-	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Referer", path.String())
 	req.Header.Add("Range", "bytes=0-")
 	return c.Do(req)
@@ -591,12 +692,18 @@ func (c *Client) WebWxGetVoice(msg *Message, info *LoginInfo) (*http.Response, e
 
 // WebWxGetVideo 获取视频消息的视频响应
 func (c *Client) WebWxGetVideo(msg *Message, info *LoginInfo) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxgetvideo)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxgetvideo)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("msgid", msg.MsgId)
 	params.Add("skey", info.SKey)
 	path.RawQuery = params.Encode()
-	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Referer", path.String())
 	req.Header.Add("Range", "bytes=0-")
 	return c.Do(req)
@@ -604,7 +711,10 @@ func (c *Client) WebWxGetVideo(msg *Message, info *LoginInfo) (*http.Response, e
 
 // WebWxGetMedia 获取文件消息的文件响应
 func (c *Client) WebWxGetMedia(msg *Message, info *LoginInfo) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.FileHost() + webwxgetmedia)
+	path, err := url.Parse(c.Domain.FileHost() + webwxgetmedia)
+	if err != nil {
+		return nil, err
+	}
 	cookies := c.Jar().Cookies(path)
 	webWxDataTicket, err := getWebWxDataTicket(cookies)
 	if err != nil {
@@ -618,20 +728,29 @@ func (c *Client) WebWxGetMedia(msg *Message, info *LoginInfo) (*http.Response, e
 	params.Add("pass_ticket", info.PassTicket)
 	params.Add("webwx_data_ticket", webWxDataTicket)
 	path.RawQuery = params.Encode()
-	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Referer", c.Domain.BaseHost()+"/")
 	return c.Do(req)
 }
 
 // Logout 用户退出
 func (c *Client) Logout(info *LoginInfo) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxlogout)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxlogout)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("redirect", "1")
 	params.Add("type", "1")
 	params.Add("skey", info.SKey)
 	path.RawQuery = params.Encode()
-	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 	return c.Do(req)
 }
 
@@ -645,7 +764,10 @@ func (c *Client) AddMemberIntoChatRoom(req *BaseRequest, info *LoginInfo, group 
 
 // addMemberIntoChatRoom 添加用户进群聊
 func (c *Client) addMemberIntoChatRoom(req *BaseRequest, info *LoginInfo, group *Group, friends ...*Friend) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxupdatechatroom)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxupdatechatroom)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("fun", "addmember")
 	params.Add("pass_ticket", info.PassTicket)
@@ -660,15 +782,24 @@ func (c *Client) addMemberIntoChatRoom(req *BaseRequest, info *LoginInfo, group 
 		"BaseRequest":   req,
 		"AddMemberList": strings.Join(addMemberList, ","),
 	}
-	buffer, _ := ToBuffer(content)
-	requ, _ := http.NewRequest(http.MethodPost, path.String(), buffer)
-	requ.Header.Set("Content-Type", jsonContentType)
-	return c.Do(requ)
+	buffer, err := jsonEncode(content)
+	if err != nil {
+		return nil, err
+	}
+	httpReq, err := http.NewRequest(http.MethodPost, path.String(), buffer)
+	if err != nil {
+		return nil, err
+	}
+	httpReq.Header.Set("Content-Type", jsonContentType)
+	return c.Do(httpReq)
 }
 
 // InviteMemberIntoChatRoom 邀请用户进群聊
 func (c *Client) InviteMemberIntoChatRoom(req *BaseRequest, info *LoginInfo, group *Group, friends ...*Friend) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxupdatechatroom)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxupdatechatroom)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("fun", "invitemember")
 	params.Add("pass_ticket", info.PassTicket)
@@ -683,15 +814,24 @@ func (c *Client) InviteMemberIntoChatRoom(req *BaseRequest, info *LoginInfo, gro
 		"BaseRequest":      req,
 		"InviteMemberList": strings.Join(addMemberList, ","),
 	}
-	buffer, _ := ToBuffer(content)
-	requ, _ := http.NewRequest(http.MethodPost, path.String(), buffer)
-	requ.Header.Set("Content-Type", jsonContentType)
-	return c.Do(requ)
+	buffer, err := jsonEncode(content)
+	if err != nil {
+		return nil, err
+	}
+	httpReq, err := http.NewRequest(http.MethodPost, path.String(), buffer)
+	if err != nil {
+		return nil, err
+	}
+	httpReq.Header.Set("Content-Type", jsonContentType)
+	return c.Do(httpReq)
 }
 
 // RemoveMemberFromChatRoom 从群聊中移除用户
 func (c *Client) RemoveMemberFromChatRoom(req *BaseRequest, info *LoginInfo, group *Group, friends ...*User) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxupdatechatroom)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxupdatechatroom)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("fun", "delmember")
 	params.Add("lang", "zh_CN")
@@ -705,10 +845,16 @@ func (c *Client) RemoveMemberFromChatRoom(req *BaseRequest, info *LoginInfo, gro
 		"BaseRequest":   req,
 		"DelMemberList": strings.Join(delMemberList, ","),
 	}
-	buffer, _ := ToBuffer(content)
-	requ, _ := http.NewRequest(http.MethodPost, path.String(), buffer)
-	requ.Header.Set("Content-Type", jsonContentType)
-	return c.Do(requ)
+	buffer, err := jsonEncode(content)
+	if err != nil {
+		return nil, err
+	}
+	httpReq, err := http.NewRequest(http.MethodPost, path.String(), buffer)
+	if err != nil {
+		return nil, err
+	}
+	httpReq.Header.Set("Content-Type", jsonContentType)
+	return c.Do(httpReq)
 }
 
 // WebWxRevokeMsg 撤回消息
@@ -719,15 +865,24 @@ func (c *Client) WebWxRevokeMsg(msg *SentMessage, request *BaseRequest) (*http.R
 		"SvrMsgId":    msg.MsgId,
 		"ToUserName":  msg.ToUserName,
 	}
-	buffer, _ := ToBuffer(content)
-	req, _ := http.NewRequest(http.MethodPost, c.Domain.BaseHost()+webwxrevokemsg, buffer)
+	buffer, err := jsonEncode(content)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPost, c.Domain.BaseHost()+webwxrevokemsg, buffer)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Set("Content-Type", jsonContentType)
 	return c.Do(req)
 }
 
 // 校验上传文件
 func (c *Client) webWxCheckUpload(stat os.FileInfo, request *BaseRequest, fileMd5, fromUserName, toUserName string) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxcheckupload)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxcheckupload)
+	if err != nil {
+		return nil, err
+	}
 	content := map[string]interface{}{
 		"BaseRequest":  request,
 		"FileMd5":      fileMd5,
@@ -737,14 +892,23 @@ func (c *Client) webWxCheckUpload(stat os.FileInfo, request *BaseRequest, fileMd
 		"FromUserName": fromUserName,
 		"ToUserName":   toUserName,
 	}
-	body, _ := ToBuffer(content)
-	req, _ := http.NewRequest(http.MethodPost, path.String(), body)
+	body, err := jsonEncode(content)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPost, path.String(), body)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Content-Type", jsonContentType)
 	return c.Do(req)
 }
 
 func (c *Client) WebWxStatusAsRead(request *BaseRequest, info *LoginInfo, msg *Message) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxstatusnotify)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxstatusnotify)
+	if err != nil {
+		return nil, err
+	}
 	content := map[string]interface{}{
 		"BaseRequest":  request,
 		"DeviceID":     request.DeviceID,
@@ -756,15 +920,24 @@ func (c *Client) WebWxStatusAsRead(request *BaseRequest, info *LoginInfo, msg *M
 		"FromUserName": msg.ToUserName,
 		"ToUserName":   msg.FromUserName,
 	}
-	body, _ := ToBuffer(content)
-	req, _ := http.NewRequest(http.MethodPost, path.String(), body)
+	body, err := jsonEncode(content)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPost, path.String(), body)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Content-Type", jsonContentType)
 	return c.Do(req)
 }
 
 // WebWxRelationPin 联系人置顶接口
 func (c *Client) WebWxRelationPin(request *BaseRequest, op uint8, user *User) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxoplog)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxoplog)
+	if err != nil {
+		return nil, err
+	}
 	content := map[string]interface{}{
 		"BaseRequest": request,
 		"CmdId":       3,
@@ -772,8 +945,14 @@ func (c *Client) WebWxRelationPin(request *BaseRequest, op uint8, user *User) (*
 		"RemarkName":  user.RemarkName,
 		"UserName":    user.UserName,
 	}
-	body, _ := ToBuffer(content)
-	req, _ := http.NewRequest(http.MethodPost, path.String(), body)
+	body, err := jsonEncode(content)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPost, path.String(), body)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Content-Type", jsonContentType)
 	return c.Do(req)
 }
@@ -785,7 +964,10 @@ func (c *Client) WebWxPushLogin(uin int64) (*http.Response, error) {
 
 // WebWxSendVideoMsg 发送视频消息接口
 func (c *Client) WebWxSendVideoMsg(request *BaseRequest, msg *SendMessage) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxsendvideomsg)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxsendvideomsg)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("fun", "async")
 	params.Add("f", "json")
@@ -797,7 +979,10 @@ func (c *Client) WebWxSendVideoMsg(request *BaseRequest, msg *SendMessage) (*htt
 
 // WebWxCreateChatRoom 创建群聊
 func (c *Client) WebWxCreateChatRoom(request *BaseRequest, info *LoginInfo, topic string, friends Friends) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxcreatechatroom)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxcreatechatroom)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("pass_ticket", info.PassTicket)
 	params.Add("r", fmt.Sprintf("%d", time.Now().Unix()))
@@ -813,15 +998,24 @@ func (c *Client) WebWxCreateChatRoom(request *BaseRequest, info *LoginInfo, topi
 		"MemberList":  memberList,
 		"Topic":       topic,
 	}
-	body, _ := ToBuffer(content)
-	req, _ := http.NewRequest(http.MethodPost, path.String(), body)
+	body, err := jsonEncode(content)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPost, path.String(), body)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Content-Type", jsonContentType)
 	return c.Do(req)
 }
 
 // WebWxRenameChatRoom 群组重命名接口
 func (c *Client) WebWxRenameChatRoom(request *BaseRequest, info *LoginInfo, newTopic string, group *Group) (*http.Response, error) {
-	path, _ := url.Parse(c.Domain.BaseHost() + webwxupdatechatroom)
+	path, err := url.Parse(c.Domain.BaseHost() + webwxupdatechatroom)
+	if err != nil {
+		return nil, err
+	}
 	params := url.Values{}
 	params.Add("fun", "modtopic")
 	params.Add("pass_ticket", info.PassTicket)
@@ -831,8 +1025,14 @@ func (c *Client) WebWxRenameChatRoom(request *BaseRequest, info *LoginInfo, newT
 		"ChatRoomName": group.UserName,
 		"NewTopic":     newTopic,
 	}
-	body, _ := ToBuffer(content)
-	req, _ := http.NewRequest(http.MethodPost, path.String(), body)
+	body, err := jsonEncode(content)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPost, path.String(), body)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Content-Type", jsonContentType)
 	return c.Do(req)
 }
