@@ -85,6 +85,11 @@ func (f Friends) SearchByRemarkName(limit int, remarkName string) (results Frien
 	return f.Search(limit, func(friend *Friend) bool { return friend.User.RemarkName == remarkName })
 }
 
+// SearchByID 根据ID查找好友
+func (f Friends) SearchByID(id string) Friends {
+	return f.Search(1, func(friend *Friend) bool { return friend.User.ID() == id })
+}
+
 // Search 根据自定义条件查找好友
 func (f Friends) Search(limit int, searchFuncList ...func(friend *Friend) bool) (results Friends) {
 	return f.AsMembers().Search(limit, func(user *User) bool {
@@ -302,6 +307,11 @@ func (g Groups) SearchByUserName(limit int, username string) (results Groups) {
 // SearchByNickName 根据昵称查找群组
 func (g Groups) SearchByNickName(limit int, nickName string) (results Groups) {
 	return g.Search(limit, func(group *Group) bool { return group.NickName == nickName })
+}
+
+// SearchByID 根据ID查找群组
+func (g Groups) SearchByID(id string) Groups {
+	return g.Search(1, func(group *Group) bool { return group.ID() == id })
 }
 
 // Search 根据自定义条件查找群组
