@@ -267,8 +267,11 @@ func (b *Bot) syncMessage() ([]*Message, error) {
 	if err != nil {
 		return nil, err
 	}
-	// 更新SyncKey并且重新存入storage
-	b.Storage.Response.SyncKey = resp.SyncKey
+
+	// 更新SyncKey并且重新存入storage 如获取到的SyncKey为空则不更新
+	if resp.SyncKey.Count > 0 {
+		b.Storage.Response.SyncKey = resp.SyncKey
+	}
 	return resp.AddMsgList, nil
 }
 
