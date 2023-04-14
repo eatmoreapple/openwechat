@@ -804,12 +804,12 @@ func (m *Message) IsJoinGroup() bool {
 
 // IsTickled 判断消息是否为拍一拍
 func (m *Message) IsTickled() bool {
-	return m.IsSystem() && strings.Contains(m.Content, "拍了拍")
+	return m.IsSystem() && (strings.Contains(m.Content, "拍了拍") || strings.Contains(m.Content, "拍拍"))
 }
 
 // IsTickledMe 判断消息是否拍了拍自己
 func (m *Message) IsTickledMe() bool {
-	return m.IsSystem() && strings.Count(m.Content, "拍了拍我") == 1
+	return m.IsSystem() && (strings.Count(m.Content, "拍了拍我") == 1 || strings.Count(m.Content, "拍拍我") == 1)
 }
 
 // IsVoipInvite 判断消息是否为语音或视频通话邀请
