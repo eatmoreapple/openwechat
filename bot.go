@@ -23,11 +23,11 @@ type Bot struct {
 	Caller              *Caller
 	err                 error
 	context             context.Context
-	cancel              context.CancelFunc
+	cancel              func()
 	self                *Self
 	hotReloadStorage    HotReloadStorage
 	uuid                string
-	loginUUID           *string
+	loginUUID           string
 	deviceId            string // 设备Id
 	loginOptionGroup    BotOptionGroup
 }
@@ -76,6 +76,7 @@ func (b *Bot) Login() error {
 }
 
 // HotLogin 热登录,可实现在单位时间内免重复扫码登录
+// 热登录需要先扫码登录一次才可以进行热登录
 func (b *Bot) HotLogin(storage HotReloadStorage, opts ...BotLoginOption) error {
 	hotLogin := &HotLogin{storage: storage}
 	// 进行相关设置。
@@ -86,8 +87,6 @@ func (b *Bot) HotLogin(storage HotReloadStorage, opts ...BotLoginOption) error {
 
 // PushLogin 免扫码登录
 // 免扫码登录需要先扫码登录一次才可以进行扫码登录
-// 扫码登录成功后需要利用微信号发送一条消息，然后在手机上进行主动退出。
-// 这时候在进行一次 PushLogin 即可。
 func (b *Bot) PushLogin(storage HotReloadStorage, opts ...BotLoginOption) error {
 	pushLogin := &PushLogin{storage: storage}
 	// 进行相关设置。
@@ -109,8 +108,8 @@ func (b *Bot) Logout() error {
 	return errors.New("user not login")
 }
 
-// HandleLogin 登录逻辑
-func (b *Bot) HandleLogin(path *url.URL) error {
+// loginFromURL 登录逻辑
+func (b *Bot) loginFromURL(path *url.URL) error {
 	// 获取登录的一些基本的信息
 	info, err := b.Caller.GetLoginInfo(path)
 	if err != nil {
@@ -135,11 +134,11 @@ func (b *Bot) HandleLogin(path *url.URL) error {
 	// 将BaseRequest存到storage里面方便后续调用
 	b.Storage.Request = request
 
-	return b.WebInit()
+	return b.webInit()
 }
 
 // WebInit 根据有效凭证获取和初始化用户信息
-func (b *Bot) WebInit() error {
+func (b *Bot) webInit() error {
 	req := b.Storage.Request
 	info := b.Storage.LoginInfo
 	// 获取初始化的用户信息和一些必要的参数
@@ -175,7 +174,7 @@ func (b *Bot) WebInit() error {
 			b.MessageErrorHandler = defaultSyncCheckErrHandler(b)
 		}
 		for {
-			err := b.syncCheck()
+			err = b.syncCheck()
 			if err == nil {
 				continue
 			}

@@ -141,7 +141,7 @@ func WithContextOption(ctx context.Context) BotPreparer {
 
 // WithUUIDOption 是一个 BotPreparerFunc，用于设置 Bot 的 登录 uuid
 func WithUUIDOption(uuid string) BotPreparer {
-	return BotPreparerFunc(func(b *Bot) { b.loginUUID = &uuid })
+	return BotPreparerFunc(func(b *Bot) { b.loginUUID = uuid })
 }
 
 // WithDeviceID 是一个 BotPreparerFunc，用于设置 Bot 的 设备 id
@@ -156,20 +156,18 @@ type BotLogin interface {
 
 // ScanLogin 扫码登录
 type ScanLogin struct {
-	UUID *string
+	UUID string
 }
 
 // Login 实现了 BotLogin 接口
 func (s *ScanLogin) Login(bot *Bot) error {
-	var uuid string
-	if s.UUID == nil {
+	var uuid = s.UUID
+	if uuid == "" {
 		var err error
 		uuid, err = bot.Caller.GetLoginUUID()
 		if err != nil {
 			return err
 		}
-	} else {
-		uuid = *s.UUID
 	}
 	return s.checkLogin(bot, uuid)
 }
@@ -187,6 +185,11 @@ func (s *ScanLogin) checkLogin(bot *Bot, uuid string) error {
 	return loginChecker.CheckLogin()
 }
 
+func botReload(bot *Bot, storage HotReloadStorage) error {
+	bot.hotReloadStorage = storage
+	return bot.reload()
+}
+
 // HotLogin 热登录模式
 type HotLogin struct {
 	storage HotReloadStorage
@@ -194,15 +197,10 @@ type HotLogin struct {
 
 // Login 实现了 BotLogin 接口
 func (h *HotLogin) Login(bot *Bot) error {
-	if err := h.hotLoginInit(bot); err != nil {
+	if err := botReload(bot, h.storage); err != nil {
 		return err
 	}
-	return bot.WebInit()
-}
-
-func (h *HotLogin) hotLoginInit(bot *Bot) error {
-	bot.hotReloadStorage = h.storage
-	return bot.reload()
+	return bot.webInit()
 }
 
 // PushLogin 免扫码登录模式
@@ -212,7 +210,7 @@ type PushLogin struct {
 
 // Login 实现了 BotLogin 接口
 func (p *PushLogin) Login(bot *Bot) error {
-	if err := p.pushLoginInit(bot); err != nil {
+	if err := botReload(bot, p.storage); err != nil {
 		return err
 	}
 	resp, err := bot.Caller.WebWxPushLogin(bot.Storage.LoginInfo.WxUin)
@@ -223,11 +221,6 @@ func (p *PushLogin) Login(bot *Bot) error {
 		return err
 	}
 	return p.checkLogin(bot, resp.UUID)
-}
-
-func (p *PushLogin) pushLoginInit(bot *Bot) error {
-	bot.hotReloadStorage = p.storage
-	return bot.reload()
 }
 
 // checkLogin 登录检查
@@ -278,7 +271,7 @@ func (l *LoginChecker) CheckLogin() error {
 			if err != nil {
 				return err
 			}
-			if err = l.Bot.HandleLogin(redirectURL); err != nil {
+			if err = l.Bot.loginFromURL(redirectURL); err != nil {
 				return err
 			}
 			if cb := l.LoginCallBack; cb != nil {
