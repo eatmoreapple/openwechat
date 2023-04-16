@@ -617,8 +617,8 @@ func (c *Client) WebWxOplog(request *BaseRequest, remarkName, userName string) (
 }
 
 // WebWxVerifyUser 添加用户为好友接口
-func (c *Client) WebWxVerifyUser(storage *Storage, info RecommendInfo, verifyContent string) (*http.Response, error) {
-	loginInfo := storage.LoginInfo
+func (c *Client) WebWxVerifyUser(session *Session, info RecommendInfo, verifyContent string) (*http.Response, error) {
+	loginInfo := session.LoginInfo
 	path, err := url.Parse(c.Domain.BaseHost() + webwxverifyuser)
 	if err != nil {
 		return nil, err
@@ -629,7 +629,7 @@ func (c *Client) WebWxVerifyUser(storage *Storage, info RecommendInfo, verifyCon
 	params.Add("pass_ticket", loginInfo.PassTicket)
 	path.RawQuery = params.Encode()
 	content := map[string]interface{}{
-		"BaseRequest":    storage.Request,
+		"BaseRequest":    session.Request,
 		"Opcode":         3,
 		"SceneList":      [1]int{33},
 		"SceneListCount": 1,
@@ -639,7 +639,7 @@ func (c *Client) WebWxVerifyUser(storage *Storage, info RecommendInfo, verifyCon
 			"VerifyUserTicket": info.Ticket,
 		}},
 		"VerifyUserListSize": 1,
-		"skey":               storage.Request.Skey,
+		"skey":               session.Request.Skey,
 	}
 	body, err := jsonEncode(content)
 	if err != nil {
