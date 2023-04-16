@@ -367,8 +367,8 @@ func (c *Caller) RemoveFriendFromChatRoom(req *BaseRequest, info *LoginInfo, gro
 }
 
 // WebWxVerifyUser 同意加好友请求
-func (c *Caller) WebWxVerifyUser(storage *Storage, info RecommendInfo, verifyContent string) error {
-	resp, err := c.Client.WebWxVerifyUser(storage, info, verifyContent)
+func (c *Caller) WebWxVerifyUser(session *Session, info RecommendInfo, verifyContent string) error {
+	resp, err := c.Client.WebWxVerifyUser(session, info, verifyContent)
 	if err != nil {
 		return err
 	}

@@ -19,8 +19,8 @@ type Bot struct {
 	MessageHandler      MessageHandler                // 获取消息成功的handle
 	MessageErrorHandler func(err error) bool          // 获取消息发生错误的handle, 返回true则尝试继续监听
 	Serializer          Serializer                    // 序列化器, 默认为json
-	Storage             *Storage
 	Caller              *Caller
+	Storage             *Session
 	err                 error
 	context             context.Context
 	cancel              func()
@@ -366,7 +366,7 @@ func NewBot(c context.Context) *Bot {
 	ctx, cancel := context.WithCancel(c)
 	return &Bot{
 		Caller:     caller,
-		Storage:    &Storage{},
+		Storage:    &Session{},
 		Serializer: &JsonSerializer{},
 		context:    ctx,
 		cancel:     cancel,

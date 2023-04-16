@@ -6,13 +6,6 @@ import (
 	"sync"
 )
 
-// Storage 身份信息, 维持整个登陆的Session会话
-type Storage struct {
-	LoginInfo *LoginInfo
-	Request   *BaseRequest
-	Response  *WebInitResponse
-}
-
 type HotReloadStorageItem struct {
 	Jar          *Jar
 	BaseRequest  *BaseRequest
