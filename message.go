@@ -48,7 +48,7 @@ type Message struct {
 	Ticket                string
 	ToUserName            string
 	Url                   string
-	senderInGroupUserName string
+	senderUserNameInGroup string
 	RecommendInfo         RecommendInfo
 	bot                   *Bot
 	mu                    sync.RWMutex
@@ -71,7 +71,7 @@ func (m *Message) Sender() (*User, error) {
 	user, exist := members.GetByUserName(m.FromUserName)
 	if !exist {
 		// 找不到, 从服务器获取
-		user = newFriend(m.FromUserName, m.bot.self).User
+		user = newFriend(m.FromUserName, m.Owner()).User
 		err = user.Detail()
 	}
 	if m.IsSendByGroup() && len(user.MemberList) == 0 {
@@ -89,8 +89,8 @@ func (m *Message) SenderInGroup() (*User, error) {
 	// https://github.com/eatmoreapple/openwechat/issues/66
 	if m.IsSystem() {
 		// 判断是否有自己发送
-		if m.FromUserName == m.bot.self.User.UserName {
-			return m.bot.self.User, nil
+		if m.IsSendBySelf() {
+			return m.Owner().User, nil
 		}
 		return nil, errors.New("can not found sender from system message")
 	}
@@ -102,7 +102,7 @@ func (m *Message) SenderInGroup() (*User, error) {
 		return user, nil
 	}
 	group := &Group{user}
-	return group.SearchMemberByUsername(m.senderInGroupUserName)
+	return group.SearchMemberByUsername(m.senderUserNameInGroup)
 }
 
 // Receiver 获取消息的接收者
@@ -147,7 +147,7 @@ func (m *Message) Receiver() (*User, error) {
 
 // IsSendBySelf 判断消息是否由自己发送
 func (m *Message) IsSendBySelf() bool {
-	return m.FromUserName == m.bot.self.User.UserName
+	return m.FromUserName == m.Owner().UserName
 }
 
 // IsSendByFriend 判断消息是否由好友发送
@@ -462,7 +462,7 @@ func (m *Message) init(bot *Bot) {
 			if !m.IsSendBySelf() {
 				data := strings.Split(m.Content, ":<br/>")
 				m.Content = strings.Join(data[1:], "")
-				m.senderInGroupUserName = data[0]
+				m.senderUserNameInGroup = data[0]
 				if strings.Contains(m.Content, "@") {
 					sender, err := m.Sender()
 					if err == nil {
