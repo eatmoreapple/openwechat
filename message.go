@@ -52,7 +52,7 @@ type Message struct {
 	RecommendInfo         RecommendInfo
 	bot                   *Bot
 	mu                    sync.RWMutex
-	Context               context.Context `json:"-"`
+	context               context.Context
 	item                  map[string]interface{}
 	Raw                   []byte `json:"-"`
 	RawContent            string `json:"-"` // 消息原始内容
@@ -825,4 +825,22 @@ func (m *Message) Bot() *Bot {
 // Owner 返回当前消息的拥有者
 func (m *Message) Owner() *Self {
 	return m.Bot().self
+}
+
+func (m *Message) Context() context.Context {
+	if m.context == nil {
+		return context.Background()
+	}
+	return m.context
+}
+
+func (m *Message) WithContext(ctx context.Context) *Message {
+	if ctx == nil {
+		panic("nil context")
+	}
+	m2 := new(Message)
+	*m2 = *m
+	m2.mu = sync.RWMutex{}
+	m2.context = ctx
+	return m2
 }
