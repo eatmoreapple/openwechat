@@ -285,11 +285,11 @@ func (b *Bot) Block() error {
 
 // Exit 主动退出，让 Block 不在阻塞
 func (b *Bot) Exit() {
+	b.self = nil
+	b.cancel()
 	if b.LogoutCallBack != nil {
 		b.LogoutCallBack(b)
 	}
-	b.self = nil
-	b.cancel()
 }
 
 // CrashReason 获取当前Bot崩溃的原因
