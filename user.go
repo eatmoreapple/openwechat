@@ -415,7 +415,11 @@ func (s *Self) SendFileToFriend(friend *Friend, file io.Reader) (*SentMessage, e
 //	self.SetRemarkNameToFriend(friend, "remark") // or friend.SetRemarkName("remark")
 func (s *Self) SetRemarkNameToFriend(friend *Friend, remarkName string) error {
 	req := s.bot.Storage.Request
-	return s.bot.Caller.WebWxOplog(req, remarkName, friend.UserName)
+	err := s.bot.Caller.WebWxOplog(req, remarkName, friend.UserName)
+	if err == nil {
+		friend.RemarkName = remarkName
+	}
+	return err
 }
 
 // CreateGroup 创建群聊
@@ -513,7 +517,11 @@ func (s *Self) AddFriendIntoManyGroups(friend *Friend, groups ...*Group) error {
 func (s *Self) RenameGroup(group *Group, newName string) error {
 	req := s.bot.Storage.Request
 	info := s.bot.Storage.LoginInfo
-	return s.bot.Caller.WebWxRenameChatRoom(req, info, newName, group)
+	err := s.bot.Caller.WebWxRenameChatRoom(req, info, newName, group)
+	if err == nil {
+		group.NickName = newName
+	}
+	return err
 }
 
 // SendTextToGroup 发送文本消息给群组
