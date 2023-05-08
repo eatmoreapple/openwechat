@@ -84,9 +84,14 @@ func (c *Caller) GetLoginInfo(path *url.URL) (*LoginInfo, error) {
 		}
 		return nil, err
 	}
+	bs, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
 	var loginInfo LoginInfo
 	// xml结构体序列化储存
-	if err = xml.NewDecoder(resp.Body).Decode(&loginInfo); err != nil {
+	if err = xml.NewDecoder(bytes.NewBuffer(bs)).Decode(&loginInfo); err != nil {
 		return nil, err
 	}
 	if !loginInfo.Ok() {
