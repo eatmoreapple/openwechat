@@ -84,13 +84,14 @@ func (c *Caller) GetLoginInfo(path *url.URL) (*LoginInfo, error) {
 		}
 		return nil, err
 	}
+
 	bs, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-
 	var loginInfo LoginInfo
 	// xml结构体序列化储存
+	// 确保传入的reader实现了io.ByteReader接口
 	if err = xml.NewDecoder(bytes.NewBuffer(bs)).Decode(&loginInfo); err != nil {
 		return nil, err
 	}
