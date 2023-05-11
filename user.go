@@ -411,6 +411,8 @@ func (s *Self) SendFileToFriend(friend *Friend, file io.Reader) (*SentMessage, e
 }
 
 // SetRemarkNameToFriend 设置好友备注
+// Deprecated
+// 已经失效了
 //
 //	self.SetRemarkNameToFriend(friend, "remark") // or friend.SetRemarkName("remark")
 func (s *Self) SetRemarkNameToFriend(friend *Friend, remarkName string) error {
@@ -514,6 +516,7 @@ func (s *Self) AddFriendIntoManyGroups(friend *Friend, groups ...*Group) error {
 }
 
 // RenameGroup 群组重命名
+// Deprecated
 func (s *Self) RenameGroup(group *Group, newName string) error {
 	req := s.bot.Storage.Request
 	info := s.bot.Storage.LoginInfo
