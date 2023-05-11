@@ -18,6 +18,7 @@ func (f *Friend) String() string {
 }
 
 // SetRemarkName 重命名当前好友
+// Deprecated
 func (f *Friend) SetRemarkName(name string) error {
 	return f.Self().SetRemarkNameToFriend(f, name)
 }
@@ -211,6 +212,7 @@ func (g *Group) RemoveMembers(members Members) error {
 }
 
 // Rename 群组重命名
+// Deprecated
 func (g *Group) Rename(name string) error {
 	return g.Self().RenameGroup(g, name)
 }
