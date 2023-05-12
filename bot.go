@@ -17,7 +17,7 @@ type Bot struct {
 	UUIDCallback        func(uuid string)             // 获取UUID的回调函数
 	SyncCheckCallback   func(resp SyncCheckResponse)  // 心跳回调
 	MessageHandler      MessageHandler                // 获取消息成功的handle
-	MessageErrorHandler func(err error) bool          // 获取消息发生错误的handle, 返回true则尝试继续监听
+	MessageErrorHandler MessageErrorHandler           // 获取消息发生错误的handle, 返回err == nil 则尝试继续监听
 	Serializer          Serializer                    // 序列化器, 默认为json
 	Caller              *Caller
 	Storage             *Session
@@ -102,7 +102,7 @@ func (b *Bot) Logout() error {
 		if err := b.Caller.Logout(info); err != nil {
 			return err
 		}
-		b.Exit()
+		b.ExitWith(ErrUserLogout)
 		return nil
 	}
 	return errors.New("user not login")
@@ -171,18 +171,15 @@ func (b *Bot) webInit() error {
 
 	go func() {
 		if b.MessageErrorHandler == nil {
-			b.MessageErrorHandler = defaultSyncCheckErrHandler(b)
+			b.MessageErrorHandler = defaultMessageErrorHandler
 		}
 		for {
-			err = b.syncCheck()
-			if err == nil {
-				continue
-			}
-			// 判断是否继续, 如果不继续则退出
-			if goon := b.MessageErrorHandler(err); !goon {
-				b.err = err
-				b.Exit()
-				break
+			if err = b.syncCheck(); err != nil {
+				// 判断是否继续, 如果不继续则退出
+				if err = b.MessageErrorHandler(err); err != nil {
+					b.ExitWith(err)
+					return
+				}
 			}
 		}
 	}()
@@ -292,6 +289,12 @@ func (b *Bot) Exit() {
 	}
 }
 
+// ExitWith 主动退出并且设置退出原因, 可以通过 `CrashReason` 获取退出原因
+func (b *Bot) ExitWith(err error) {
+	b.err = err
+	b.Exit()
+}
+
 // CrashReason 获取当前Bot崩溃的原因
 func (b *Bot) CrashReason() error {
 	return b.err
@@ -398,21 +401,6 @@ func DefaultBot(prepares ...BotPreparer) *Bot {
 		prepare.Prepare(bot)
 	}
 	return bot
-}
-
-// defaultSyncCheckErrHandler 默认的SyncCheck错误处理函数
-func defaultSyncCheckErrHandler(bot *Bot) func(error) bool {
-	return func(err error) bool {
-		var ret Ret
-		if errors.As(err, &ret) {
-			switch ret {
-			case failedLoginCheck, cookieInvalid, failedLoginWarn:
-				_ = bot.Logout()
-				return false
-			}
-		}
-		return true
-	}
 }
 
 // GetQrcodeUrl 通过uuid获取登录二维码的url

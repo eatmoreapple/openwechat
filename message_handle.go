@@ -1,6 +1,9 @@
 package openwechat
 
-import "strings"
+import (
+	"errors"
+	"strings"
+)
 
 // MessageHandler 消息处理函数
 type MessageHandler func(msg *Message)
@@ -282,4 +285,21 @@ func SenderNickNameContainsMatchFunc(nickname string) MatchFunc {
 // SenderRemakeNameContainsFunc  根据用户备注名是否包含指定字符串的匹配函数
 func SenderRemakeNameContainsFunc(remakeName string) MatchFunc {
 	return SenderMatchFunc(func(user *User) bool { return strings.Contains(user.RemarkName, remakeName) })
+}
+
+// MessageErrorHandler 获取消息时发生了错误的处理函数
+// 参数err为获取消息时发生的错误，返回值为处理后的错误
+// 如果返回nil，则表示忽略该错误，否则将继续传递该错误
+type MessageErrorHandler func(err error) error
+
+// defaultMessageErrorHandler 默认的SyncCheck错误处理函数
+func defaultMessageErrorHandler(err error) error {
+	var ret Ret
+	if errors.As(err, &ret) {
+		switch ret {
+		case failedLoginCheck, cookieInvalid, failedLoginWarn:
+			return ret
+		}
+	}
+	return nil
 }
