@@ -1,6 +1,11 @@
 # openwechat
 
-[![Go Doc](https://pkg.go.dev/badge/github.com/eatMoreApple/openwechat)](https://godoc.org/github.com/eatMoreApple/openwechat)[![Release](https://img.shields.io/github/v/release/eatmoreapple/openwechat.svg?style=flat-square)](https://github.com/eatmoreapple/openwechat/releases)[![Go Report Card](https://goreportcard.com/badge/github.com/eatmoreapple/openwechat)](https://goreportcard.com/badge/github.com/eatmoreapple/openwechat)[![Stars](https://img.shields.io/github/stars/eatmoreapple/openwechat.svg?style=flat-square)](https://img.shields.io/github/stars/eatmoreapple/openwechat.svg?style=flat-square)[![Forks](https://img.shields.io/github/forks/eatmoreapple/openwechat.svg?style=flat-square)](https://img.shields.io/github/forks/eatmoreapple/openwechat.svg?style=flat-square)
+[![Go Doc](https://pkg.go.dev/badge/github.com/eatMoreApple/openwechat)](https://godoc.org/github.com/eatMoreApple/openwechat)
+[![Release](https://img.shields.io/github/v/release/eatmoreapple/openwechat.svg?style=flat-square)](https://github.com/eatmoreapple/openwechat/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/eatmoreapple/openwechat)](https://goreportcard.com/badge/github.com/eatmoreapple/openwechat)
+[![Stars](https://img.shields.io/github/stars/eatmoreapple/openwechat.svg?style=flat-square)](https://img.shields.io/github/stars/eatmoreapple/openwechat.svg?style=flat-square)
+[![Forks](https://img.shields.io/github/forks/eatmoreapple/openwechat.svg?style=flat-square)](https://img.shields.io/github/forks/eatmoreapple/openwechat.svg?style=flat-square)
+[![Sourcegraph](https://sourcegraph.com/github.com/eatmoreapple/openwechat/-/badge.svg)](https://sourcegraph.com/github.com/eatmoreapple/openwechat?badge)
 
 > golang版个人微信号API, 突破登录限制，类似开发公众号一样，开发个人微信号
 
