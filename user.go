@@ -180,9 +180,15 @@ func (u *User) IsPin() bool {
 	return u.ContactFlag == 2051
 }
 
-// ID 获取用户的唯一标识 只对当前登录的用户有效
-// ID 和 UserName 的区别是 ID 多次登录不会变化，而 UserName 只针对当前登录会话有效
+// ID 获取用户头像id
+// Deprecated: 请使用 AvatarID
 func (u *User) ID() string {
+	return u.AvatarID()
+}
+
+// AvatarID 获取用户头像id
+// 这个值会随着用户更换头像而变化
+func (u *User) AvatarID() string {
 	// 首先尝试获取uid
 	if u.Uin != 0 {
 		return strconv.FormatInt(u.Uin, 10)
@@ -715,6 +721,11 @@ func (s *Self) ContactList() Members {
 // MPSubscribeList 获取部分公众号文章列表
 func (s *Self) MPSubscribeList() []*MPSubscribeMsg {
 	return s.Bot().Storage.Response.MPSubscribeMsgList
+}
+
+// ID 当前登录用户的ID
+func (s *Self) ID() int64 {
+	return s.Uin
 }
 
 // Members 抽象的用户组
