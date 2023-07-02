@@ -129,6 +129,10 @@ func (m *Message) Receiver() (*User, error) {
 		}
 		users := groups.SearchByUserName(1, username)
 		if users.Count() == 0 {
+			group := newUser(m.Owner(), username)
+			if err := group.Detail(); err == nil {
+				return group, nil
+			}
 			return nil, ErrNoSuchUserFoundError
 		}
 		return users.First().User, nil
