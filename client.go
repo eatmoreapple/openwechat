@@ -70,6 +70,7 @@ func NewClient() *Client {
 		Timeout: 30 * time.Second,
 	}
 	client := &Client{client: httpClient}
+	client.MaxRetryTimes = 1
 	client.SetCookieJar(NewJar())
 	return client
 }
