@@ -20,11 +20,35 @@ import (
 
 // HttpHook 请求上下文钩子
 type HttpHook interface {
+	// BeforeRequest 将在请求之前调用
 	BeforeRequest(req *http.Request)
+
+	// AfterRequest 将在请求之后调用，无论请求成功与否
 	AfterRequest(response *http.Response, err error)
 }
 
+// HttpHooks 请求上下文钩子列表
 type HttpHooks []HttpHook
+
+// BeforeRequest 将在请求之前调用
+func (h HttpHooks) BeforeRequest(req *http.Request) {
+	if len(h) == 0 {
+		return
+	}
+	for _, hook := range h {
+		hook.BeforeRequest(req)
+	}
+}
+
+// AfterRequest 将在请求之后调用，无论请求成功与否
+func (h HttpHooks) AfterRequest(response *http.Response, err error) {
+	if len(h) == 0 {
+		return
+	}
+	for _, hook := range h {
+		hook.AfterRequest(response, err)
+	}
+}
 
 type UserAgentHook struct {
 	UserAgent string
@@ -35,6 +59,9 @@ func (u UserAgentHook) BeforeRequest(req *http.Request) {
 }
 
 func (u UserAgentHook) AfterRequest(_ *http.Response, _ error) {}
+
+// defaultUserAgentHook 默认的User-Agent钩子
+var defaultUserAgentHook = UserAgentHook{"Mozilla/5.0 (Linux; U; UOS x86_64; zh-cn) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 UOSBrowser/6.0.1.1001"}
 
 // Client http请求客户端
 // 客户端需要维持Session会话
@@ -59,15 +86,10 @@ type Client struct {
 	MaxRetryTimes int
 }
 
-func NewClient() *Client {
-	httpClient := &http.Client{
-		// 设置客户端不自动跳转
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-		// 设置30秒超时
-		// 因为微信同步消息时是一个时间长达25秒的长轮训
-		Timeout: 30 * time.Second,
+// NewClient 创建一个新的客户端
+func NewClient(httpClient *http.Client) *Client {
+	if httpClient == nil {
+		panic("http client is nil")
 	}
 	client := &Client{client: httpClient}
 	client.MaxRetryTimes = 1
@@ -78,24 +100,39 @@ func NewClient() *Client {
 // DefaultClient 自动存储cookie
 // 设置客户端不自动跳转
 func DefaultClient() *Client {
-	client := NewClient()
-	client.AddHttpHook(UserAgentHook{"Mozilla/5.0 (Linux; U; UOS x86_64; zh-cn) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 UOSBrowser/6.0.1.1001"})
+	httpClient := &http.Client{
+		// 设置客户端不自动跳转
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+		// 设置30秒超时
+		// 因为微信同步消息时是一个时间长达25秒的长轮训
+		Timeout: 30 * time.Second,
+	}
+	client := NewClient(httpClient)
+	client.AddHttpHook(defaultUserAgentHook)
 	client.MaxRetryTimes = 5
 	return client
 }
 
+// AddHttpHook 添加一个请求上下文钩子
 func (c *Client) AddHttpHook(hooks ...HttpHook) {
 	c.HttpHooks = append(c.HttpHooks, hooks...)
 }
 
 func (c *Client) do(req *http.Request) (*http.Response, error) {
-	for _, hook := range c.HttpHooks {
-		hook.BeforeRequest(req)
+	// 确保请求能够被执行
+	if c.MaxRetryTimes <= 0 {
+		c.MaxRetryTimes = 1
 	}
 	var (
 		resp *http.Response
 		err  error
 	)
+
+	c.HttpHooks.BeforeRequest(req)
+	defer c.HttpHooks.AfterRequest(resp, err)
+
 	for i := 0; i < c.MaxRetryTimes; i++ {
 		resp, err = c.client.Do(req)
 		if err == nil {
@@ -105,14 +142,9 @@ func (c *Client) do(req *http.Request) (*http.Response, error) {
 	if err != nil {
 		err = fmt.Errorf("%w: %s", NetworkErr, err.Error())
 	}
-	for _, hook := range c.HttpHooks {
-		hook.AfterRequest(resp, err)
-	}
 	return resp, err
 }
 
-// Do 抽象Do方法,将所有的有效的cookie存入Client.cookies
-// 方便热登陆时获取
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	return c.do(req)
 }
