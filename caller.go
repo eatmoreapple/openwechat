@@ -33,11 +33,10 @@ func (c *Caller) GetLoginUUID() (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	defer func() { _ = resp.Body.Close() }()
 
 	var buffer bytes.Buffer
-	if _, err := buffer.ReadFrom(resp.Body); err != nil {
+	if _, err = buffer.ReadFrom(resp.Body); err != nil {
 		return "", err
 	}
 	// 正则匹配uuid字符串
@@ -77,6 +76,7 @@ func (c *Caller) GetLoginInfo(path *url.URL) (*LoginInfo, error) {
 	// 微信 v2 版本修复了301 response missing Location header 的问题
 	defer func() { _ = resp.Body.Close() }()
 
+	// 这里部分账号可能会被误判, 但是我又没有号测试。如果你遇到了这个问题，可以帮忙解决一下。😊
 	if _, exists := CookieGroup(resp.Cookies()).GetByName("wxuin"); !exists {
 		err = ErrForbidden
 		if c.Client.mode != desktop {
@@ -90,14 +90,19 @@ func (c *Caller) GetLoginInfo(path *url.URL) (*LoginInfo, error) {
 		return nil, err
 	}
 	var loginInfo LoginInfo
+
 	// xml结构体序列化储存
-	// 确保传入的reader实现了io.ByteReader接口
+	// 为什么这里不直接使用resp.Body?
+	// 因为要确保传入的reader实现了 io.ByteReader 接口
+	// https://github.com/eatmoreapple/openwechat/pull/345
 	if err = xml.NewDecoder(bytes.NewBuffer(bs)).Decode(&loginInfo); err != nil {
 		return nil, err
 	}
 	if !loginInfo.Ok() {
 		return nil, loginInfo.Err()
 	}
+	// set domain
+	c.Client.Domain = WechatDomain(path.Host)
 	return &loginInfo, nil
 }
 

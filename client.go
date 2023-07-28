@@ -200,7 +200,6 @@ func (c *Client) CheckLogin(uuid, tip string) (*http.Response, error) {
 
 // GetLoginInfo 请求获取LoginInfo
 func (c *Client) GetLoginInfo(path *url.URL) (*http.Response, error) {
-	c.Domain = WechatDomain(path.Host)
 	return c.mode.GetLoginInfo(c, path.String())
 }
 
