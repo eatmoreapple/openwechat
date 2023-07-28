@@ -1,7 +1,6 @@
 package openwechat
 
 import (
-	"bufio"
 	"bytes"
 	"crypto/md5"
 	"encoding/hex"
@@ -426,26 +425,16 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 		return nil, err
 	}
 
-	// 将文件的游标复原到原点
-	// 上面获取文件的类型的时候已经读取了512个字节
-	if _, err = file.Seek(0, 0); err != nil {
-		return nil, err
-	}
-
-	reader := bufio.NewReader(file)
-
 	h := md5.New()
-	if _, err = io.Copy(h, reader); err != nil {
+	if _, err = io.Copy(h, file); err != nil {
 		return nil, err
 	}
-
 	fileMd5 := hex.EncodeToString(h.Sum(nil))
 
 	sate, err := file.Stat()
 	if err != nil {
 		return nil, err
 	}
-
 	filename := sate.Name()
 
 	if ext := filepath.Ext(filename); ext == "" {
