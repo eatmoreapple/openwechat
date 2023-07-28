@@ -424,7 +424,11 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 	if err != nil {
 		return nil, err
 	}
+	if _, err = file.Seek(io.SeekStart, 0); err != nil {
+		return nil, err
+	}
 
+	// 获取文件的md5
 	h := md5.New()
 	if _, err = io.Copy(h, file); err != nil {
 		return nil, err
@@ -479,16 +483,8 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 		return nil, err
 	}
 
-	var chunks int64
-
-	if sate.Size() > chunkSize {
-		chunks = sate.Size() / chunkSize
-		if chunks*chunkSize < sate.Size() {
-			chunks++
-		}
-	} else {
-		chunks = 1
-	}
+	// 计算上传文件的次数
+	chunks := (sate.Size() + chunkSize - 1) / chunkSize
 
 	var resp *http.Response
 
