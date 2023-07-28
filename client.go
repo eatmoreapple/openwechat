@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -140,7 +141,7 @@ func (c *Client) do(req *http.Request) (*http.Response, error) {
 		}
 	}
 	if err != nil {
-		err = fmt.Errorf("%w: %s", NetworkErr, err.Error())
+		err = errors.Join(NetworkErr, err)
 	}
 	return resp, err
 }
