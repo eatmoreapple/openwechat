@@ -394,6 +394,10 @@ func NewBot(c context.Context) *Bot {
 	}
 }
 
+func New(ctx context.Context) *Bot {
+	return NewBot(ctx)
+}
+
 // DefaultBot 默认的Bot的构造方法,
 // mode不传入默认为 openwechat.Normal,详情见mode
 //
@@ -419,6 +423,10 @@ func DefaultBot(prepares ...BotPreparer) *Bot {
 		prepare.Prepare(bot)
 	}
 	return bot
+}
+
+func Default(prepares ...BotPreparer) *Bot {
+	return DefaultBot(prepares...)
 }
 
 // GetQrcodeUrl 通过uuid获取登录二维码的url
