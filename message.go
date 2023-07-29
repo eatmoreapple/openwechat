@@ -287,13 +287,13 @@ func (m *Message) GetFile() (*http.Response, error) {
 	}
 	switch {
 	case m.IsPicture() || m.IsEmoticon():
-		return m.bot.Caller.Client.WebWxGetMsgImg(m, m.bot.Storage.LoginInfo)
+		return m.bot.Caller.Client.WebWxGetMsgImg(m.Context(), m, m.bot.Storage.LoginInfo)
 	case m.IsVoice():
-		return m.bot.Caller.Client.WebWxGetVoice(m, m.bot.Storage.LoginInfo)
+		return m.bot.Caller.Client.WebWxGetVoice(m.Context(), m, m.bot.Storage.LoginInfo)
 	case m.IsVideo():
-		return m.bot.Caller.Client.WebWxGetVideo(m, m.bot.Storage.LoginInfo)
+		return m.bot.Caller.Client.WebWxGetVideo(m.Context(), m, m.bot.Storage.LoginInfo)
 	case m.IsMedia() && m.AppMsgType == AppMsgTypeAttach:
-		return m.bot.Caller.Client.WebWxGetMedia(m, m.bot.Storage.LoginInfo)
+		return m.bot.Caller.Client.WebWxGetMedia(m.Context(), m, m.bot.Storage.LoginInfo)
 	default:
 		return nil, errors.New("unsupported type")
 	}
@@ -304,7 +304,7 @@ func (m *Message) GetPicture() (*http.Response, error) {
 	if !(m.IsPicture() || m.IsEmoticon()) {
 		return nil, errors.New("picture message required")
 	}
-	return m.bot.Caller.Client.WebWxGetMsgImg(m, m.bot.Storage.LoginInfo)
+	return m.bot.Caller.Client.WebWxGetMsgImg(m.Context(), m, m.bot.Storage.LoginInfo)
 }
 
 // GetVoice 获取录音消息的响应
@@ -312,7 +312,7 @@ func (m *Message) GetVoice() (*http.Response, error) {
 	if !m.IsVoice() {
 		return nil, errors.New("voice message required")
 	}
-	return m.bot.Caller.Client.WebWxGetVoice(m, m.bot.Storage.LoginInfo)
+	return m.bot.Caller.Client.WebWxGetVoice(m.Context(), m, m.bot.Storage.LoginInfo)
 }
 
 // GetVideo 获取视频消息的响应
@@ -320,7 +320,7 @@ func (m *Message) GetVideo() (*http.Response, error) {
 	if !m.IsVideo() {
 		return nil, errors.New("video message required")
 	}
-	return m.bot.Caller.Client.WebWxGetVideo(m, m.bot.Storage.LoginInfo)
+	return m.bot.Caller.Client.WebWxGetVideo(m.Context(), m, m.bot.Storage.LoginInfo)
 }
 
 // GetMedia 获取媒体消息的响应
@@ -328,7 +328,7 @@ func (m *Message) GetMedia() (*http.Response, error) {
 	if !m.IsMedia() {
 		return nil, errors.New("media message required")
 	}
-	return m.bot.Caller.Client.WebWxGetMedia(m, m.bot.Storage.LoginInfo)
+	return m.bot.Caller.Client.WebWxGetMedia(m.Context(), m, m.bot.Storage.LoginInfo)
 }
 
 // SaveFile 保存文件到指定的 io.Writer
@@ -387,7 +387,13 @@ func (m *Message) Agree(verifyContents ...string) (*Friend, error) {
 	if !m.IsFriendAdd() {
 		return nil, errors.New("friend add message required")
 	}
-	err := m.bot.Caller.WebWxVerifyUser(m.bot.Storage, m.RecommendInfo, strings.Join(verifyContents, ""))
+	opt := &CallerWebWxVerifyUserOptions{
+		VerifyContent: strings.Join(verifyContents, ""),
+		RecommendInfo: m.RecommendInfo,
+		BaseRequest:   m.bot.Storage.Request,
+		LoginInfo:     m.bot.Storage.LoginInfo,
+	}
+	err := m.bot.Caller.WebWxVerifyUser(m.Context(), opt)
 	if err != nil {
 		return nil, err
 	}
@@ -400,7 +406,12 @@ func (m *Message) Agree(verifyContents ...string) (*Friend, error) {
 
 // AsRead 将消息设置为已读
 func (m *Message) AsRead() error {
-	return m.bot.Caller.WebWxStatusAsRead(m.bot.Storage.Request, m.bot.Storage.LoginInfo, m)
+	opt := &CallerWebWxStatusAsReadOptions{
+		BaseRequest: m.bot.Storage.Request,
+		LoginInfo:   m.bot.Storage.LoginInfo,
+		Message:     m,
+	}
+	return m.bot.Caller.WebWxStatusAsRead(m.Context(), opt)
 }
 
 // IsArticle 判断当前的消息类型是否为文章
