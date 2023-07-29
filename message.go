@@ -820,18 +820,14 @@ func (m *Message) Owner() *Self {
 
 func (m *Message) Context() context.Context {
 	if m.context == nil {
-		return context.Background()
+		return m.Bot().Context()
 	}
 	return m.context
 }
 
-func (m *Message) WithContext(ctx context.Context) *Message {
+func (m *Message) WithContext(ctx context.Context) {
 	if ctx == nil {
 		panic("nil context")
 	}
-	m2 := new(Message)
-	*m2 = *m
-	m2.mu = sync.RWMutex{}
-	m2.context = ctx
-	return m2
+	m.context = ctx
 }
