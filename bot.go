@@ -111,7 +111,7 @@ func (b *Bot) Logout() error {
 // loginFromURL 登录逻辑
 func (b *Bot) loginFromURL(path *url.URL) error {
 	// 获取登录的一些基本的信息
-	info, err := b.Caller.GetLoginInfo(path)
+	info, err := b.Caller.GetLoginInfo(b.Context(), path)
 	if err != nil {
 		return err
 	}

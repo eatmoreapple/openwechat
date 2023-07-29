@@ -2,6 +2,7 @@ package openwechat
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
@@ -169,8 +170,8 @@ func (c *Client) HTTPClient() *http.Client {
 }
 
 // GetLoginUUID 获取登录的uuid
-func (c *Client) GetLoginUUID() (*http.Response, error) {
-	return c.mode.GetLoginUUID(c)
+func (c *Client) GetLoginUUID(ctx context.Context) (*http.Response, error) {
+	return c.mode.GetLoginUUID(ctx, c)
 }
 
 // GetLoginQrcode 获取登录的二维吗
@@ -198,8 +199,8 @@ func (c *Client) CheckLogin(uuid, tip string) (*http.Response, error) {
 }
 
 // GetLoginInfo 请求获取LoginInfo
-func (c *Client) GetLoginInfo(path *url.URL) (*http.Response, error) {
-	return c.mode.GetLoginInfo(c, path.String())
+func (c *Client) GetLoginInfo(ctx context.Context, path *url.URL) (*http.Response, error) {
+	return c.mode.GetLoginInfo(ctx, c, path.String())
 }
 
 // WebInit 请求获取初始化信息
@@ -987,8 +988,8 @@ func (c *Client) WebWxRelationPin(request *BaseRequest, op uint8, user *User) (*
 }
 
 // WebWxPushLogin 免扫码登陆接口
-func (c *Client) WebWxPushLogin(uin int64) (*http.Response, error) {
-	return c.mode.PushLogin(c, uin)
+func (c *Client) WebWxPushLogin(ctx context.Context, uin int64) (*http.Response, error) {
+	return c.mode.PushLogin(ctx, c, uin)
 }
 
 // WebWxSendVideoMsg 发送视频消息接口

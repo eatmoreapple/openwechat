@@ -2,6 +2,7 @@ package openwechat
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
@@ -28,8 +29,8 @@ func DefaultCaller() *Caller {
 }
 
 // GetLoginUUID 获取登录的uuid
-func (c *Caller) GetLoginUUID() (string, error) {
-	resp, err := c.Client.GetLoginUUID()
+func (c *Caller) GetLoginUUID(ctx context.Context) (string, error) {
+	resp, err := c.Client.GetLoginUUID(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -64,12 +65,12 @@ func (c *Caller) CheckLogin(uuid, tip string) (CheckLoginResponse, error) {
 }
 
 // GetLoginInfo 获取登录信息
-func (c *Caller) GetLoginInfo(path *url.URL) (*LoginInfo, error) {
+func (c *Caller) GetLoginInfo(ctx context.Context, path *url.URL) (*LoginInfo, error) {
 	// 从响应体里面获取需要跳转的url
 	query := path.Query()
 	query.Set("version", "v2")
 	path.RawQuery = query.Encode()
-	resp, err := c.Client.GetLoginInfo(path)
+	resp, err := c.Client.GetLoginInfo(ctx, path)
 	if err != nil {
 		return nil, err
 	}
@@ -474,8 +475,8 @@ func (c *Caller) WebWxRelationPin(request *BaseRequest, user *User, op uint8) er
 }
 
 // WebWxPushLogin 免扫码登陆接口
-func (c *Caller) WebWxPushLogin(uin int64) (*PushLoginResponse, error) {
-	resp, err := c.Client.WebWxPushLogin(uin)
+func (c *Caller) WebWxPushLogin(ctx context.Context, uin int64) (*PushLoginResponse, error) {
+	resp, err := c.Client.WebWxPushLogin(ctx, uin)
 	if err != nil {
 		return nil, err
 	}
