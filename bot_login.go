@@ -253,7 +253,7 @@ func (l *LoginChecker) CheckLogin() error {
 	var tip = l.Tip
 	for {
 		// 长轮询检查是否扫码登录
-		resp, err := l.Bot.Caller.CheckLogin(uuid, tip)
+		resp, err := l.Bot.Caller.CheckLogin(l.Bot.Context(), uuid, tip)
 		if err != nil {
 			return err
 		}

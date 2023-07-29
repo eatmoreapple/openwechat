@@ -99,7 +99,7 @@ func (b *Bot) PushLogin(storage HotReloadStorage, opts ...BotLoginOption) error 
 func (b *Bot) Logout() error {
 	if b.Alive() {
 		info := b.Storage.LoginInfo
-		if err := b.Caller.Logout(info); err != nil {
+		if err := b.Caller.Logout(b.Context(), info); err != nil {
 			return err
 		}
 		b.ExitWith(ErrUserLogout)
@@ -142,7 +142,7 @@ func (b *Bot) webInit() error {
 	req := b.Storage.Request
 	info := b.Storage.LoginInfo
 	// 获取初始化的用户信息和一些必要的参数
-	resp, err := b.Caller.WebInit(req)
+	resp, err := b.Caller.WebInit(b.Context(), req)
 	if err != nil {
 		return err
 	}
@@ -163,8 +163,14 @@ func (b *Bot) webInit() error {
 		}
 	}
 
+	// 构建通知手机客户端已经登录的参数
+	notifyOption := &CallerWebWxStatusNotifyOptions{
+		BaseRequest:     req,
+		WebInitResponse: resp,
+		LoginInfo:       info,
+	}
 	// 通知手机客户端已经登录
-	if err = b.Caller.WebWxStatusNotify(req, resp, info); err != nil {
+	if err = b.Caller.WebWxStatusNotify(b.Context(), notifyOption); err != nil {
 		return err
 	}
 	// 开启协程，轮询获取是否有新的消息返回
@@ -214,9 +220,16 @@ func (b *Bot) syncCheck() error {
 		err  error
 		resp *SyncCheckResponse
 	)
+
+	syncCheckOption := &CallerSyncCheckOptions{}
+
 	for b.Alive() {
+		// 重制相关参数，因为它们可能是动态的
+		syncCheckOption.BaseRequest = b.Storage.Request
+		syncCheckOption.WebInitResponse = b.Storage.Response
+		syncCheckOption.LoginInfo = b.Storage.LoginInfo
 		// 长轮询检查是否有消息返回
-		resp, err = b.Caller.SyncCheck(b.Storage.Request, b.Storage.LoginInfo, b.Storage.Response)
+		resp, err = b.Caller.SyncCheck(b.Context(), syncCheckOption)
 		if err != nil {
 			return err
 		}
@@ -259,7 +272,12 @@ func (b *Bot) syncCheck() error {
 
 // 获取新的消息
 func (b *Bot) syncMessage() ([]*Message, error) {
-	resp, err := b.Caller.WebWxSync(b.Storage.Request, b.Storage.Response, b.Storage.LoginInfo)
+	opt := CallerWebWxSyncOptions{
+		BaseRequest:     b.Storage.Request,
+		WebInitResponse: b.Storage.Response,
+		LoginInfo:       b.Storage.LoginInfo,
+	}
+	resp, err := b.Caller.WebWxSync(b.Context(), &opt)
 	if err != nil {
 		return nil, err
 	}

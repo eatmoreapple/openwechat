@@ -175,13 +175,17 @@ func (c *Client) GetLoginUUID(ctx context.Context) (*http.Response, error) {
 }
 
 // GetLoginQrcode 获取登录的二维吗
-func (c *Client) GetLoginQrcode(uuid string) (*http.Response, error) {
+func (c *Client) GetLoginQrcode(ctx context.Context, uuid string) (*http.Response, error) {
 	path := qrcode + uuid
-	return c.client.Get(path)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return c.client.Do(req)
 }
 
 // CheckLogin 检查是否登录
-func (c *Client) CheckLogin(uuid, tip string) (*http.Response, error) {
+func (c *Client) CheckLogin(ctx context.Context, uuid, tip string) (*http.Response, error) {
 	path, err := url.Parse(login)
 	if err != nil {
 		return nil, err
@@ -194,7 +198,10 @@ func (c *Client) CheckLogin(uuid, tip string) (*http.Response, error) {
 	params.Add("uuid", uuid)
 	params.Add("tip", tip)
 	path.RawQuery = params.Encode()
-	req, _ := http.NewRequest(http.MethodGet, path.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 	return c.Do(req)
 }
 
@@ -204,7 +211,7 @@ func (c *Client) GetLoginInfo(ctx context.Context, path *url.URL) (*http.Respons
 }
 
 // WebInit 请求获取初始化信息
-func (c *Client) WebInit(request *BaseRequest) (*http.Response, error) {
+func (c *Client) WebInit(ctx context.Context, request *BaseRequest) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.BaseHost() + webwxinit)
 	if err != nil {
 		return nil, err
@@ -217,7 +224,7 @@ func (c *Client) WebInit(request *BaseRequest) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, path.String(), body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -225,18 +232,26 @@ func (c *Client) WebInit(request *BaseRequest) (*http.Response, error) {
 	return c.Do(req)
 }
 
+type ClientCommonOptions struct {
+	BaseRequest     *BaseRequest
+	WebInitResponse *WebInitResponse
+	LoginInfo       *LoginInfo
+}
+
+type ClientWebWxStatusNotifyOptions ClientCommonOptions
+
 // WebWxStatusNotify 通知手机已登录
-func (c *Client) WebWxStatusNotify(request *BaseRequest, response *WebInitResponse, info *LoginInfo) (*http.Response, error) {
+func (c *Client) WebWxStatusNotify(ctx context.Context, opt *ClientWebWxStatusNotifyOptions) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.BaseHost() + webwxstatusnotify)
 	if err != nil {
 		return nil, err
 	}
 	params := url.Values{}
 	params.Add("lang", "zh_CN")
-	params.Add("pass_ticket", info.PassTicket)
-	username := response.User.UserName
+	params.Add("pass_ticket", opt.LoginInfo.PassTicket)
+	username := opt.WebInitResponse.User.UserName
 	content := map[string]interface{}{
-		"BaseRequest":  request,
+		"BaseRequest":  opt.BaseRequest,
 		"ClientMsgId":  time.Now().Unix(),
 		"Code":         3,
 		"FromUserName": username,
@@ -247,7 +262,7 @@ func (c *Client) WebWxStatusNotify(request *BaseRequest, response *WebInitRespon
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, path.String(), buffer)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.String(), buffer)
 	if err != nil {
 		return nil, err
 	}
@@ -255,29 +270,31 @@ func (c *Client) WebWxStatusNotify(request *BaseRequest, response *WebInitRespon
 	return c.Do(req)
 }
 
+type ClientSyncCheckOptions ClientCommonOptions
+
 // SyncCheck 异步检查是否有新的消息返回
-func (c *Client) SyncCheck(request *BaseRequest, info *LoginInfo, response *WebInitResponse) (*http.Response, error) {
+func (c *Client) SyncCheck(ctx context.Context, opt *ClientSyncCheckOptions) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.SyncHost() + synccheck)
 	if err != nil {
 		return nil, err
 	}
 	params := url.Values{}
 	params.Add("r", strconv.FormatInt(time.Now().UnixNano()/1e6, 10))
-	params.Add("skey", info.SKey)
-	params.Add("sid", info.WxSid)
-	params.Add("uin", strconv.FormatInt(info.WxUin, 10))
-	params.Add("deviceid", request.DeviceID)
+	params.Add("skey", opt.LoginInfo.SKey)
+	params.Add("sid", opt.LoginInfo.WxSid)
+	params.Add("uin", strconv.FormatInt(opt.LoginInfo.WxUin, 10))
+	params.Add("deviceid", opt.BaseRequest.DeviceID)
 	params.Add("_", strconv.FormatInt(time.Now().UnixNano()/1e6, 10))
-	var syncKeyStringSlice = make([]string, response.SyncKey.Count)
+	var syncKeyStringSlice = make([]string, opt.WebInitResponse.SyncKey.Count)
 	// 将SyncKey里面的元素按照特定的格式拼接起来
-	for index, item := range response.SyncKey.List {
+	for index, item := range opt.WebInitResponse.SyncKey.List {
 		i := fmt.Sprintf("%d_%d", item.Key, item.Val)
 		syncKeyStringSlice[index] = i
 	}
 	syncKey := strings.Join(syncKeyStringSlice, "|")
 	params.Add("synckey", syncKey)
 	path.RawQuery = params.Encode()
-	req, err := http.NewRequest(http.MethodGet, path.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -285,17 +302,17 @@ func (c *Client) SyncCheck(request *BaseRequest, info *LoginInfo, response *WebI
 }
 
 // WebWxGetContact 获取联系人信息
-func (c *Client) WebWxGetContact(info *LoginInfo, reqs int64) (*http.Response, error) {
+func (c *Client) WebWxGetContact(ctx context.Context, sKey string, reqs int64) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.BaseHost() + webwxgetcontact)
 	if err != nil {
 		return nil, err
 	}
 	params := url.Values{}
 	params.Add("r", strconv.FormatInt(time.Now().UnixNano()/1e6, 10))
-	params.Add("skey", info.SKey)
+	params.Add("skey", sKey)
 	params.Add("seq", strconv.FormatInt(reqs, 10))
 	path.RawQuery = params.Encode()
-	req, err := http.NewRequest(http.MethodGet, path.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -303,7 +320,7 @@ func (c *Client) WebWxGetContact(info *LoginInfo, reqs int64) (*http.Response, e
 }
 
 // WebWxBatchGetContact 获取联系人详情
-func (c *Client) WebWxBatchGetContact(members Members, request *BaseRequest) (*http.Response, error) {
+func (c *Client) WebWxBatchGetContact(ctx context.Context, members Members, request *BaseRequest) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.BaseHost() + webwxbatchgetcontact)
 	if err != nil {
 		return nil, err
@@ -322,7 +339,7 @@ func (c *Client) WebWxBatchGetContact(members Members, request *BaseRequest) (*h
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, path.String(), body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -330,27 +347,29 @@ func (c *Client) WebWxBatchGetContact(members Members, request *BaseRequest) (*h
 	return c.Do(req)
 }
 
+type ClientWebWxSyncOptions ClientCommonOptions
+
 // WebWxSync 获取消息接口
-func (c *Client) WebWxSync(request *BaseRequest, response *WebInitResponse, info *LoginInfo) (*http.Response, error) {
+func (c *Client) WebWxSync(ctx context.Context, opt *ClientWebWxSyncOptions) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.BaseHost() + webwxsync)
 	if err != nil {
 		return nil, err
 	}
 	params := url.Values{}
-	params.Add("sid", info.WxSid)
-	params.Add("skey", info.SKey)
-	params.Add("pass_ticket", info.PassTicket)
+	params.Add("sid", opt.LoginInfo.WxSid)
+	params.Add("skey", opt.LoginInfo.SKey)
+	params.Add("pass_ticket", opt.LoginInfo.PassTicket)
 	path.RawQuery = params.Encode()
 	content := map[string]interface{}{
-		"BaseRequest": request,
-		"SyncKey":     response.SyncKey,
+		"BaseRequest": opt.BaseRequest,
+		"SyncKey":     opt.WebInitResponse.SyncKey,
 		"rr":          strconv.FormatInt(time.Now().Unix(), 10),
 	}
 	reader, err := jsonEncode(content)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, path.String(), reader)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.String(), reader)
 	if err != nil {
 		return nil, err
 	}
@@ -359,7 +378,7 @@ func (c *Client) WebWxSync(request *BaseRequest, response *WebInitResponse, info
 }
 
 // 发送消息
-func (c *Client) sendMessage(request *BaseRequest, url string, msg *SendMessage) (*http.Response, error) {
+func (c *Client) sendMessage(ctx context.Context, request *BaseRequest, url string, msg *SendMessage) (*http.Response, error) {
 	content := map[string]interface{}{
 		"BaseRequest": request,
 		"Msg":         msg,
@@ -369,7 +388,7 @@ func (c *Client) sendMessage(request *BaseRequest, url string, msg *SendMessage)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, url, body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, body)
 	if err != nil {
 		return nil, err
 	}
@@ -377,22 +396,28 @@ func (c *Client) sendMessage(request *BaseRequest, url string, msg *SendMessage)
 	return c.Do(req)
 }
 
+type ClientWebWxSendMsgOptions struct {
+	LoginInfo   *LoginInfo
+	BaseRequest *BaseRequest
+	Message     *SendMessage
+}
+
 // WebWxSendMsg 发送文本消息
-func (c *Client) WebWxSendMsg(msg *SendMessage, info *LoginInfo, request *BaseRequest) (*http.Response, error) {
-	msg.Type = MsgTypeText
+func (c *Client) WebWxSendMsg(ctx context.Context, opt *ClientWebWxSendMsgOptions) (*http.Response, error) {
+	opt.Message.Type = MsgTypeText
 	path, err := url.Parse(c.Domain.BaseHost() + webwxsendmsg)
 	if err != nil {
 		return nil, err
 	}
 	params := url.Values{}
 	params.Add("lang", "zh_CN")
-	params.Add("pass_ticket", info.PassTicket)
+	params.Add("pass_ticket", opt.LoginInfo.PassTicket)
 	path.RawQuery = params.Encode()
-	return c.sendMessage(request, path.String(), msg)
+	return c.sendMessage(ctx, opt.BaseRequest, path.String(), opt.Message)
 }
 
 // WebWxGetHeadImg 获取用户的头像
-func (c *Client) WebWxGetHeadImg(user *User) (*http.Response, error) {
+func (c *Client) WebWxGetHeadImg(ctx context.Context, user *User) (*http.Response, error) {
 	var path string
 	if user.HeadImgUrl != "" {
 		path = c.Domain.BaseHost() + user.HeadImgUrl
@@ -410,7 +435,7 @@ func (c *Client) WebWxGetHeadImg(user *User) (*http.Response, error) {
 		URL.RawQuery = params.Encode()
 		path = URL.String()
 	}
-	req, err := http.NewRequest(http.MethodGet, path, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -427,7 +452,7 @@ type ClientWebWxUploadMediaByChunkOptions struct {
 
 // WebWxUploadMediaByChunk 分块上传文件
 // TODO 优化掉这个函数
-func (c *Client) WebWxUploadMediaByChunk(opt *ClientWebWxUploadMediaByChunkOptions) (*http.Response, error) {
+func (c *Client) WebWxUploadMediaByChunk(ctx context.Context, opt *ClientWebWxUploadMediaByChunkOptions) (*http.Response, error) {
 	// 获取文件上传的类型
 	contentType, err := GetFileContentType(opt.File)
 	if err != nil {
@@ -558,7 +583,7 @@ func (c *Client) WebWxUploadMediaByChunk(opt *ClientWebWxUploadMediaByChunkOptio
 			return nil, err
 		}
 
-		req, err := http.NewRequest(http.MethodPost, path.String(), formBuffer)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.String(), formBuffer)
 		if err != nil {
 			return nil, err
 		}
@@ -590,8 +615,8 @@ func (c *Client) WebWxUploadMediaByChunk(opt *ClientWebWxUploadMediaByChunkOptio
 // WebWxSendMsgImg 发送图片
 // 这个接口依赖上传文件的接口
 // 发送的图片必须是已经成功上传的图片
-func (c *Client) WebWxSendMsgImg(msg *SendMessage, request *BaseRequest, info *LoginInfo) (*http.Response, error) {
-	msg.Type = MsgTypeImage
+func (c *Client) WebWxSendMsgImg(ctx context.Context, opt *ClientWebWxSendMsgOptions) (*http.Response, error) {
+	opt.Message.Type = MsgTypeImage
 	path, err := url.Parse(c.Domain.BaseHost() + webwxsendmsgimg)
 	if err != nil {
 		return nil, err
@@ -600,13 +625,13 @@ func (c *Client) WebWxSendMsgImg(msg *SendMessage, request *BaseRequest, info *L
 	params.Add("fun", "async")
 	params.Add("f", "json")
 	params.Add("lang", "zh_CN")
-	params.Add("pass_ticket", info.PassTicket)
+	params.Add("pass_ticket", opt.LoginInfo.PassTicket)
 	path.RawQuery = params.Encode()
-	return c.sendMessage(request, path.String(), msg)
+	return c.sendMessage(ctx, opt.BaseRequest, path.String(), opt.Message)
 }
 
 // WebWxSendAppMsg 发送文件信息
-func (c *Client) WebWxSendAppMsg(msg *SendMessage, request *BaseRequest) (*http.Response, error) {
+func (c *Client) WebWxSendAppMsg(ctx context.Context, msg *SendMessage, request *BaseRequest) (*http.Response, error) {
 	msg.Type = AppMessage
 	path, err := url.Parse(c.Domain.BaseHost() + webwxsendappmsg)
 	if err != nil {
@@ -616,11 +641,17 @@ func (c *Client) WebWxSendAppMsg(msg *SendMessage, request *BaseRequest) (*http.
 	params.Add("fun", "async")
 	params.Add("f", "json")
 	path.RawQuery = params.Encode()
-	return c.sendMessage(request, path.String(), msg)
+	return c.sendMessage(ctx, request, path.String(), msg)
+}
+
+type ClientWebWxOplogOption struct {
+	RemarkName  string
+	UserName    string
+	BaseRequest *BaseRequest
 }
 
 // WebWxOplog 用户重命名接口
-func (c *Client) WebWxOplog(request *BaseRequest, remarkName, userName string) (*http.Response, error) {
+func (c *Client) WebWxOplog(ctx context.Context, opt *ClientWebWxOplogOption) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.BaseHost() + webwxoplog)
 	if err != nil {
 		return nil, err
@@ -629,16 +660,16 @@ func (c *Client) WebWxOplog(request *BaseRequest, remarkName, userName string) (
 	params.Add("lang", "zh_CN")
 	path.RawQuery = params.Encode()
 	content := map[string]interface{}{
-		"BaseRequest": request,
+		"BaseRequest": opt.BaseRequest,
 		"CmdId":       2,
-		"RemarkName":  remarkName,
-		"UserName":    userName,
+		"RemarkName":  opt.RemarkName,
+		"UserName":    opt.UserName,
 	}
 	body, err := jsonEncode(content)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, path.String(), body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -646,9 +677,16 @@ func (c *Client) WebWxOplog(request *BaseRequest, remarkName, userName string) (
 	return c.Do(req)
 }
 
+type ClientWebWxVerifyUserOption struct {
+	RecommendInfo RecommendInfo
+	VerifyContent string
+	BaseRequest   *BaseRequest
+	LoginInfo     *LoginInfo
+}
+
 // WebWxVerifyUser 添加用户为好友接口
-func (c *Client) WebWxVerifyUser(session *Session, info RecommendInfo, verifyContent string) (*http.Response, error) {
-	loginInfo := session.LoginInfo
+func (c *Client) WebWxVerifyUser(ctx context.Context, opt *ClientWebWxVerifyUserOption) (*http.Response, error) {
+	loginInfo := opt.LoginInfo
 	path, err := url.Parse(c.Domain.BaseHost() + webwxverifyuser)
 	if err != nil {
 		return nil, err
@@ -659,23 +697,23 @@ func (c *Client) WebWxVerifyUser(session *Session, info RecommendInfo, verifyCon
 	params.Add("pass_ticket", loginInfo.PassTicket)
 	path.RawQuery = params.Encode()
 	content := map[string]interface{}{
-		"BaseRequest":    session.Request,
+		"BaseRequest":    opt.BaseRequest,
 		"Opcode":         3,
 		"SceneList":      [1]int{33},
 		"SceneListCount": 1,
-		"VerifyContent":  verifyContent,
+		"VerifyContent":  opt.VerifyContent,
 		"VerifyUserList": []interface{}{map[string]string{
-			"Value":            info.UserName,
-			"VerifyUserTicket": info.Ticket,
+			"Value":            opt.RecommendInfo.UserName,
+			"VerifyUserTicket": opt.RecommendInfo.Ticket,
 		}},
 		"VerifyUserListSize": 1,
-		"skey":               session.Request.Skey,
+		"skey":               opt.BaseRequest.Skey,
 	}
 	body, err := jsonEncode(content)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, path.String(), body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -684,7 +722,7 @@ func (c *Client) WebWxVerifyUser(session *Session, info RecommendInfo, verifyCon
 }
 
 // WebWxGetMsgImg 获取图片消息的图片响应
-func (c *Client) WebWxGetMsgImg(msg *Message, info *LoginInfo) (*http.Response, error) {
+func (c *Client) WebWxGetMsgImg(ctx context.Context, msg *Message, info *LoginInfo) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.BaseHost() + webwxgetmsgimg)
 	if err != nil {
 		return nil, err
@@ -694,7 +732,7 @@ func (c *Client) WebWxGetMsgImg(msg *Message, info *LoginInfo) (*http.Response, 
 	params.Add("skey", info.SKey)
 	// params.Add("type", "slave")
 	path.RawQuery = params.Encode()
-	req, err := http.NewRequest(http.MethodGet, path.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -702,7 +740,7 @@ func (c *Client) WebWxGetMsgImg(msg *Message, info *LoginInfo) (*http.Response, 
 }
 
 // WebWxGetVoice 获取语音消息的语音响应
-func (c *Client) WebWxGetVoice(msg *Message, info *LoginInfo) (*http.Response, error) {
+func (c *Client) WebWxGetVoice(ctx context.Context, msg *Message, info *LoginInfo) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.BaseHost() + webwxgetvoice)
 	if err != nil {
 		return nil, err
@@ -711,7 +749,7 @@ func (c *Client) WebWxGetVoice(msg *Message, info *LoginInfo) (*http.Response, e
 	params.Add("msgid", msg.MsgId)
 	params.Add("skey", info.SKey)
 	path.RawQuery = params.Encode()
-	req, err := http.NewRequest(http.MethodGet, path.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -721,7 +759,7 @@ func (c *Client) WebWxGetVoice(msg *Message, info *LoginInfo) (*http.Response, e
 }
 
 // WebWxGetVideo 获取视频消息的视频响应
-func (c *Client) WebWxGetVideo(msg *Message, info *LoginInfo) (*http.Response, error) {
+func (c *Client) WebWxGetVideo(ctx context.Context, msg *Message, info *LoginInfo) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.BaseHost() + webwxgetvideo)
 	if err != nil {
 		return nil, err
@@ -730,7 +768,7 @@ func (c *Client) WebWxGetVideo(msg *Message, info *LoginInfo) (*http.Response, e
 	params.Add("msgid", msg.MsgId)
 	params.Add("skey", info.SKey)
 	path.RawQuery = params.Encode()
-	req, err := http.NewRequest(http.MethodGet, path.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -740,7 +778,7 @@ func (c *Client) WebWxGetVideo(msg *Message, info *LoginInfo) (*http.Response, e
 }
 
 // WebWxGetMedia 获取文件消息的文件响应
-func (c *Client) WebWxGetMedia(msg *Message, info *LoginInfo) (*http.Response, error) {
+func (c *Client) WebWxGetMedia(ctx context.Context, msg *Message, info *LoginInfo) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.FileHost() + webwxgetmedia)
 	if err != nil {
 		return nil, err
@@ -758,7 +796,7 @@ func (c *Client) WebWxGetMedia(msg *Message, info *LoginInfo) (*http.Response, e
 	params.Add("pass_ticket", info.PassTicket)
 	params.Add("webwx_data_ticket", webWxDataTicket)
 	path.RawQuery = params.Encode()
-	req, err := http.NewRequest(http.MethodGet, path.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -767,7 +805,7 @@ func (c *Client) WebWxGetMedia(msg *Message, info *LoginInfo) (*http.Response, e
 }
 
 // Logout 用户退出
-func (c *Client) Logout(info *LoginInfo) (*http.Response, error) {
+func (c *Client) Logout(ctx context.Context, info *LoginInfo) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.BaseHost() + webwxlogout)
 	if err != nil {
 		return nil, err
@@ -777,46 +815,49 @@ func (c *Client) Logout(info *LoginInfo) (*http.Response, error) {
 	params.Add("type", "1")
 	params.Add("skey", info.SKey)
 	path.RawQuery = params.Encode()
-	req, err := http.NewRequest(http.MethodGet, path.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path.String(), nil)
 	if err != nil {
 		return nil, err
 	}
 	return c.Do(req)
 }
 
+type ClientAddMemberIntoChatRoomOption struct {
+	Group            string
+	InviteMemberList []string
+	BaseRequest      *BaseRequest
+	LoginInfo        *LoginInfo
+}
+
 // AddMemberIntoChatRoom 添加用户进群聊
-func (c *Client) AddMemberIntoChatRoom(req *BaseRequest, info *LoginInfo, group *Group, friends ...*Friend) (*http.Response, error) {
-	if len(group.MemberList) >= 40 {
-		return c.InviteMemberIntoChatRoom(req, info, group, friends...)
+func (c *Client) AddMemberIntoChatRoom(ctx context.Context, opt *ClientAddMemberIntoChatRoomOption) (*http.Response, error) {
+	if len(opt.InviteMemberList) >= 40 {
+		return c.InviteMemberIntoChatRoom(ctx, opt)
 	}
-	return c.addMemberIntoChatRoom(req, info, group, friends...)
+	return c.addMemberIntoChatRoom(ctx, opt)
 }
 
 // addMemberIntoChatRoom 添加用户进群聊
-func (c *Client) addMemberIntoChatRoom(req *BaseRequest, info *LoginInfo, group *Group, friends ...*Friend) (*http.Response, error) {
+func (c *Client) addMemberIntoChatRoom(ctx context.Context, opt *ClientAddMemberIntoChatRoomOption) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.BaseHost() + webwxupdatechatroom)
 	if err != nil {
 		return nil, err
 	}
 	params := url.Values{}
 	params.Add("fun", "addmember")
-	params.Add("pass_ticket", info.PassTicket)
+	params.Add("pass_ticket", opt.LoginInfo.PassTicket)
 	params.Add("lang", "zh_CN")
 	path.RawQuery = params.Encode()
-	addMemberList := make([]string, len(friends))
-	for index, friend := range friends {
-		addMemberList[index] = friend.UserName
-	}
 	content := map[string]interface{}{
-		"ChatRoomName":  group.UserName,
-		"BaseRequest":   req,
-		"AddMemberList": strings.Join(addMemberList, ","),
+		"ChatRoomName":  opt.Group,
+		"BaseRequest":   opt.BaseRequest,
+		"AddMemberList": strings.Join(opt.InviteMemberList, ","),
 	}
 	buffer, err := jsonEncode(content)
 	if err != nil {
 		return nil, err
 	}
-	httpReq, err := http.NewRequest(http.MethodPost, path.String(), buffer)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, path.String(), buffer)
 	if err != nil {
 		return nil, err
 	}
@@ -825,30 +866,26 @@ func (c *Client) addMemberIntoChatRoom(req *BaseRequest, info *LoginInfo, group 
 }
 
 // InviteMemberIntoChatRoom 邀请用户进群聊
-func (c *Client) InviteMemberIntoChatRoom(req *BaseRequest, info *LoginInfo, group *Group, friends ...*Friend) (*http.Response, error) {
+func (c *Client) InviteMemberIntoChatRoom(ctx context.Context, opt *ClientAddMemberIntoChatRoomOption) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.BaseHost() + webwxupdatechatroom)
 	if err != nil {
 		return nil, err
 	}
 	params := url.Values{}
 	params.Add("fun", "invitemember")
-	params.Add("pass_ticket", info.PassTicket)
+	params.Add("pass_ticket", opt.LoginInfo.PassTicket)
 	params.Add("lang", "zh_CN")
 	path.RawQuery = params.Encode()
-	addMemberList := make([]string, len(friends))
-	for index, friend := range friends {
-		addMemberList[index] = friend.UserName
-	}
 	content := map[string]interface{}{
-		"ChatRoomName":     group.UserName,
-		"BaseRequest":      req,
-		"InviteMemberList": strings.Join(addMemberList, ","),
+		"ChatRoomName":     opt.Group,
+		"BaseRequest":      opt.BaseRequest,
+		"InviteMemberList": strings.Join(opt.InviteMemberList, ","),
 	}
 	buffer, err := jsonEncode(content)
 	if err != nil {
 		return nil, err
 	}
-	httpReq, err := http.NewRequest(http.MethodPost, path.String(), buffer)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, path.String(), buffer)
 	if err != nil {
 		return nil, err
 	}
@@ -856,8 +893,15 @@ func (c *Client) InviteMemberIntoChatRoom(req *BaseRequest, info *LoginInfo, gro
 	return c.Do(httpReq)
 }
 
+type ClientRemoveMemberFromChatRoomOption struct {
+	Group         string
+	DelMemberList []string
+	BaseRequest   *BaseRequest
+	LoginInfo     *LoginInfo
+}
+
 // RemoveMemberFromChatRoom 从群聊中移除用户
-func (c *Client) RemoveMemberFromChatRoom(req *BaseRequest, info *LoginInfo, group *Group, friends ...*User) (*http.Response, error) {
+func (c *Client) RemoveMemberFromChatRoom(ctx context.Context, opt *ClientRemoveMemberFromChatRoomOption) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.BaseHost() + webwxupdatechatroom)
 	if err != nil {
 		return nil, err
@@ -865,21 +909,17 @@ func (c *Client) RemoveMemberFromChatRoom(req *BaseRequest, info *LoginInfo, gro
 	params := url.Values{}
 	params.Add("fun", "delmember")
 	params.Add("lang", "zh_CN")
-	params.Add("pass_ticket", info.PassTicket)
-	delMemberList := make([]string, len(friends))
-	for index, friend := range friends {
-		delMemberList[index] = friend.UserName
-	}
+	params.Add("pass_ticket", opt.LoginInfo.PassTicket)
 	content := map[string]interface{}{
-		"ChatRoomName":  group.UserName,
-		"BaseRequest":   req,
-		"DelMemberList": strings.Join(delMemberList, ","),
+		"ChatRoomName":  opt.Group,
+		"BaseRequest":   opt.BaseRequest,
+		"DelMemberList": strings.Join(opt.DelMemberList, ","),
 	}
 	buffer, err := jsonEncode(content)
 	if err != nil {
 		return nil, err
 	}
-	httpReq, err := http.NewRequest(http.MethodPost, path.String(), buffer)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, path.String(), buffer)
 	if err != nil {
 		return nil, err
 	}
@@ -888,7 +928,7 @@ func (c *Client) RemoveMemberFromChatRoom(req *BaseRequest, info *LoginInfo, gro
 }
 
 // WebWxRevokeMsg 撤回消息
-func (c *Client) WebWxRevokeMsg(msg *SentMessage, request *BaseRequest) (*http.Response, error) {
+func (c *Client) WebWxRevokeMsg(ctx context.Context, msg *SentMessage, request *BaseRequest) (*http.Response, error) {
 	content := map[string]interface{}{
 		"BaseRequest": request,
 		"ClientMsgId": msg.ClientMsgId,
@@ -899,7 +939,7 @@ func (c *Client) WebWxRevokeMsg(msg *SentMessage, request *BaseRequest) (*http.R
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, c.Domain.BaseHost()+webwxrevokemsg, buffer)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.Domain.BaseHost()+webwxrevokemsg, buffer)
 	if err != nil {
 		return nil, err
 	}
@@ -934,27 +974,33 @@ func (c *Client) webWxCheckUpload(stat os.FileInfo, request *BaseRequest, fileMd
 	return c.Do(req)
 }
 
-func (c *Client) WebWxStatusAsRead(request *BaseRequest, info *LoginInfo, msg *Message) (*http.Response, error) {
+type ClientWebWxStatusAsReadOption struct {
+	LoginInfo *LoginInfo
+	Request   *BaseRequest
+	Message   *Message
+}
+
+func (c *Client) WebWxStatusAsRead(ctx context.Context, opt *ClientWebWxStatusAsReadOption) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.BaseHost() + webwxstatusnotify)
 	if err != nil {
 		return nil, err
 	}
 	content := map[string]interface{}{
-		"BaseRequest":  request,
-		"DeviceID":     request.DeviceID,
-		"Sid":          request.Sid,
-		"Skey":         request.Skey,
-		"Uin":          info.WxUin,
+		"BaseRequest":  opt.Request,
+		"DeviceID":     opt.Request.DeviceID,
+		"Sid":          opt.Request.Sid,
+		"Skey":         opt.Request.Skey,
+		"Uin":          opt.LoginInfo.WxUin,
 		"ClientMsgId":  time.Now().Unix(),
 		"Code":         1,
-		"FromUserName": msg.ToUserName,
-		"ToUserName":   msg.FromUserName,
+		"FromUserName": opt.Message.ToUserName,
+		"ToUserName":   opt.Message.FromUserName,
 	}
 	body, err := jsonEncode(content)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, path.String(), body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -962,24 +1008,31 @@ func (c *Client) WebWxStatusAsRead(request *BaseRequest, info *LoginInfo, msg *M
 	return c.Do(req)
 }
 
+type ClientWebWxRelationPinOption struct {
+	Request    *BaseRequest
+	Op         uint8
+	RemarkName string
+	UserName   string
+}
+
 // WebWxRelationPin 联系人置顶接口
-func (c *Client) WebWxRelationPin(request *BaseRequest, op uint8, user *User) (*http.Response, error) {
+func (c *Client) WebWxRelationPin(ctx context.Context, opt *ClientWebWxRelationPinOption) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.BaseHost() + webwxoplog)
 	if err != nil {
 		return nil, err
 	}
 	content := map[string]interface{}{
-		"BaseRequest": request,
+		"BaseRequest": opt.Request,
 		"CmdId":       3,
-		"OP":          op,
-		"RemarkName":  user.RemarkName,
-		"UserName":    user.UserName,
+		"OP":          opt.Op,
+		"RemarkName":  opt.RemarkName,
+		"UserName":    opt.UserName,
 	}
 	body, err := jsonEncode(content)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, path.String(), body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -993,7 +1046,7 @@ func (c *Client) WebWxPushLogin(ctx context.Context, uin int64) (*http.Response,
 }
 
 // WebWxSendVideoMsg 发送视频消息接口
-func (c *Client) WebWxSendVideoMsg(request *BaseRequest, msg *SendMessage) (*http.Response, error) {
+func (c *Client) WebWxSendVideoMsg(ctx context.Context, request *BaseRequest, msg *SendMessage) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.BaseHost() + webwxsendvideomsg)
 	if err != nil {
 		return nil, err
@@ -1004,35 +1057,42 @@ func (c *Client) WebWxSendVideoMsg(request *BaseRequest, msg *SendMessage) (*htt
 	params.Add("lang", "zh_CN")
 	params.Add("pass_ticket", "pass_ticket")
 	path.RawQuery = params.Encode()
-	return c.sendMessage(request, path.String(), msg)
+	return c.sendMessage(ctx, request, path.String(), msg)
+}
+
+type ClientWebWxCreateChatRoomOption struct {
+	Request   *BaseRequest
+	LoginInfo *LoginInfo
+	Topic     string
+	Friends   []string
 }
 
 // WebWxCreateChatRoom 创建群聊
-func (c *Client) WebWxCreateChatRoom(request *BaseRequest, info *LoginInfo, topic string, friends Friends) (*http.Response, error) {
+func (c *Client) WebWxCreateChatRoom(ctx context.Context, opt *ClientWebWxCreateChatRoomOption) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.BaseHost() + webwxcreatechatroom)
 	if err != nil {
 		return nil, err
 	}
 	params := url.Values{}
-	params.Add("pass_ticket", info.PassTicket)
+	params.Add("pass_ticket", opt.LoginInfo.PassTicket)
 	params.Add("r", fmt.Sprintf("%d", time.Now().Unix()))
 	path.RawQuery = params.Encode()
-	count := len(friends)
+	count := len(opt.Friends)
 	memberList := make([]struct{ UserName string }, count)
-	for index, member := range friends {
-		memberList[index] = struct{ UserName string }{member.UserName}
+	for index, member := range opt.Friends {
+		memberList[index] = struct{ UserName string }{member}
 	}
 	content := map[string]interface{}{
-		"BaseRequest": request,
+		"BaseRequest": opt.Request,
 		"MemberCount": count,
 		"MemberList":  memberList,
-		"Topic":       topic,
+		"Topic":       opt.Topic,
 	}
 	body, err := jsonEncode(content)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, path.String(), body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -1040,26 +1100,33 @@ func (c *Client) WebWxCreateChatRoom(request *BaseRequest, info *LoginInfo, topi
 	return c.Do(req)
 }
 
+type ClientWebWxRenameChatRoomOption struct {
+	Request   *BaseRequest
+	LoginInfo *LoginInfo
+	NewTopic  string
+	Group     string
+}
+
 // WebWxRenameChatRoom 群组重命名接口
-func (c *Client) WebWxRenameChatRoom(request *BaseRequest, info *LoginInfo, newTopic string, group *Group) (*http.Response, error) {
+func (c *Client) WebWxRenameChatRoom(ctx context.Context, opt *ClientWebWxRenameChatRoomOption) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.BaseHost() + webwxupdatechatroom)
 	if err != nil {
 		return nil, err
 	}
 	params := url.Values{}
 	params.Add("fun", "modtopic")
-	params.Add("pass_ticket", info.PassTicket)
+	params.Add("pass_ticket", opt.LoginInfo.PassTicket)
 	path.RawQuery = params.Encode()
 	content := map[string]interface{}{
-		"BaseRequest":  request,
-		"ChatRoomName": group.UserName,
-		"NewTopic":     newTopic,
+		"BaseRequest":  opt.Request,
+		"ChatRoomName": opt.Group,
+		"NewTopic":     opt.NewTopic,
 	}
 	body, err := jsonEncode(content)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, path.String(), body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.String(), body)
 	if err != nil {
 		return nil, err
 	}
