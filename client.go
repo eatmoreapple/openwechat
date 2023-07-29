@@ -416,26 +416,34 @@ func (c *Client) WebWxGetHeadImg(user *User) (*http.Response, error) {
 	return c.Do(req)
 }
 
+type ClientWebWxUploadMediaByChunkOptions struct {
+	FromUserName string
+	ToUserName   string
+	File         *os.File
+	BaseRequest  *BaseRequest
+	LoginInfo    *LoginInfo
+}
+
 // WebWxUploadMediaByChunk 分块上传文件
 // TODO 优化掉这个函数
-func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, info *LoginInfo, forUserName, toUserName string) (*http.Response, error) {
+func (c *Client) WebWxUploadMediaByChunk(opt *ClientWebWxUploadMediaByChunkOptions) (*http.Response, error) {
 	// 获取文件上传的类型
-	contentType, err := GetFileContentType(file)
+	contentType, err := GetFileContentType(opt.File)
 	if err != nil {
 		return nil, err
 	}
-	if _, err = file.Seek(io.SeekStart, 0); err != nil {
+	if _, err = opt.File.Seek(io.SeekStart, 0); err != nil {
 		return nil, err
 	}
 
 	// 获取文件的md5
 	h := md5.New()
-	if _, err = io.Copy(h, file); err != nil {
+	if _, err = io.Copy(h, opt.File); err != nil {
 		return nil, err
 	}
 	fileMd5 := hex.EncodeToString(h.Sum(nil))
 
-	sate, err := file.Stat()
+	sate, err := opt.File.Stat()
 	if err != nil {
 		return nil, err
 	}
@@ -467,14 +475,14 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 
 	uploadMediaRequest := map[string]interface{}{
 		"UploadType":    2,
-		"BaseRequest":   request,
+		"BaseRequest":   opt.BaseRequest,
 		"ClientMediaId": time.Now().Unix() * 1e4,
 		"TotalLen":      sate.Size(),
 		"StartPos":      0,
 		"DataLen":       sate.Size(),
 		"MediaType":     4,
-		"FromUserName":  forUserName,
-		"ToUserName":    toUserName,
+		"FromUserName":  opt.FromUserName,
+		"ToUserName":    opt.ToUserName,
 		"FileMd5":       fileMd5,
 	}
 
@@ -496,14 +504,14 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 		"size":              strconv.FormatInt(sate.Size(), 10),
 		"mediatype":         mediaType,
 		"webwx_data_ticket": webWxDataTicket,
-		"pass_ticket":       info.PassTicket,
+		"pass_ticket":       opt.LoginInfo.PassTicket,
 	}
 
 	if chunks > 1 {
 		content["chunks"] = strconv.FormatInt(chunks, 10)
 	}
 
-	if _, err = file.Seek(0, 0); err != nil {
+	if _, err = opt.File.Seek(0, 0); err != nil {
 		return nil, err
 	}
 
@@ -531,12 +539,12 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 			}
 		}
 
-		w, err := writer.CreateFormFile("filename", file.Name())
+		w, err := writer.CreateFormFile("filename", opt.File.Name())
 		if err != nil {
 			return nil, err
 		}
 
-		n, err := file.Read(chunkBuff)
+		n, err := opt.File.Read(chunkBuff)
 
 		if err != nil && err != io.EOF {
 			return nil, err
@@ -549,7 +557,10 @@ func (c *Client) WebWxUploadMediaByChunk(file *os.File, request *BaseRequest, in
 			return nil, err
 		}
 
-		req, _ := http.NewRequest(http.MethodPost, path.String(), formBuffer)
+		req, err := http.NewRequest(http.MethodPost, path.String(), formBuffer)
+		if err != nil {
+			return nil, err
+		}
 		req.Header.Set("Content-Type", ct)
 
 		// 发送数据

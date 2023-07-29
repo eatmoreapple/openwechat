@@ -232,9 +232,24 @@ func (c *Caller) WebWxOplog(request *BaseRequest, remarkName, toUserName string)
 	return parser.Err()
 }
 
-func (c *Caller) UploadMedia(file *os.File, request *BaseRequest, info *LoginInfo, fromUserName, toUserName string) (*UploadResponse, error) {
+type CallerUploadMediaOptions struct {
+	FromUserName string
+	ToUserName   string
+	File         *os.File
+	BaseRequest  *BaseRequest
+	LoginInfo    *LoginInfo
+}
+
+func (c *Caller) UploadMedia(opt *CallerUploadMediaOptions) (*UploadResponse, error) {
 	// 首先尝试上传图片
-	resp, err := c.Client.WebWxUploadMediaByChunk(file, request, info, fromUserName, toUserName)
+	clientWebWxUploadMediaByChunkOpt := &ClientWebWxUploadMediaByChunkOptions{
+		FromUserName: opt.FromUserName,
+		ToUserName:   opt.ToUserName,
+		File:         opt.File,
+		BaseRequest:  opt.BaseRequest,
+		LoginInfo:    opt.LoginInfo,
+	}
+	resp, err := c.Client.WebWxUploadMediaByChunk(clientWebWxUploadMediaByChunkOpt)
 	// 无错误上传成功之后获取请求结果，判断结果是否正常
 	if err != nil {
 		return nil, err
@@ -253,9 +268,19 @@ func (c *Caller) UploadMedia(file *os.File, request *BaseRequest, info *LoginInf
 	return &item, nil
 }
 
+type CallerUploadMediaCommonOptions struct {
+	FromUserName string
+	ToUserName   string
+	Reader       io.Reader
+	BaseRequest  *BaseRequest
+	LoginInfo    *LoginInfo
+}
+
+type CallerWebWxSendImageMsgOptions CallerUploadMediaCommonOptions
+
 // WebWxSendImageMsg 发送图片消息接口
-func (c *Caller) WebWxSendImageMsg(reader io.Reader, request *BaseRequest, info *LoginInfo, fromUserName, toUserName string) (*SentMessage, error) {
-	file, cb, err := readerToFile(reader)
+func (c *Caller) WebWxSendImageMsg(opt *CallerWebWxSendImageMsgOptions) (*SentMessage, error) {
+	file, cb, err := readerToFile(opt.Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -263,16 +288,23 @@ func (c *Caller) WebWxSendImageMsg(reader io.Reader, request *BaseRequest, info 
 	// 首先尝试上传图片
 	var mediaId string
 	{
-		resp, err := c.UploadMedia(file, request, info, fromUserName, toUserName)
+		uploadMediaOption := &CallerUploadMediaOptions{
+			FromUserName: opt.FromUserName,
+			ToUserName:   opt.ToUserName,
+			File:         file,
+			BaseRequest:  opt.BaseRequest,
+			LoginInfo:    opt.LoginInfo,
+		}
+		resp, err := c.UploadMedia(uploadMediaOption)
 		if err != nil {
 			return nil, err
 		}
 		mediaId = resp.MediaId
 	}
 	// 构造新的图片类型的信息
-	msg := NewMediaSendMessage(MsgTypeImage, fromUserName, toUserName, mediaId)
+	msg := NewMediaSendMessage(MsgTypeImage, opt.FromUserName, opt.ToUserName, mediaId)
 	// 发送图片信息
-	resp, err := c.Client.WebWxSendMsgImg(msg, request, info)
+	resp, err := c.Client.WebWxSendMsgImg(msg, opt.BaseRequest, opt.LoginInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -281,13 +313,23 @@ func (c *Caller) WebWxSendImageMsg(reader io.Reader, request *BaseRequest, info 
 	return parser.SentMessage(msg)
 }
 
-func (c *Caller) WebWxSendFile(reader io.Reader, req *BaseRequest, info *LoginInfo, fromUserName, toUserName string) (*SentMessage, error) {
-	file, cb, err := readerToFile(reader)
+type CallerWebWxSendFileOptions CallerUploadMediaCommonOptions
+
+func (c *Caller) WebWxSendFile(opt *CallerWebWxSendFileOptions) (*SentMessage, error) {
+	file, cb, err := readerToFile(opt.Reader)
 	if err != nil {
 		return nil, err
 	}
 	defer cb()
-	resp, err := c.UploadMedia(file, req, info, fromUserName, toUserName)
+
+	uploadMediaOption := &CallerUploadMediaOptions{
+		FromUserName: opt.FromUserName,
+		ToUserName:   opt.ToUserName,
+		File:         file,
+		BaseRequest:  opt.BaseRequest,
+		LoginInfo:    opt.LoginInfo,
+	}
+	resp, err := c.UploadMedia(uploadMediaOption)
 	if err != nil {
 		return nil, err
 	}
@@ -298,27 +340,37 @@ func (c *Caller) WebWxSendFile(reader io.Reader, req *BaseRequest, info *LoginIn
 	if err != nil {
 		return nil, err
 	}
-	msg := NewSendMessage(AppMessage, string(content), fromUserName, toUserName, "")
-	return c.WebWxSendAppMsg(msg, req)
+	msg := NewSendMessage(AppMessage, string(content), opt.FromUserName, opt.ToUserName, "")
+	return c.WebWxSendAppMsg(msg, opt.BaseRequest)
 }
 
-func (c *Caller) WebWxSendVideoMsg(reader io.Reader, request *BaseRequest, info *LoginInfo, fromUserName, toUserName string) (*SentMessage, error) {
-	file, cb, err := readerToFile(reader)
+type CallerWebWxSendAppMsgOptions CallerUploadMediaCommonOptions
+
+func (c *Caller) WebWxSendVideoMsg(opt *CallerWebWxSendAppMsgOptions) (*SentMessage, error) {
+	file, cb, err := readerToFile(opt.Reader)
 	if err != nil {
 		return nil, err
 	}
 	defer cb()
 	var mediaId string
 	{
-		resp, err := c.UploadMedia(file, request, info, fromUserName, toUserName)
+		uploadMediaOption := &CallerUploadMediaOptions{
+			FromUserName: opt.FromUserName,
+			ToUserName:   opt.ToUserName,
+			File:         file,
+			BaseRequest:  opt.BaseRequest,
+			LoginInfo:    opt.LoginInfo,
+		}
+
+		resp, err := c.UploadMedia(uploadMediaOption)
 		if err != nil {
 			return nil, err
 		}
 		mediaId = resp.MediaId
 	}
 	// 构造新的图片类型的信息
-	msg := NewMediaSendMessage(MsgTypeVideo, fromUserName, toUserName, mediaId)
-	resp, err := c.Client.WebWxSendVideoMsg(request, msg)
+	msg := NewMediaSendMessage(MsgTypeVideo, opt.FromUserName, opt.ToUserName, mediaId)
+	resp, err := c.Client.WebWxSendVideoMsg(opt.BaseRequest, msg)
 	if err != nil {
 		return nil, err
 	}

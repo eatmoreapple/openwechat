@@ -365,55 +365,68 @@ func (s *Self) UpdateMembersDetail() error {
 	return members.Detail()
 }
 
-func (s *Self) sendTextToUser(user *User, text string) (*SentMessage, error) {
-	msg := NewTextSendMessage(text, s.UserName, user.UserName)
-	msg.FromUserName = s.UserName
-	msg.ToUserName = user.UserName
+func (s *Self) sendTextToUser(username, text string) (*SentMessage, error) {
+	msg := NewTextSendMessage(text, s.UserName, username)
 	info := s.bot.Storage.LoginInfo
 	request := s.bot.Storage.Request
 	sentMessage, err := s.bot.Caller.WebWxSendMsg(msg, info, request)
 	return s.sendMessageWrapper(sentMessage, err)
 }
 
-func (s *Self) sendImageToUser(user *User, file io.Reader) (*SentMessage, error) {
-	req := s.bot.Storage.Request
-	info := s.bot.Storage.LoginInfo
-	sentMessage, err := s.bot.Caller.WebWxSendImageMsg(file, req, info, s.UserName, user.UserName)
+func (s *Self) sendImageToUser(username string, file io.Reader) (*SentMessage, error) {
+	opt := &CallerWebWxSendImageMsgOptions{
+		FromUserName: s.UserName,
+		ToUserName:   username,
+		Reader:       file,
+		BaseRequest:  s.bot.Storage.Request,
+		LoginInfo:    s.bot.Storage.LoginInfo,
+	}
+	sentMessage, err := s.bot.Caller.WebWxSendImageMsg(opt)
 	return s.sendMessageWrapper(sentMessage, err)
 }
 
-func (s *Self) sendVideoToUser(user *User, file io.Reader) (*SentMessage, error) {
-	req := s.bot.Storage.Request
-	info := s.bot.Storage.LoginInfo
-	sentMessage, err := s.bot.Caller.WebWxSendVideoMsg(file, req, info, s.UserName, user.UserName)
+func (s *Self) sendVideoToUser(username string, file io.Reader) (*SentMessage, error) {
+	opt := &CallerWebWxSendAppMsgOptions{
+		FromUserName: s.UserName,
+		ToUserName:   username,
+		Reader:       file,
+		BaseRequest:  s.bot.Storage.Request,
+		LoginInfo:    s.bot.Storage.LoginInfo,
+	}
+	sentMessage, err := s.bot.Caller.WebWxSendVideoMsg(opt)
 	return s.sendMessageWrapper(sentMessage, err)
 }
 
-func (s *Self) sendFileToUser(user *User, file io.Reader) (*SentMessage, error) {
-	req := s.bot.Storage.Request
-	info := s.bot.Storage.LoginInfo
-	sentMessage, err := s.bot.Caller.WebWxSendFile(file, req, info, s.UserName, user.UserName)
+func (s *Self) sendFileToUser(username string, file io.Reader) (*SentMessage, error) {
+	opt := &CallerWebWxSendFileOptions{
+		FromUserName: s.UserName,
+		ToUserName:   username,
+		Reader:       file,
+		BaseRequest:  s.bot.Storage.Request,
+		LoginInfo:    s.bot.Storage.LoginInfo,
+	}
+	sentMessage, err := s.bot.Caller.WebWxSendFile(opt)
 	return s.sendMessageWrapper(sentMessage, err)
 }
 
 // SendTextToFriend 发送文本消息给好友
 func (s *Self) SendTextToFriend(friend *Friend, text string) (*SentMessage, error) {
-	return s.sendTextToUser(friend.User, text)
+	return s.sendTextToUser(friend.User.UserName, text)
 }
 
 // SendImageToFriend 发送图片消息给好友
 func (s *Self) SendImageToFriend(friend *Friend, file io.Reader) (*SentMessage, error) {
-	return s.sendImageToUser(friend.User, file)
+	return s.sendImageToUser(friend.User.UserName, file)
 }
 
 // SendVideoToFriend 发送视频给好友
 func (s *Self) SendVideoToFriend(friend *Friend, file io.Reader) (*SentMessage, error) {
-	return s.sendVideoToUser(friend.User, file)
+	return s.sendVideoToUser(friend.User.UserName, file)
 }
 
 // SendFileToFriend 发送文件给好友
 func (s *Self) SendFileToFriend(friend *Friend, file io.Reader) (*SentMessage, error) {
-	return s.sendFileToUser(friend.User, file)
+	return s.sendFileToUser(friend.User.UserName, file)
 }
 
 // SetRemarkNameToFriend 设置好友备注
@@ -535,22 +548,22 @@ func (s *Self) RenameGroup(group *Group, newName string) error {
 
 // SendTextToGroup 发送文本消息给群组
 func (s *Self) SendTextToGroup(group *Group, text string) (*SentMessage, error) {
-	return s.sendTextToUser(group.User, text)
+	return s.sendTextToUser(group.User.UserName, text)
 }
 
 // SendImageToGroup 发送图片消息给群组
 func (s *Self) SendImageToGroup(group *Group, file io.Reader) (*SentMessage, error) {
-	return s.sendImageToUser(group.User, file)
+	return s.sendImageToUser(group.User.UserName, file)
 }
 
 // SendVideoToGroup 发送视频给群组
 func (s *Self) SendVideoToGroup(group *Group, file io.Reader) (*SentMessage, error) {
-	return s.sendVideoToUser(group.User, file)
+	return s.sendVideoToUser(group.User.UserName, file)
 }
 
 // SendFileToGroup 发送文件给群组
 func (s *Self) SendFileToGroup(group *Group, file io.Reader) (*SentMessage, error) {
-	return s.sendFileToUser(group.User, file)
+	return s.sendFileToUser(group.User.UserName, file)
 }
 
 // RevokeMessage 撤回消息
@@ -616,7 +629,7 @@ func (s *Self) sendTextToMembers(text string, delay time.Duration, members ...*U
 		return nil
 	}
 	user := members[0]
-	msg, err := s.sendTextToUser(user, text)
+	msg, err := s.sendTextToUser(user.UserName, text)
 	if err != nil {
 		return err
 	}
@@ -630,7 +643,7 @@ func (s *Self) sendImageToMembers(img io.Reader, delay time.Duration, members ..
 		return nil
 	}
 	user := members[0]
-	msg, err := s.sendImageToUser(user, img)
+	msg, err := s.sendImageToUser(user.UserName, img)
 	if err != nil {
 		return err
 	}
@@ -644,7 +657,7 @@ func (s *Self) sendVideoToMembers(video io.Reader, delay time.Duration, members 
 		return nil
 	}
 	user := members[0]
-	msg, err := s.sendVideoToUser(user, video)
+	msg, err := s.sendVideoToUser(user.UserName, video)
 	if err != nil {
 		return err
 	}
@@ -657,7 +670,7 @@ func (s *Self) sendFileToMembers(file io.Reader, delay time.Duration, members ..
 		return nil
 	}
 	user := members[0]
-	msg, err := s.sendFileToUser(user, file)
+	msg, err := s.sendFileToUser(user.UserName, file)
 	if err != nil {
 		return err
 	}
@@ -956,22 +969,22 @@ func NewFriendHelper(self *Self) *Friend {
 
 // SendTextToMp 发送文本消息给公众号
 func (s *Self) SendTextToMp(mp *Mp, text string) (*SentMessage, error) {
-	return s.sendTextToUser(mp.User, text)
+	return s.sendTextToUser(mp.User.UserName, text)
 }
 
 // SendImageToMp 发送图片消息给公众号
 func (s *Self) SendImageToMp(mp *Mp, file io.Reader) (*SentMessage, error) {
-	return s.sendImageToUser(mp.User, file)
+	return s.sendImageToUser(mp.User.UserName, file)
 }
 
 // SendFileToMp 发送文件给公众号
 func (s *Self) SendFileToMp(mp *Mp, file io.Reader) (*SentMessage, error) {
-	return s.sendFileToUser(mp.User, file)
+	return s.sendFileToUser(mp.User.UserName, file)
 }
 
 // SendVideoToMp 发送视频消息给公众号
 func (s *Self) SendVideoToMp(mp *Mp, file io.Reader) (*SentMessage, error) {
-	return s.sendVideoToUser(mp.User, file)
+	return s.sendVideoToUser(mp.User.UserName, file)
 }
 
 func (s *Self) sendMessageWrapper(message *SentMessage, err error) (*SentMessage, error) {
