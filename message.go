@@ -166,35 +166,22 @@ func (m *Message) IsSendByGroup() bool {
 
 // ReplyText 回复文本消息
 func (m *Message) ReplyText(content string) (*SentMessage, error) {
-	msg := NewSendMessage(MsgTypeText, content, m.bot.self.User.UserName, m.FromUserName, "")
-	info := m.Bot().Storage.LoginInfo
-	request := m.Bot().Storage.Request
-	sentMessage, err := m.bot.Caller.WebWxSendMsg(msg, info, request)
-	return m.bot.self.sendMessageWrapper(sentMessage, err)
+	return m.Owner().sendTextToUser(m.FromUserName, content)
 }
 
 // ReplyImage 回复图片消息
 func (m *Message) ReplyImage(file io.Reader) (*SentMessage, error) {
-	info := m.bot.Storage.LoginInfo
-	request := m.bot.Storage.Request
-	sentMessage, err := m.bot.Caller.WebWxSendImageMsg(file, request, info, m.bot.self.UserName, m.FromUserName)
-	return m.bot.self.sendMessageWrapper(sentMessage, err)
+	return m.Owner().sendImageToUser(m.FromUserName, file)
 }
 
 // ReplyVideo 回复视频消息
 func (m *Message) ReplyVideo(file io.Reader) (*SentMessage, error) {
-	info := m.bot.Storage.LoginInfo
-	request := m.bot.Storage.Request
-	sentMessage, err := m.bot.Caller.WebWxSendVideoMsg(file, request, info, m.bot.self.UserName, m.FromUserName)
-	return m.bot.self.sendMessageWrapper(sentMessage, err)
+	return m.Owner().sendVideoToUser(m.FromUserName, file)
 }
 
 // ReplyFile 回复文件消息
 func (m *Message) ReplyFile(file io.Reader) (*SentMessage, error) {
-	info := m.bot.Storage.LoginInfo
-	request := m.bot.Storage.Request
-	sentMessage, err := m.bot.Caller.WebWxSendFile(file, request, info, m.bot.self.UserName, m.FromUserName)
-	return m.bot.self.sendMessageWrapper(sentMessage, err)
+	return m.Owner().sendFileToUser(m.FromUserName, file)
 }
 
 func (m *Message) IsText() bool {
