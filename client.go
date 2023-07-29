@@ -132,7 +132,7 @@ func (c *Client) do(req *http.Request) (*http.Response, error) {
 	)
 
 	c.HttpHooks.BeforeRequest(req)
-	defer c.HttpHooks.AfterRequest(resp, err)
+	defer func() { c.HttpHooks.AfterRequest(resp, err) }()
 
 	for i := 0; i < c.MaxRetryTimes; i++ {
 		resp, err = c.client.Do(req)
