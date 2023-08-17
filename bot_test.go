@@ -134,7 +134,7 @@ func TestSender(t *testing.T) {
 func TestGetUUID(t *testing.T) {
 	bot := DefaultBot(Desktop)
 
-	uuid, err := bot.Caller.GetLoginUUID()
+	uuid, err := bot.Caller.GetLoginUUID(bot.Context())
 	if err != nil {
 		t.Error(err)
 		return
