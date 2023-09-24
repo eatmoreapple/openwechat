@@ -460,6 +460,7 @@ type CallerAddFriendIntoChatRoomOptions struct {
 	BaseRequest *BaseRequest
 	LoginInfo   *LoginInfo
 	Group       *Group
+	GroupLength int
 	Friends     []*Friend
 }
 
@@ -476,6 +477,7 @@ func (c *Caller) AddFriendIntoChatRoom(ctx context.Context, opt *CallerAddFriend
 		BaseRequest:      opt.BaseRequest,
 		LoginInfo:        opt.LoginInfo,
 		Group:            opt.Group.UserName,
+		GroupLength:      opt.GroupLength,
 		InviteMemberList: inviteMemberList,
 	}
 	resp, err := c.Client.AddMemberIntoChatRoom(ctx, clientAddMemberIntoChatRoomOption)
