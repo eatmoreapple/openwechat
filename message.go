@@ -164,24 +164,49 @@ func (m *Message) IsSendByGroup() bool {
 	return strings.HasPrefix(m.FromUserName, "@@") || (m.IsSendBySelf() && strings.HasPrefix(m.ToUserName, "@@"))
 }
 
+// IsSelfSendToGroup 判断消息是否由自己发送到群组
+func (m *Message) IsSelfSendToGroup() bool {
+	return m.IsSendBySelf() && strings.HasPrefix(m.ToUserName, "@@")
+}
+
 // ReplyText 回复文本消息
 func (m *Message) ReplyText(content string) (*SentMessage, error) {
-	return m.Owner().sendTextToUser(m.FromUserName, content)
+	// 判断是否由自己发送
+	username := m.FromUserName
+	if m.IsSelfSendToGroup() {
+		username = m.ToUserName
+	}
+	return m.Owner().sendTextToUser(username, content)
 }
 
 // ReplyImage 回复图片消息
 func (m *Message) ReplyImage(file io.Reader) (*SentMessage, error) {
-	return m.Owner().sendImageToUser(m.FromUserName, file)
+	// 判断是否由自己发送
+	username := m.FromUserName
+	if m.IsSelfSendToGroup() {
+		username = m.ToUserName
+	}
+	return m.Owner().sendImageToUser(username, file)
 }
 
 // ReplyVideo 回复视频消息
 func (m *Message) ReplyVideo(file io.Reader) (*SentMessage, error) {
-	return m.Owner().sendVideoToUser(m.FromUserName, file)
+	// 判断是否由自己发送
+	username := m.FromUserName
+	if m.IsSelfSendToGroup() {
+		username = m.ToUserName
+	}
+	return m.Owner().sendVideoToUser(username, file)
 }
 
 // ReplyFile 回复文件消息
 func (m *Message) ReplyFile(file io.Reader) (*SentMessage, error) {
-	return m.Owner().sendFileToUser(m.FromUserName, file)
+	// 判断是否由自己发送
+	username := m.FromUserName
+	if m.IsSelfSendToGroup() {
+		username = m.ToUserName
+	}
+	return m.Owner().sendFileToUser(username, file)
 }
 
 func (m *Message) IsText() bool {
