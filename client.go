@@ -824,6 +824,7 @@ func (c *Client) Logout(ctx context.Context, info *LoginInfo) (*http.Response, e
 
 type ClientAddMemberIntoChatRoomOption struct {
 	Group            string
+	GroupLength      int
 	InviteMemberList []string
 	BaseRequest      *BaseRequest
 	LoginInfo        *LoginInfo
@@ -831,7 +832,7 @@ type ClientAddMemberIntoChatRoomOption struct {
 
 // AddMemberIntoChatRoom 添加用户进群聊
 func (c *Client) AddMemberIntoChatRoom(ctx context.Context, opt *ClientAddMemberIntoChatRoomOption) (*http.Response, error) {
-	if len(opt.InviteMemberList) >= 40 {
+	if opt.GroupLength >= 40 {
 		return c.InviteMemberIntoChatRoom(ctx, opt)
 	}
 	return c.addMemberIntoChatRoom(ctx, opt)

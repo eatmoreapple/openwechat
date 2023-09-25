@@ -509,6 +509,7 @@ func (s *Self) AddFriendsIntoGroup(group *Group, friends ...*Friend) error {
 		BaseRequest: s.bot.Storage.Request,
 		LoginInfo:   s.bot.Storage.LoginInfo,
 		Group:       group,
+		GroupLength: groupMembers.Count(),
 		Friends:     friends,
 	}
 	return s.bot.Caller.AddFriendIntoChatRoom(s.Bot().Context(), opt)
