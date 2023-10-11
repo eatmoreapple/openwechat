@@ -202,11 +202,11 @@ func (b *Bot) updateGroups(msg *Message) {
 		if err != nil {
 			return
 		}
-		user, exist := members.GetByUserName(msg.FromUserName)
+		_, exist := members.GetByUserName(msg.FromUserName)
 		if !exist {
 			// 找不到, 从服务器获取
-			user = newUser(msg.Owner(), msg.FromUserName)
-			err = user.Detail()
+			user := newUser(msg.Owner(), msg.FromUserName)
+			_ = user.Detail()
 			b.self.members = b.self.members.Append(user)
 			b.self.groups = b.self.members.Groups()
 		}
