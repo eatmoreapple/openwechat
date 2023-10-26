@@ -121,7 +121,7 @@ func (c *Client) AddHttpHook(hooks ...HttpHook) {
 	c.HttpHooks = append(c.HttpHooks, hooks...)
 }
 
-func (c *Client) do(req *http.Request) (*http.Response, error) {
+func (c *Client) do(req *http.Request, rawBody []byte) (*http.Response, error) {
 	// 确保请求能够被执行
 	if c.MaxRetryTimes <= 0 {
 		c.MaxRetryTimes = 1
@@ -138,6 +138,8 @@ func (c *Client) do(req *http.Request) (*http.Response, error) {
 		resp, err = c.client.Do(req)
 		if err == nil {
 			break
+		} else {
+			req.Body = io.NopCloser(bytes.NewReader(rawBody))
 		}
 	}
 	if err != nil {
@@ -147,7 +149,16 @@ func (c *Client) do(req *http.Request) (*http.Response, error) {
 }
 
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
-	return c.do(req)
+	var rawBody []byte
+	if req.Body != nil {
+		var err error
+		rawBody, err = io.ReadAll(req.Body)
+		if err != nil {
+			return nil, fmt.Errorf("io.ReadAll: %w", err)
+		}
+	}
+	req.Body = io.NopCloser(bytes.NewReader(rawBody))
+	return c.do(req, rawBody)
 }
 
 // Jar 返回当前client的 http.CookieJar
