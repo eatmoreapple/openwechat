@@ -127,14 +127,28 @@ func (c *Client) do(req *http.Request) (*http.Response, error) {
 		c.MaxRetryTimes = 1
 	}
 	var (
-		resp *http.Response
-		err  error
+		resp        *http.Response
+		err         error
+		requestBody *bytes.Reader
 	)
 
 	c.HttpHooks.BeforeRequest(req)
 	defer func() { c.HttpHooks.AfterRequest(resp, err) }()
-
+	if req.Body != nil {
+		rawBody, err := io.ReadAll(req.Body)
+		if err != nil {
+			return nil, fmt.Errorf("io.ReadAll: %w", err)
+		}
+		requestBody = bytes.NewReader(rawBody)
+	}
 	for i := 0; i < c.MaxRetryTimes; i++ {
+		if requestBody != nil {
+			_, err := requestBody.Seek(0, io.SeekStart)
+			if err != nil {
+				return nil, fmt.Errorf("requestBody.Seek: %w", err)
+			}
+			req.Body = io.NopCloser(requestBody)
+		}
 		resp, err = c.client.Do(req)
 		if err == nil {
 			break
