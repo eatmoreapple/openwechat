@@ -3,6 +3,7 @@ package openwechat
 import (
 	"fmt"
 	"io"
+	"math/rand"
 	"time"
 )
 
@@ -134,6 +135,25 @@ func (f Friends) SendText(text string, delays ...time.Duration) error {
 	}
 	self := f.First().Self()
 	return self.SendTextToFriends(text, delay, f...)
+}
+// 挨个延迟1-10秒发送消息给好友,和SendText一样最后都是使用的WebWxSendMsg()方法
+func (f Friends)BroadcastTextToFriendsByRandomTime(bot *Bot, msg string) error {
+	self, err := bot.GetCurrentUser()
+	if err != nil {
+		return err
+	}
+	firends, err := self.Friends()
+	if err != nil {
+		return err
+	}
+	for _, friend := range firends {
+		time.Sleep(time.Duration(rand.Intn(10)) * time.Second) //随机休眠0-10秒
+		_,err=self.SendTextToFriend(friend, msg)
+		if err != nil {
+		return err
+		}
+	}
+	return nil
 }
 
 // SendImage 向slice的好友依次发送图片消息
