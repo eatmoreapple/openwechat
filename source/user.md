@@ -116,7 +116,7 @@ self, err := bot.GetCurrentUser()
 #### 获取当前用户的所有的好友
 
 ```go
-firends, err := self.Friends() // self.Friends(true)
+Friends, err := self.Friends() // self.Friends(true)
 ```
 
 `Friends`：可接受`bool`值来判断是否获取最新的好友
@@ -162,7 +162,7 @@ func (s *Self) SendTextToFriend(friend *Friend, text string) (*SentMessage, erro
 ```
 
 ```go
-firends, err := self.Friends()
+Friends, err := self.Friends()
 
 if err != nil {
     return
@@ -332,7 +332,7 @@ type Friends []*Friend
 #### 获取当前用户的好友列表
 
 ```go
-firends, err := self.Friends()
+Friends, err := self.Friends()
 ```
 
 注：此时获取到的`friends`为好友组，而非好友。好友组是当前wx号所有好友的集合。
@@ -342,7 +342,7 @@ firends, err := self.Friends()
 #### 统计好友个数
 
 ```go
-firends.Count() // => int
+Friends.Count() // => int
 ```
 
 
@@ -359,7 +359,7 @@ func (f Friends) Search(limit int, condFuncList ...func(friend *Friend) bool) (r
 
 ```go
 // 例：查询昵称为eatmoreapple的1个好友
-sult := firends.Search(1, func(friend *openwechat.Friend) bool {return friend.NickName == "eatmoreapple"})
+sult := Friends.Search(1, func(friend *openwechat.Friend) bool {return friend.NickName == "eatmoreapple"})
 ```
 
 
