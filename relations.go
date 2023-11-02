@@ -135,6 +135,16 @@ func (f Friends) SendText(text string, delays ...time.Duration) error {
 	self := f.First().Self()
 	return self.SendTextToFriends(text, delay, f...)
 }
+//向所有好友随机时间间隔发送消息。
+func (f Friends) BroadcastTextToFriendsByRandomTime(msg string) error {
+	for _, friend := range f {
+		time.Sleep(time.Duration(rand.Intn(10)) * time.Second) //随机休眠0-10秒
+		if _, err := friend.SendText(msg); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 // SendImage 向slice的好友依次发送图片消息
 func (f Friends) SendImage(file io.Reader, delays ...time.Duration) error {
