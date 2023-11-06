@@ -3,6 +3,7 @@ package openwechat
 import (
 	"fmt"
 	"io"
+	"math/rand"
 	"time"
 )
 
@@ -135,7 +136,8 @@ func (f Friends) SendText(text string, delays ...time.Duration) error {
 	self := f.First().Self()
 	return self.SendTextToFriends(text, delay, f...)
 }
-//向所有好友随机时间间隔发送消息。
+
+// BroadcastTextToFriendsByRandomTime 向所有好友随机时间间隔发送消息。
 func (f Friends) BroadcastTextToFriendsByRandomTime(msg string) error {
 	for _, friend := range f {
 		time.Sleep(time.Duration(rand.Intn(10)) * time.Second) //随机休眠0-10秒
