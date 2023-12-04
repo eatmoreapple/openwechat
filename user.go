@@ -668,18 +668,29 @@ func (s *Self) ForwardMessageToGroups(msg *SentMessage, delay time.Duration, gro
 	return s.forwardMessage(msg, delay, members...)
 }
 
+type SendMessageFunc func() (*SentMessage, error)
+
+func (s *Self) sendMessageToMember(sendMessageFunc SendMessageFunc, delay time.Duration, members ...*User) error {
+	if len(members) == 0 {
+		return nil
+	}
+	msg, err := sendMessageFunc()
+	if err != nil {
+		return err
+	}
+	return s.forwardMessage(msg, delay, members...)
+}
+
 // sendTextToMembers 发送文本消息给群组或者好友
 func (s *Self) sendTextToMembers(text string, delay time.Duration, members ...*User) error {
 	if len(members) == 0 {
 		return nil
 	}
-	user := members[0]
-	msg, err := s.sendTextToUser(user.UserName, text)
-	if err != nil {
-		return err
+	var sendMessageFunc SendMessageFunc = func() (*SentMessage, error) {
+		user := members[0]
+		return s.sendTextToUser(user.UserName, text)
 	}
-	time.Sleep(delay)
-	return s.forwardMessage(msg, delay, members[1:]...)
+	return s.sendMessageToMember(sendMessageFunc, delay, members[1:]...)
 }
 
 // sendImageToMembers 发送图片消息给群组或者好友
@@ -687,13 +698,11 @@ func (s *Self) sendImageToMembers(img io.Reader, delay time.Duration, members ..
 	if len(members) == 0 {
 		return nil
 	}
-	user := members[0]
-	msg, err := s.sendImageToUser(user.UserName, img)
-	if err != nil {
-		return err
+	var sendMessageFunc SendMessageFunc = func() (*SentMessage, error) {
+		user := members[0]
+		return s.sendImageToUser(user.UserName, img)
 	}
-	time.Sleep(delay)
-	return s.forwardMessage(msg, delay, members[1:]...)
+	return s.sendMessageToMember(sendMessageFunc, delay, members[1:]...)
 }
 
 // sendVideoToMembers 发送视频消息给群组或者好友
@@ -701,26 +710,23 @@ func (s *Self) sendVideoToMembers(video io.Reader, delay time.Duration, members 
 	if len(members) == 0 {
 		return nil
 	}
-	user := members[0]
-	msg, err := s.sendVideoToUser(user.UserName, video)
-	if err != nil {
-		return err
+	var sendMessageFunc SendMessageFunc = func() (*SentMessage, error) {
+		user := members[0]
+		return s.sendVideoToUser(user.UserName, video)
 	}
-	time.Sleep(delay)
-	return s.forwardMessage(msg, delay, members[1:]...)
+	return s.sendMessageToMember(sendMessageFunc, delay, members[1:]...)
 }
 
+// sendFileToMembers 发送文件消息给群组或者好友
 func (s *Self) sendFileToMembers(file io.Reader, delay time.Duration, members ...*User) error {
 	if len(members) == 0 {
 		return nil
 	}
-	user := members[0]
-	msg, err := s.sendFileToUser(user.UserName, file)
-	if err != nil {
-		return err
+	var sendMessageFunc SendMessageFunc = func() (*SentMessage, error) {
+		user := members[0]
+		return s.sendFileToUser(user.UserName, file)
 	}
-	time.Sleep(delay)
-	return s.forwardMessage(msg, delay, members[1:]...)
+	return s.sendMessageToMember(sendMessageFunc, delay, members[1:]...)
 }
 
 // SendTextToFriends 发送文本消息给好友
