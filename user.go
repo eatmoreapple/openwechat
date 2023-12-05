@@ -645,13 +645,17 @@ func (s *Self) forwardMessage(msg *SentMessage, delay time.Duration, users ...*U
 	default:
 		return fmt.Errorf("unsupported message type: %s", msg.Type)
 	}
+	var errGroup []error
 	for _, user := range users {
 		msg.FromUserName = s.UserName
 		msg.ToUserName = user.UserName
 		if err := forwardFunc(); err != nil {
-			return err
+			errGroup = append(errGroup, err)
 		}
 		time.Sleep(delay)
+	}
+	if len(errGroup) > 0 {
+		return errors.Join(errGroup...)
 	}
 	return nil
 }
