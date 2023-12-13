@@ -21,16 +21,8 @@
 
 ### 安装
 
-`go get`
-
 ```shell
-go get github.com/eatmoreapple/openwechat
-```
-
-`go mod`
-
-```shell
-require github.com/eatmoreapple/openwechat latest
+go get -u github.com/eatmoreapple/openwechat
 ```
 
 ### 快速开始
@@ -104,9 +96,9 @@ func main() {
 
 ** 如果喜欢的话，可以请作者吃包辣条。谢谢支持 :smile: **
 
-<img width="210px"  src="https://github.com/eatmoreapple/eatmoreapple/blob/main/img/wechat_pay.jpg" align="left">
+<img width="210px" height="210px" src="https://github.com/eatmoreapple/eatmoreapple/blob/main/img/wechat_pay.jpg" align="left">
 
-<img width="210px"  src="https://raw.githubusercontent.com/eatmoreapple/eatMoreApple/main/img/wechat.jpg" align="left">
+<img width="210px" height="210px" src="https://raw.githubusercontent.com/eatmoreapple/eatMoreApple/main/img/wechat.jpg" align="left">
 
 
 
