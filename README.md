@@ -10,8 +10,7 @@
 > golang版个人微信号API, 突破登录限制，类似开发公众号一样，开发个人微信号
 
 
-
-微信机器人:smiling_imp:，利用微信号完成一些功能的定制化开发⭐
+微信机器人，利用微信号完成一些功能的定制化开发⭐
 
 * 模块简单易用，易于扩展
 * 支持定制化开发，如日志记录，自动回复
@@ -92,13 +91,9 @@ func main() {
 
 <a href="https://www.jetbrains.com/?from=openwechat"><img src="https://account.jetbrains.com/static/images/jetbrains-logo-inv.svg" height="200" alt="JetBrains"/></a>
 
-### 添加微信(eatmoreapple):apple:（备注: openwechat），进群交流:smiling_imp:
-
 ** 如果喜欢的话，可以请作者吃包辣条。谢谢支持 :smile: **
 
 <img width="210px" height="210px" src="https://github.com/eatmoreapple/eatmoreapple/blob/main/img/wechat_pay.jpg" align="left">
-
-<img width="210px" height="210px" src="https://raw.githubusercontent.com/eatmoreapple/eatMoreApple/main/img/wechat.jpg" align="left">
 
 
 
