@@ -2,11 +2,9 @@ package openwechat
 
 import (
 	"context"
-	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"html"
 	"io"
 	"net/http"
 	"os"
@@ -484,50 +482,7 @@ func (m *Message) Get(key string) (value interface{}, exist bool) {
 // 消息初始化,根据不同的消息作出不同的处理
 func (m *Message) init(bot *Bot) {
 	m.bot = bot
-	raw, _ := json.Marshal(m)
-	m.Raw = raw
-	m.RawContent = m.Content
-	// 如果是群消息
-	if m.IsSendByGroup() {
-		if !m.IsSystem() {
-			// 将Username和正文分开
-			if !m.IsSendBySelf() {
-				data := strings.Split(m.Content, ":<br/>")
-				m.Content = strings.Join(data[1:], "")
-				m.senderUserNameInGroup = data[0]
-				if strings.Contains(m.Content, "@") {
-					sender, err := m.Sender()
-					if err == nil {
-						receiver := sender.MemberList.SearchByUserName(1, m.ToUserName)
-						if receiver != nil {
-							displayName := receiver.First().DisplayName
-							if displayName == "" {
-								displayName = receiver.First().NickName
-							}
-							var atFlag string
-							msgContent := FormatEmoji(m.Content)
-							atName := FormatEmoji(displayName)
-							if strings.Contains(msgContent, "\u2005") {
-								atFlag = "@" + atName + "\u2005"
-							} else {
-								atFlag = "@" + atName
-							}
-							m.isAt = strings.Contains(msgContent, atFlag) || strings.HasSuffix(msgContent, atFlag)
-						}
-					}
-				}
-			} else {
-				// 这块不严谨，但是只能这么干了
-				m.isAt = strings.Contains(m.Content, "@") || strings.Contains(m.Content, "\u2005")
-			}
-		}
-	}
-	// 处理消息中的换行
-	m.Content = strings.Replace(m.Content, `<br/>`, "\n", -1)
-	// 处理html转义字符
-	m.Content = html.UnescapeString(m.Content)
-	// 处理消息中的emoji表情
-	m.Content = FormatEmoji(m.Content)
+	defaultMessageObserver.OnMessageReceive(m)
 }
 
 // SendMessage 发送消息的结构体
