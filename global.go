@@ -127,6 +127,7 @@ var imageType = map[string]struct{}{
 	"png":  {},
 	"jpeg": {},
 	"jpg":  {},
+	"gif":  {},
 }
 
 const videoType = "mp4"
