@@ -655,7 +655,11 @@ func (s *Self) forwardMessage(msg *SentMessage, delay time.Duration, users ...*U
 		time.Sleep(delay)
 	}
 	if len(errGroup) > 0 {
-		return errors.Join(errGroup...)
+		var errorStr []string
+		for i := range errGroup {
+			errorStr = append(errorStr, errGroup[i].Error())
+		}
+		return fmt.Errorf(strings.Join(errorStr, ","))
 	}
 	return nil
 }
