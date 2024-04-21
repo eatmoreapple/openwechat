@@ -212,7 +212,7 @@ func (m *Message) IsText() bool {
 }
 
 func (m *Message) IsLocation() bool {
-	return m.MsgType == MsgTypeText && strings.Contains(m.Url, "api.map.qq.com") && strings.Contains(m.Content, "pictype=location")
+	return m.MsgType == MsgTypeText && strings.Contains(m.Url, "apis.map.qq.com") && strings.Contains(m.Content, "pictype=location")
 }
 
 func (m *Message) IsRealtimeLocation() bool {
