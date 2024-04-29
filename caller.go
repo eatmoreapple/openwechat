@@ -77,15 +77,6 @@ func (c *Caller) GetLoginInfo(ctx context.Context, path *url.URL) (*LoginInfo, e
 	// 微信 v2 版本修复了301 response missing Location header 的问题
 	defer func() { _ = resp.Body.Close() }()
 
-	// 这里部分账号可能会被误判, 但是我又没有号测试。如果你遇到了这个问题，可以帮忙解决一下。😊
-	if _, exists := CookieGroup(resp.Cookies()).GetByName("wxuin"); !exists {
-		err = ErrForbidden
-		if c.Client.mode != desktop {
-			err = fmt.Errorf("%w: try to login with desktop mode", err)
-		}
-		return nil, err
-	}
-
 	bs, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -99,8 +90,8 @@ func (c *Caller) GetLoginInfo(ctx context.Context, path *url.URL) (*LoginInfo, e
 	if err = xml.NewDecoder(bytes.NewBuffer(bs)).Decode(&loginInfo); err != nil {
 		return nil, err
 	}
-	if !loginInfo.Ok() {
-		return nil, loginInfo.Err()
+	if err = loginInfo.Err(); err != nil {
+		return nil, err
 	}
 	// set domain
 	c.Client.Domain = WechatDomain(path.Host)
