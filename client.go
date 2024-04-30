@@ -185,7 +185,11 @@ func (c *Client) HTTPClient() *http.Client {
 
 // GetLoginUUID 获取登录的uuid
 func (c *Client) GetLoginUUID(ctx context.Context) (*http.Response, error) {
-	return c.mode.GetLoginUUID(ctx, c)
+	req, err := c.mode.BuildGetLoginUUIDRequest(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return c.Do(req)
 }
 
 // GetLoginQrcode 获取登录的二维吗
@@ -221,7 +225,11 @@ func (c *Client) CheckLogin(ctx context.Context, uuid, tip string) (*http.Respon
 
 // GetLoginInfo 请求获取LoginInfo
 func (c *Client) GetLoginInfo(ctx context.Context, path *url.URL) (*http.Response, error) {
-	return c.mode.GetLoginInfo(ctx, c, path.String())
+	req, err := c.mode.BuildGetLoginInfoRequest(ctx, path.String())
+	if err != nil {
+		return nil, err
+	}
+	return c.Do(req)
 }
 
 // WebInit 请求获取初始化信息
@@ -1057,7 +1065,11 @@ func (c *Client) WebWxRelationPin(ctx context.Context, opt *ClientWebWxRelationP
 
 // WebWxPushLogin 免扫码登陆接口
 func (c *Client) WebWxPushLogin(ctx context.Context, uin int64) (*http.Response, error) {
-	return c.mode.PushLogin(ctx, c, uin)
+	req, err := c.mode.BuildPushLoginRequest(ctx, c.Domain.BaseHost(), uin)
+	if err != nil {
+		return nil, err
+	}
+	return c.Do(req)
 }
 
 // WebWxSendVideoMsg 发送视频消息接口
