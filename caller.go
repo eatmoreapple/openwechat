@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
-	"fmt"
 	"io"
 	"net/url"
 	"os"
@@ -109,8 +108,8 @@ func (c *Caller) WebInit(ctx context.Context, request *BaseRequest) (*WebInitRes
 	if err = json.NewDecoder(resp.Body).Decode(&webInitResponse); err != nil {
 		return nil, err
 	}
-	if !webInitResponse.BaseResponse.Ok() {
-		return nil, webInitResponse.BaseResponse.Err()
+	if err = webInitResponse.BaseResponse.Err(); err != nil {
+		return nil, err
 	}
 	return &webInitResponse, nil
 }
@@ -177,8 +176,8 @@ func (c *Caller) WebWxGetContact(ctx context.Context, info *LoginInfo) (Members,
 		if err = resp.Body.Close(); err != nil {
 			return nil, err
 		}
-		if !item.BaseResponse.Ok() {
-			return nil, item.BaseResponse.Err()
+		if err = item.BaseResponse.Err(); err != nil {
+			return nil, err
 		}
 		members = append(members, item.MemberList...)
 
@@ -202,8 +201,8 @@ func (c *Caller) WebWxBatchGetContact(ctx context.Context, members Members, requ
 	if err = json.NewDecoder(resp.Body).Decode(&item); err != nil {
 		return nil, err
 	}
-	if !item.BaseResponse.Ok() {
-		return nil, item.BaseResponse.Err()
+	if err = item.BaseResponse.Err(); err != nil {
+		return nil, err
 	}
 	return item.ContactList, nil
 }
@@ -300,8 +299,8 @@ func (c *Caller) UploadMedia(ctx context.Context, opt *CallerUploadMediaOptions)
 	if err = json.NewDecoder(resp.Body).Decode(&item); err != nil {
 		return &item, err
 	}
-	if !item.BaseResponse.Ok() {
-		return &item, item.BaseResponse.Err()
+	if err = item.BaseResponse.Err(); err != nil {
+		return &item, err
 	}
 	if len(item.MediaId) == 0 {
 		return &item, errors.New("upload failed")
@@ -599,7 +598,7 @@ func (c *Caller) WebWxPushLogin(ctx context.Context, uin int64) (*PushLoginRespo
 	}
 	defer func() { _ = resp.Body.Close() }()
 	var item PushLoginResponse
-	if err := json.NewDecoder(resp.Body).Decode(&item); err != nil {
+	if err = json.NewDecoder(resp.Body).Decode(&item); err != nil {
 		return nil, err
 	}
 	return &item, nil
@@ -639,8 +638,8 @@ func (c *Caller) WebWxCreateChatRoom(ctx context.Context, opt *CallerWebWxCreate
 	if err = json.NewDecoder(resp.Body).Decode(&item); err != nil {
 		return nil, err
 	}
-	if !item.BaseResponse.Ok() {
-		return nil, item.BaseResponse.Err()
+	if err = item.BaseResponse.Err(); err != nil {
+		return nil, err
 	}
 	group := Group{User: &User{UserName: item.ChatRoomName}}
 	return &group, nil
@@ -686,8 +685,8 @@ func (p *MessageResponseParser) Err() error {
 	if err := json.NewDecoder(p.Reader).Decode(&item); err != nil {
 		return err
 	}
-	if !item.BaseResponse.Ok() {
-		return item.BaseResponse.Err()
+	if err := item.BaseResponse.Err(); err != nil {
+		return err
 	}
 	return nil
 }
@@ -698,8 +697,8 @@ func (p *MessageResponseParser) MsgID() (string, error) {
 	if err := json.NewDecoder(p.Reader).Decode(&messageResp); err != nil {
 		return "", err
 	}
-	if !messageResp.BaseResponse.Ok() {
-		return "", messageResp.BaseResponse.Err()
+	if err := messageResp.BaseResponse.Err(); err != nil {
+		return "", err
 	}
 	return messageResp.MsgID, nil
 }
