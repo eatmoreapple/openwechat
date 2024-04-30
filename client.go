@@ -467,31 +467,30 @@ func (c *Client) WebWxGetHeadImg(ctx context.Context, user *User) (*http.Respons
 type ClientWebWxUploadMediaByChunkOptions struct {
 	FromUserName string
 	ToUserName   string
-	File         *os.File
 	BaseRequest  *BaseRequest
 	LoginInfo    *LoginInfo
 }
 
 // WebWxUploadMediaByChunk 分块上传文件
 // TODO 优化掉这个函数
-func (c *Client) WebWxUploadMediaByChunk(ctx context.Context, opt *ClientWebWxUploadMediaByChunkOptions) (*http.Response, error) {
+func (c *Client) WebWxUploadMediaByChunk(ctx context.Context, file *os.File, opt *ClientWebWxUploadMediaByChunkOptions) (*http.Response, error) {
 	// 获取文件上传的类型
-	contentType, err := GetFileContentType(opt.File)
+	contentType, err := GetFileContentType(file)
 	if err != nil {
 		return nil, err
 	}
-	if _, err = opt.File.Seek(io.SeekStart, 0); err != nil {
+	if _, err = file.Seek(io.SeekStart, 0); err != nil {
 		return nil, err
 	}
 
 	// 获取文件的md5
 	h := md5.New()
-	if _, err = io.Copy(h, opt.File); err != nil {
+	if _, err = io.Copy(h, file); err != nil {
 		return nil, err
 	}
 	fileMd5 := hex.EncodeToString(h.Sum(nil))
 
-	sate, err := opt.File.Stat()
+	sate, err := file.Stat()
 	if err != nil {
 		return nil, err
 	}
@@ -559,7 +558,7 @@ func (c *Client) WebWxUploadMediaByChunk(ctx context.Context, opt *ClientWebWxUp
 		content["chunks"] = strconv.FormatInt(chunks, 10)
 	}
 
-	if _, err = opt.File.Seek(0, 0); err != nil {
+	if _, err = file.Seek(0, 0); err != nil {
 		return nil, err
 	}
 
@@ -587,12 +586,12 @@ func (c *Client) WebWxUploadMediaByChunk(ctx context.Context, opt *ClientWebWxUp
 			}
 		}
 
-		w, err := writer.CreateFormFile("filename", opt.File.Name())
+		w, err := writer.CreateFormFile("filename", file.Name())
 		if err != nil {
 			return nil, err
 		}
 
-		n, err := opt.File.Read(chunkBuff)
+		n, err := file.Read(chunkBuff)
 
 		if err != nil && err != io.EOF {
 			return nil, err

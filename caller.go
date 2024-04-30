@@ -275,21 +275,19 @@ func (c *Caller) WebWxOplog(ctx context.Context, opt *CallerWebWxOplogOptions) e
 type CallerUploadMediaOptions struct {
 	FromUserName string
 	ToUserName   string
-	File         *os.File
 	BaseRequest  *BaseRequest
 	LoginInfo    *LoginInfo
 }
 
-func (c *Caller) UploadMedia(ctx context.Context, opt *CallerUploadMediaOptions) (*UploadResponse, error) {
+func (c *Caller) UploadMedia(ctx context.Context, file *os.File, opt *CallerUploadMediaOptions) (*UploadResponse, error) {
 	// 首先尝试上传图片
 	clientWebWxUploadMediaByChunkOpt := &ClientWebWxUploadMediaByChunkOptions{
 		FromUserName: opt.FromUserName,
 		ToUserName:   opt.ToUserName,
-		File:         opt.File,
 		BaseRequest:  opt.BaseRequest,
 		LoginInfo:    opt.LoginInfo,
 	}
-	resp, err := c.Client.WebWxUploadMediaByChunk(ctx, clientWebWxUploadMediaByChunkOpt)
+	resp, err := c.Client.WebWxUploadMediaByChunk(ctx, file, clientWebWxUploadMediaByChunkOpt)
 	// 无错误上传成功之后获取请求结果，判断结果是否正常
 	if err != nil {
 		return nil, err
@@ -331,11 +329,10 @@ func (c *Caller) WebWxSendImageMsg(ctx context.Context, opt *CallerWebWxSendImag
 		uploadMediaOption := &CallerUploadMediaOptions{
 			FromUserName: opt.FromUserName,
 			ToUserName:   opt.ToUserName,
-			File:         file,
 			BaseRequest:  opt.BaseRequest,
 			LoginInfo:    opt.LoginInfo,
 		}
-		resp, err := c.UploadMedia(ctx, uploadMediaOption)
+		resp, err := c.UploadMedia(ctx, file, uploadMediaOption)
 		if err != nil {
 			return nil, err
 		}
@@ -370,11 +367,10 @@ func (c *Caller) WebWxSendFile(ctx context.Context, opt *CallerWebWxSendFileOpti
 	uploadMediaOption := &CallerUploadMediaOptions{
 		FromUserName: opt.FromUserName,
 		ToUserName:   opt.ToUserName,
-		File:         file,
 		BaseRequest:  opt.BaseRequest,
 		LoginInfo:    opt.LoginInfo,
 	}
-	resp, err := c.UploadMedia(ctx, uploadMediaOption)
+	resp, err := c.UploadMedia(ctx, file, uploadMediaOption)
 	if err != nil {
 		return nil, err
 	}
@@ -402,12 +398,10 @@ func (c *Caller) WebWxSendVideoMsg(ctx context.Context, opt *CallerWebWxSendAppM
 		uploadMediaOption := &CallerUploadMediaOptions{
 			FromUserName: opt.FromUserName,
 			ToUserName:   opt.ToUserName,
-			File:         file,
 			BaseRequest:  opt.BaseRequest,
 			LoginInfo:    opt.LoginInfo,
 		}
-
-		resp, err := c.UploadMedia(ctx, uploadMediaOption)
+		resp, err := c.UploadMedia(ctx, file, uploadMediaOption)
 		if err != nil {
 			return nil, err
 		}
