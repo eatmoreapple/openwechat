@@ -9,9 +9,9 @@ import (
 )
 
 type Mode interface {
-	GetLoginUUID(ctx context.Context, client *Client) (*http.Response, error)
-	GetLoginInfo(ctx context.Context, client *Client, path string) (*http.Response, error)
-	PushLogin(ctx context.Context, client *Client, uin int64) (*http.Response, error)
+	BuildGetLoginUUIDRequest(ctx context.Context) (*http.Request, error)
+	BuildGetLoginInfoRequest(ctx context.Context, path string) (*http.Request, error)
+	BuildPushLoginRequest(ctx context.Context, host string, uin int64) (*http.Request, error)
 }
 
 var (
@@ -23,6 +23,29 @@ var (
 )
 
 type normalMode struct{}
+
+func (n normalMode) BuildGetLoginUUIDRequest(ctx context.Context) (*http.Request, error) {
+	path, err := url.Parse(jslogin)
+	if err != nil {
+		return nil, err
+	}
+	params := url.Values{}
+	redirectUrl, err := url.Parse(webwxnewloginpage)
+	if err != nil {
+		return nil, err
+	}
+	params.Add("redirect_uri", redirectUrl.String())
+	params.Add("appid", appId)
+	params.Add("fun", "new")
+	params.Add("lang", "zh_CN")
+	params.Add("_", strconv.FormatInt(time.Now().UnixNano()/1e6, 10))
+	path.RawQuery = params.Encode()
+	return http.NewRequestWithContext(ctx, http.MethodGet, path.String(), nil)
+}
+
+func (n normalMode) BuildGetLoginInfoRequest(ctx context.Context, path string) (*http.Request, error) {
+	return http.NewRequestWithContext(ctx, http.MethodGet, path, nil)
+}
 
 func (n normalMode) PushLogin(ctx context.Context, client *Client, uin int64) (*http.Response, error) {
 	path, err := url.Parse(client.Domain.BaseHost() + webwxpushloginurl)
@@ -39,41 +62,20 @@ func (n normalMode) PushLogin(ctx context.Context, client *Client, uin int64) (*
 	return client.Do(req)
 }
 
-func (n normalMode) GetLoginUUID(ctx context.Context, client *Client) (*http.Response, error) {
-	path, err := url.Parse(jslogin)
+func (n normalMode) BuildPushLoginRequest(ctx context.Context, host string, uin int64) (*http.Request, error) {
+	path, err := url.Parse(host + webwxpushloginurl)
 	if err != nil {
 		return nil, err
 	}
 	params := url.Values{}
-	redirectUrl, err := url.Parse(webwxnewloginpage)
-	if err != nil {
-		return nil, err
-	}
-	params.Add("redirect_uri", redirectUrl.String())
-	params.Add("appid", appId)
-	params.Add("fun", "new")
-	params.Add("lang", "zh_CN")
-	params.Add("_", strconv.FormatInt(time.Now().UnixNano()/1e6, 10))
+	params.Add("uin", strconv.FormatInt(uin, 10))
 	path.RawQuery = params.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	return client.Do(req)
-}
-
-func (n normalMode) GetLoginInfo(ctx context.Context, client *Client, path string) (*http.Response, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path, nil)
-	if err != nil {
-		return nil, err
-	}
-	return client.Do(req)
+	return http.NewRequestWithContext(ctx, http.MethodGet, path.String(), nil)
 }
 
 type desktopMode struct{}
 
-func (n desktopMode) GetLoginUUID(ctx context.Context, client *Client) (*http.Response, error) {
+func (n desktopMode) BuildGetLoginUUIDRequest(ctx context.Context) (*http.Request, error) {
 	path, err := url.Parse(jslogin)
 	if err != nil {
 		return nil, err
@@ -91,26 +93,21 @@ func (n desktopMode) GetLoginUUID(ctx context.Context, client *Client) (*http.Re
 	params.Add("lang", "zh_CN")
 	params.Add("_", strconv.FormatInt(time.Now().UnixNano()/1e6, 10))
 	path.RawQuery = params.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	return client.Do(req)
+	return http.NewRequestWithContext(ctx, http.MethodGet, path.String(), nil)
 }
 
-func (n desktopMode) GetLoginInfo(ctx context.Context, client *Client, path string) (*http.Response, error) {
+func (n desktopMode) BuildGetLoginInfoRequest(ctx context.Context, path string) (*http.Request, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Add("client-version", uosPatchClientVersion)
 	req.Header.Add("extspam", uosPatchExtspam)
-	return client.Do(req)
+	return req, nil
 }
 
-func (n desktopMode) PushLogin(ctx context.Context, client *Client, uin int64) (*http.Response, error) {
-	path, err := url.Parse(client.Domain.BaseHost() + webwxpushloginurl)
+func (n desktopMode) BuildPushLoginRequest(ctx context.Context, host string, uin int64) (*http.Request, error) {
+	path, err := url.Parse(host + webwxpushloginurl)
 	if err != nil {
 		return nil, err
 	}
@@ -118,9 +115,5 @@ func (n desktopMode) PushLogin(ctx context.Context, client *Client, uin int64) (
 	params.Add("uin", strconv.FormatInt(uin, 10))
 	params.Add("mod", "desktop")
 	path.RawQuery = params.Encode()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	return client.Do(req)
+	return http.NewRequestWithContext(ctx, http.MethodGet, path.String(), nil)
 }
