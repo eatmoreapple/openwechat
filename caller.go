@@ -309,7 +309,6 @@ func (c *Caller) UploadMedia(ctx context.Context, file *os.File, opt *CallerUplo
 type CallerUploadMediaCommonOptions struct {
 	FromUserName string
 	ToUserName   string
-	Reader       io.Reader
 	BaseRequest  *BaseRequest
 	LoginInfo    *LoginInfo
 }
@@ -317,8 +316,8 @@ type CallerUploadMediaCommonOptions struct {
 type CallerWebWxSendImageMsgOptions CallerUploadMediaCommonOptions
 
 // WebWxSendImageMsg 发送图片消息接口
-func (c *Caller) WebWxSendImageMsg(ctx context.Context, opt *CallerWebWxSendImageMsgOptions) (*SentMessage, error) {
-	file, cb, err := readerToFile(opt.Reader)
+func (c *Caller) WebWxSendImageMsg(ctx context.Context, reader io.Reader, opt *CallerWebWxSendImageMsgOptions) (*SentMessage, error) {
+	file, cb, err := readerToFile(reader)
 	if err != nil {
 		return nil, err
 	}
@@ -357,8 +356,8 @@ func (c *Caller) WebWxSendImageMsg(ctx context.Context, opt *CallerWebWxSendImag
 
 type CallerWebWxSendFileOptions CallerUploadMediaCommonOptions
 
-func (c *Caller) WebWxSendFile(ctx context.Context, opt *CallerWebWxSendFileOptions) (*SentMessage, error) {
-	file, cb, err := readerToFile(opt.Reader)
+func (c *Caller) WebWxSendFile(ctx context.Context, reader io.Reader, opt *CallerWebWxSendFileOptions) (*SentMessage, error) {
+	file, cb, err := readerToFile(reader)
 	if err != nil {
 		return nil, err
 	}
@@ -387,8 +386,8 @@ func (c *Caller) WebWxSendFile(ctx context.Context, opt *CallerWebWxSendFileOpti
 
 type CallerWebWxSendAppMsgOptions CallerUploadMediaCommonOptions
 
-func (c *Caller) WebWxSendVideoMsg(ctx context.Context, opt *CallerWebWxSendAppMsgOptions) (*SentMessage, error) {
-	file, cb, err := readerToFile(opt.Reader)
+func (c *Caller) WebWxSendVideoMsg(ctx context.Context, reader io.Reader, opt *CallerWebWxSendAppMsgOptions) (*SentMessage, error) {
+	file, cb, err := readerToFile(reader)
 	if err != nil {
 		return nil, err
 	}
