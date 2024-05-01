@@ -541,8 +541,6 @@ func (c *Client) WebWxUploadMediaByChunk(ctx context.Context, file *os.File, opt
 	// 计算上传文件的次数
 	chunks := int((sate.Size() + chunkSize - 1) / chunkSize)
 
-	var resp *http.Response
-
 	content := map[string]string{
 		"id":                "WU_FILE_0",
 		"name":              filename,
@@ -558,45 +556,63 @@ func (c *Client) WebWxUploadMediaByChunk(ctx context.Context, file *os.File, opt
 		content["chunks"] = strconv.Itoa(chunks)
 	}
 
-	var formBuffer = bytes.NewBuffer(nil)
+	var (
+		resp       *http.Response
+		formBuffer = bytes.NewBuffer(nil)
+	)
 
-	upload := func(chunk int, fileReader io.Reader) (*http.Response, error) {
+	upload := func(chunk int, fileReader io.Reader) error {
 		if chunks > 1 {
 			content["chunk"] = strconv.Itoa(chunk)
 		}
+		formBuffer.Reset()
+
 		writer := multipart.NewWriter(formBuffer)
 
-		if err = writer.WriteField("uploadmediarequest", string(uploadMediaRequestByte)); err != nil {
-			return nil, err
-		}
-		for k, v := range content {
-			if err := writer.WriteField(k, v); err != nil {
-				return nil, err
+		// write form data
+		{
+			if err = writer.WriteField("uploadmediarequest", string(uploadMediaRequestByte)); err != nil {
+				return err
 			}
-		}
-		fileWriter, err := writer.CreateFormFile("filename", file.Name())
-		if err != nil {
-			return nil, err
-		}
+			for k, v := range content {
+				if err := writer.WriteField(k, v); err != nil {
+					return err
+				}
+			}
 
-		if _, err = io.Copy(fileWriter, fileReader); err != nil {
-			return nil, err
-		}
-		if err = writer.Close(); err != nil {
-			return nil, err
+			// create form file
+			fileWriter, err := writer.CreateFormFile("filename", file.Name())
+			if err != nil {
+				return err
+			}
+			if _, err = io.Copy(fileWriter, fileReader); err != nil {
+				return err
+			}
+			if err = writer.Close(); err != nil {
+				return err
+			}
 		}
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.String(), formBuffer)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		req.Header.Set("Content-Type", writer.FormDataContentType())
-		return c.Do(req)
-	}
 
-	parserErr := func(reader io.ReadCloser) error {
-		defer func() { _ = reader.Close() }()
-		parser := MessageResponseParser{Reader: resp.Body}
-		return parser.Err()
+		resp, err = c.Do(req)
+		if err != nil {
+			return err
+		}
+
+		// parse response error
+		{
+			isLastTime := chunk+1 == chunks
+			if !isLastTime {
+				defer func() { _ = resp.Body.Close() }()
+				parser := MessageResponseParser{Reader: resp.Body}
+				err = parser.Err()
+			}
+		}
+		return err
 	}
 
 	// 分块上传
@@ -604,16 +620,8 @@ func (c *Client) WebWxUploadMediaByChunk(ctx context.Context, file *os.File, opt
 		// chunk reader
 		selectionReader := io.NewSectionReader(file, int64(chunk)*chunkSize, chunkSize)
 		// try to upload
-		resp, err = upload(chunk, selectionReader)
-		if err != nil {
+		if err = upload(chunk, selectionReader); err != nil {
 			return nil, err
-		}
-		isLastTime := chunk+1 == chunks
-		// 如果不是最后一次, 解析有没有错误
-		if !isLastTime {
-			if err = parserErr(resp.Body); err != nil {
-				return nil, err
-			}
 		}
 	}
 	// 将最后一次携带文件信息的response返回
