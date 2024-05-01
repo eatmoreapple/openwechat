@@ -388,11 +388,10 @@ func (s *Self) sendImageToUser(username string, file io.Reader) (*SentMessage, e
 	opt := &CallerWebWxSendImageMsgOptions{
 		FromUserName: s.UserName,
 		ToUserName:   username,
-		Reader:       file,
 		BaseRequest:  s.bot.Storage.Request,
 		LoginInfo:    s.bot.Storage.LoginInfo,
 	}
-	sentMessage, err := s.bot.Caller.WebWxSendImageMsg(s.Bot().Context(), opt)
+	sentMessage, err := s.bot.Caller.WebWxSendImageMsg(s.Bot().Context(), file, opt)
 	return s.sendMessageWrapper(sentMessage, err)
 }
 
@@ -400,11 +399,10 @@ func (s *Self) sendVideoToUser(username string, file io.Reader) (*SentMessage, e
 	opt := &CallerWebWxSendAppMsgOptions{
 		FromUserName: s.UserName,
 		ToUserName:   username,
-		Reader:       file,
 		BaseRequest:  s.bot.Storage.Request,
 		LoginInfo:    s.bot.Storage.LoginInfo,
 	}
-	sentMessage, err := s.bot.Caller.WebWxSendVideoMsg(s.Bot().Context(), opt)
+	sentMessage, err := s.bot.Caller.WebWxSendVideoMsg(s.Bot().Context(), file, opt)
 	return s.sendMessageWrapper(sentMessage, err)
 }
 
@@ -412,11 +410,10 @@ func (s *Self) sendFileToUser(username string, file io.Reader) (*SentMessage, er
 	opt := &CallerWebWxSendFileOptions{
 		FromUserName: s.UserName,
 		ToUserName:   username,
-		Reader:       file,
 		BaseRequest:  s.bot.Storage.Request,
 		LoginInfo:    s.bot.Storage.LoginInfo,
 	}
-	sentMessage, err := s.bot.Caller.WebWxSendFile(s.Bot().Context(), opt)
+	sentMessage, err := s.bot.Caller.WebWxSendFile(s.Bot().Context(), file, opt)
 	return s.sendMessageWrapper(sentMessage, err)
 }
 
