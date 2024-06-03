@@ -180,6 +180,9 @@ func (b *Bot) webInit() error {
 			b.MessageErrorHandler = defaultMessageErrorHandler
 		}
 		for {
+			if !b.Alive() {
+				return
+			}
 			if err = b.syncCheck(); err != nil {
 				// 判断是否继续, 如果不继续则退出
 				if err = b.MessageErrorHandler(err); err != nil {
