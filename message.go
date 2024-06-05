@@ -177,6 +177,16 @@ func (m *Message) ReplyText(content string) (*SentMessage, error) {
 	return m.Owner().sendTextToUser(username, content)
 }
 
+// ReplyEmoticon 回复表情
+func (m *Message) ReplyEmoticon(md5 string, file io.Reader) (*SentMessage, error) {
+	// 判断是否由自己发送
+	username := m.FromUserName
+	if m.IsSelfSendToGroup() {
+		username = m.ToUserName
+	}
+	return m.Owner().sendEmoticonToUser(username, md5, file)
+}
+
 // ReplyImage 回复图片消息
 func (m *Message) ReplyImage(file io.Reader) (*SentMessage, error) {
 	// 判断是否由自己发送
@@ -494,6 +504,8 @@ type SendMessage struct {
 	LocalID      string
 	ClientMsgId  string
 	MediaId      string `json:"MediaId,omitempty"`
+	EmojiFlag    int    `json:"EmojiFlag,omitempty"`
+	EMoticonMd5  string `json:"EMoticonMd5,omitempty"`
 }
 
 // NewSendMessage SendMessage的构造方法
@@ -518,6 +530,18 @@ func NewTextSendMessage(content, fromUserName, toUserName string) *SendMessage {
 // NewMediaSendMessage 媒体消息的构造方法
 func NewMediaSendMessage(msgType MessageType, fromUserName, toUserName, mediaId string) *SendMessage {
 	return NewSendMessage(msgType, "", fromUserName, toUserName, mediaId)
+}
+
+// NewEmoticonSendMessage 表情消息的构造方法
+func NewEmoticonSendMessage(fromUserName, toUserName, md5OrMediaId string) *SendMessage {
+	msg := NewSendMessage(MsgTypeEmoticon, "", fromUserName, toUserName, "")
+	msg.EmojiFlag = 2
+	if strings.HasPrefix(md5OrMediaId, "@") {
+		msg.MediaId = md5OrMediaId
+	} else {
+		msg.EMoticonMd5 = md5OrMediaId
+	}
+	return msg
 }
 
 // RecommendInfo 一些特殊类型的消息会携带该结构体信息

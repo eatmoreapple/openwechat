@@ -14,6 +14,7 @@ const (
 	webwxstatusnotify    = "/cgi-bin/mmwebwx-bin/webwxstatusnotify"
 	webwxsync            = "/cgi-bin/mmwebwx-bin/webwxsync"
 	webwxsendmsg         = "/cgi-bin/mmwebwx-bin/webwxsendmsg"
+	webwxsendemoticon    = "/cgi-bin/mmwebwx-bin/webwxsendemoticon"
 	webwxgetcontact      = "/cgi-bin/mmwebwx-bin/webwxgetcontact"
 	webwxsendmsgimg      = "/cgi-bin/mmwebwx-bin/webwxsendmsgimg"
 	webwxsendappmsg      = "/cgi-bin/mmwebwx-bin/webwxsendappmsg"
