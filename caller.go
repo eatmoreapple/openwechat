@@ -419,7 +419,7 @@ func (c *Caller) WebWxSendFile(ctx context.Context, reader io.Reader, opt *Calle
 	}
 	// 构造新的文件类型的信息
 	stat, _ := file.Stat()
-	appMsg := NewFileAppMessage(stat, resp.MediaId)
+	appMsg := newFileAppMessage(stat, resp.MediaId)
 	content, err := appMsg.XmlByte()
 	if err != nil {
 		return nil, err
