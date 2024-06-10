@@ -494,7 +494,7 @@ func (c *Client) WebWxUploadMediaByChunk(ctx context.Context, file *os.File, opt
 	if err != nil {
 		return nil, err
 	}
-	if _, err = file.Seek(io.SeekStart, 0); err != nil {
+	if _, err = file.Seek(0, io.SeekStart); err != nil {
 		return nil, err
 	}
 

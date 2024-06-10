@@ -7,11 +7,9 @@ import (
 	"math/rand"
 	"net/http"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
-	"unsafe"
 )
 
 func jsonEncode(v interface{}) (io.Reader, error) {
@@ -71,8 +69,4 @@ func getMessageType(filename string) string {
 		return video
 	}
 	return doc
-}
-
-func stringToByte(s string) []byte {
-	return *(*[]byte)(unsafe.Pointer(&*(*reflect.StringHeader)(unsafe.Pointer(&s))))
 }

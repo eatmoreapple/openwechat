@@ -252,7 +252,7 @@ func (u *User) OrderSymbol() string {
 	}
 	symbol = html.UnescapeString(symbol)
 	symbol = strings.ToUpper(symbol)
-	symbol = regexp.MustCompile("/\\W/ig").ReplaceAllString(symbol, "")
+	symbol = regexp.MustCompile(`/\W/ig`).ReplaceAllString(symbol, "")
 	if len(symbol) > 0 && symbol[0] < 'A' {
 		return "~"
 	}
@@ -386,8 +386,8 @@ func (s *Self) sendTextToUser(username, text string) (*SentMessage, error) {
 
 func (s *Self) sendEmoticonToUser(username, md5 string, file io.Reader) (*SentMessage, error) {
 	opt := &CallerWebWxSendAppMsgOptions{
-		LoginInfo:   s.bot.Storage.LoginInfo,
-		BaseRequest: s.bot.Storage.Request,
+		LoginInfo:    s.bot.Storage.LoginInfo,
+		BaseRequest:  s.bot.Storage.Request,
 		FromUserName: s.UserName,
 		ToUserName:   username,
 	}
