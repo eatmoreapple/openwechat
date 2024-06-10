@@ -26,28 +26,32 @@ func TestLogout(t *testing.T) {
 	}
 	bot.MessageHandler = func(msg *Message) {
 		if msg.IsText() && msg.Content == "logout" {
-			bot.Logout()
+			if err := bot.Logout(); err != nil {
+				t.Error(err)
+			}
 		}
 	}
 	if err := bot.Login(); err != nil {
 		t.Error(err)
 		return
 	}
-	bot.Block()
+	_ = bot.Block()
 }
 
 func TestMessageHandle(t *testing.T) {
 	bot := DefaultBot(Desktop)
 	bot.MessageHandler = func(msg *Message) {
 		if msg.IsText() && msg.Content == "ping" {
-			msg.ReplyText("pong")
+			if _, err := msg.ReplyText("pong"); err != nil {
+				t.Error(err)
+			}
 		}
 	}
 	if err := bot.Login(); err != nil {
 		t.Error(err)
 		return
 	}
-	bot.Block()
+	_ = bot.Block()
 }
 
 func TestFriends(t *testing.T) {
@@ -106,9 +110,15 @@ func TestPinUser(t *testing.T) {
 	}
 	if friends.Count() > 0 {
 		f := friends.First()
-		f.Pin()
+		if err = f.Pin(); err != nil {
+			t.Error(err)
+			return
+		}
 		time.Sleep(time.Second * 5)
-		f.UnPin()
+		if err = f.UnPin(); err != nil {
+			t.Error(err)
+			return
+		}
 	}
 }
 
@@ -125,7 +135,7 @@ func TestSender(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	bot.Block()
+	_ = bot.Block()
 }
 
 // TestGetUUID
