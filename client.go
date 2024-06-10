@@ -494,7 +494,7 @@ func (c *Client) WebWxUploadMediaByChunk(ctx context.Context, file *os.File, opt
 	if err != nil {
 		return nil, err
 	}
-	if _, err = file.Seek(io.SeekStart, 0); err != nil {
+	if _, err = file.Seek(0, io.SeekStart); err != nil {
 		return nil, err
 	}
 
@@ -980,6 +980,7 @@ func (c *Client) WebWxRevokeMsg(ctx context.Context, msg *SentMessage, request *
 }
 
 // 校验上传文件
+// nolint:unused
 func (c *Client) webWxCheckUpload(stat os.FileInfo, request *BaseRequest, fileMd5, fromUserName, toUserName string) (*http.Response, error) {
 	path, err := url.Parse(c.Domain.BaseHost() + webwxcheckupload)
 	if err != nil {

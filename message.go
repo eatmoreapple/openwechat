@@ -396,7 +396,7 @@ func (m *Message) Card() (*Card, error) {
 		return nil, errors.New("card message required")
 	}
 	var card Card
-	err := xml.Unmarshal(stringToByte(m.Content), &card)
+	err := xml.Unmarshal([]byte(m.Content), &card)
 	return &card, err
 }
 
@@ -406,7 +406,7 @@ func (m *Message) FriendAddMessageContent() (*FriendAddMessage, error) {
 		return nil, errors.New("friend add message required")
 	}
 	var f FriendAddMessage
-	err := xml.Unmarshal(stringToByte(m.Content), &f)
+	err := xml.Unmarshal([]byte(m.Content), &f)
 	return &f, err
 }
 
@@ -416,7 +416,7 @@ func (m *Message) RevokeMsg() (*RevokeMsg, error) {
 		return nil, errors.New("recalled message required")
 	}
 	var r RevokeMsg
-	err := xml.Unmarshal(stringToByte(m.Content), &r)
+	err := xml.Unmarshal([]byte(m.Content), &r)
 	return &r, err
 }
 
@@ -463,7 +463,7 @@ func (m *Message) MediaData() (*AppMessageData, error) {
 		return nil, errors.New("media message required")
 	}
 	var data AppMessageData
-	if err := xml.Unmarshal(stringToByte(m.Content), &data); err != nil {
+	if err := xml.Unmarshal([]byte(m.Content), &data); err != nil {
 		return nil, err
 	}
 	return &data, nil
