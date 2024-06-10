@@ -56,7 +56,7 @@ type entry struct {
 	// seqNum is a sequence number so that Jar returns cookies in a
 	// deterministic order, even for cookies that have equal Path length and
 	// equal Creation time. This simplifies testing.
-	seqNum uint64
+	seqNum uint64 // nolint:unused
 }
 
 // CookieGroup is a group of cookies
