@@ -384,6 +384,17 @@ func (s *Self) sendTextToUser(username, text string) (*SentMessage, error) {
 	return s.sendMessageWrapper(sentMessage, err)
 }
 
+func (s *Self) sendEmoticonToUser(username, md5 string, file io.Reader) (*SentMessage, error) {
+	opt := &CallerWebWxSendAppMsgOptions{
+		LoginInfo:   s.bot.Storage.LoginInfo,
+		BaseRequest: s.bot.Storage.Request,
+		FromUserName: s.UserName,
+		ToUserName:   username,
+	}
+	sentMessage, err := s.bot.Caller.WebWxSendEmoticon(s.Bot().Context(), md5, file, opt)
+	return s.sendMessageWrapper(sentMessage, err)
+}
+
 func (s *Self) sendImageToUser(username string, file io.Reader) (*SentMessage, error) {
 	opt := &CallerWebWxSendImageMsgOptions{
 		FromUserName: s.UserName,
@@ -420,6 +431,11 @@ func (s *Self) sendFileToUser(username string, file io.Reader) (*SentMessage, er
 // SendTextToFriend 发送文本消息给好友
 func (s *Self) SendTextToFriend(friend *Friend, text string) (*SentMessage, error) {
 	return s.sendTextToUser(friend.User.UserName, text)
+}
+
+// SendEmoticonToFriend 发送表情给好友
+func (s *Self) SendEmoticonToFriend(friend *Friend, md5 string, file io.Reader) (*SentMessage, error) {
+	return s.sendEmoticonToUser(friend.User.UserName, md5, file)
 }
 
 // SendImageToFriend 发送图片消息给好友
@@ -585,6 +601,11 @@ func (s *Self) SendImageToGroup(group *Group, file io.Reader) (*SentMessage, err
 	return s.sendImageToUser(group.User.UserName, file)
 }
 
+// SendImageToGroup 发送图片消息给群组
+func (s *Self) SendEmoticonToGroup(group *Group, md5 string, file io.Reader) (*SentMessage, error) {
+	return s.sendEmoticonToUser(group.User.UserName, md5, file)
+}
+
 // SendVideoToGroup 发送视频给群组
 func (s *Self) SendVideoToGroup(group *Group, file io.Reader) (*SentMessage, error) {
 	return s.sendVideoToUser(group.User.UserName, file)
@@ -694,6 +715,18 @@ func (s *Self) sendTextToMembers(text string, delay time.Duration, members ...*U
 	return s.sendMessageToMember(sendMessageFunc, delay, members[1:]...)
 }
 
+// sendEmoticonToMembers 发送表情消息给群组或者好友
+func (s *Self) sendEmoticonToMembers(md5 string, file io.Reader, delay time.Duration, members ...*User) error {
+	if len(members) == 0 {
+		return nil
+	}
+	var sendMessageFunc SendMessageFunc = func() (*SentMessage, error) {
+		user := members[0]
+		return s.sendEmoticonToUser(user.UserName, md5, file)
+	}
+	return s.sendMessageToMember(sendMessageFunc, delay, members[1:]...)
+}
+
 // sendImageToMembers 发送图片消息给群组或者好友
 func (s *Self) sendImageToMembers(img io.Reader, delay time.Duration, members ...*User) error {
 	if len(members) == 0 {
@@ -736,6 +769,12 @@ func (s *Self) SendTextToFriends(text string, delay time.Duration, friends ...*F
 	return s.sendTextToMembers(text, delay, members...)
 }
 
+// SendEmoticonToFriends 发送表情给好友
+func (s *Self) SendEmoticonToFriends(md5 string, file io.Reader, delay time.Duration, friends ...*Friend) error {
+	members := Friends(friends).AsMembers()
+	return s.sendEmoticonToMembers(md5, file, delay, members...)
+}
+
 // SendImageToFriends 发送图片消息给好友
 func (s *Self) SendImageToFriends(img io.Reader, delay time.Duration, friends ...*Friend) error {
 	members := Friends(friends).AsMembers()
@@ -758,6 +797,12 @@ func (s *Self) SendVideoToFriends(video io.Reader, delay time.Duration, friends 
 func (s *Self) SendTextToGroups(text string, delay time.Duration, groups ...*Group) error {
 	members := Groups(groups).AsMembers()
 	return s.sendTextToMembers(text, delay, members...)
+}
+
+// SendEmoticonToGroups 发送表情给群组
+func (s *Self) SendEmoticonToGroups(md5 string, file io.Reader, delay time.Duration, groups ...*Group) error {
+	members := Groups(groups).AsMembers()
+	return s.sendEmoticonToMembers(md5, file, delay, members...)
 }
 
 // SendImageToGroups 发送图片消息给群组
@@ -1024,6 +1069,11 @@ func NewFriendHelper(self *Self) *Friend {
 // SendTextToMp 发送文本消息给公众号
 func (s *Self) SendTextToMp(mp *Mp, text string) (*SentMessage, error) {
 	return s.sendTextToUser(mp.User.UserName, text)
+}
+
+// SendEmoticonToMp 发送表情给公众号
+func (s *Self) SendEmoticonToMp(mp *Mp, md5 string, file io.Reader) (*SentMessage, error) {
+	return s.sendEmoticonToUser(mp.User.UserName, md5, file)
 }
 
 // SendImageToMp 发送图片消息给公众号

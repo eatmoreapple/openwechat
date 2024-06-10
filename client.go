@@ -438,6 +438,21 @@ func (c *Client) WebWxSendMsg(ctx context.Context, opt *ClientWebWxSendMsgOption
 	return c.sendMessage(ctx, opt.BaseRequest, path.String(), opt.Message)
 }
 
+// WebWxSendMsg 发送表情消息
+func (c *Client) WebWxSendEmoticon(ctx context.Context, opt *ClientWebWxSendMsgOptions) (*http.Response, error) {
+	opt.Message.Type = MsgTypeText
+	path, err := url.Parse(c.Domain.BaseHost() + webwxsendemoticon)
+	if err != nil {
+		return nil, err
+	}
+	params := url.Values{}
+	params.Add("fun", "sys")
+	params.Add("lang", "zh_CN")
+	params.Add("pass_ticket", opt.LoginInfo.PassTicket)
+	path.RawQuery = params.Encode()
+	return c.sendMessage(ctx, opt.BaseRequest, path.String(), opt.Message)
+}
+
 // WebWxGetHeadImg 获取用户的头像
 func (c *Client) WebWxGetHeadImg(ctx context.Context, user *User) (*http.Response, error) {
 	var path string
