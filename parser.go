@@ -25,12 +25,12 @@ func jsonEncode(v interface{}) (io.Reader, error) {
 
 // GetRandomDeviceId 获取随机设备id
 func GetRandomDeviceId() string {
-	rand.Seed(time.Now().Unix())
+	rng := rand.New(rand.NewSource(time.Now().Unix()))
 	var builder strings.Builder
 	builder.Grow(16)
 	builder.WriteString("e")
 	for i := 0; i < 15; i++ {
-		r := rand.Intn(9)
+		r := rng.Intn(9)
 		builder.WriteString(strconv.Itoa(r))
 	}
 	return builder.String()
