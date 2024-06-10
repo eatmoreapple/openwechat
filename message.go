@@ -492,7 +492,7 @@ func (m *Message) Get(key string) (value interface{}, exist bool) {
 // 消息初始化,根据不同的消息作出不同的处理
 func (m *Message) init(bot *Bot) {
 	m.bot = bot
-	defaultMessageObserver.OnMessageReceive(m)
+	defaultMessageProcessor.ProcessMessage(m)
 }
 
 // SendMessage 发送消息的结构体
@@ -709,7 +709,7 @@ func (f appmsg) XmlByte() ([]byte, error) {
 	return xml.Marshal(f)
 }
 
-func NewFileAppMessage(stat os.FileInfo, attachId string) *appmsg {
+func newFileAppMessage(stat os.FileInfo, attachId string) *appmsg {
 	m := &appmsg{AppId: appMessageAppId, Title: stat.Name()}
 	m.AppAttach.AttachId = attachId
 	m.AppAttach.TotalLen = stat.Size()

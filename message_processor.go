@@ -6,31 +6,31 @@ import (
 	"strings"
 )
 
-type MessageObserver interface {
-	OnMessageReceive(msg *Message)
+type MessageProcessor interface {
+	ProcessMessage(msg *Message)
 }
 
-type MessageObserverGroup []MessageObserver
+type MessageProcessorGroup []MessageProcessor
 
-func (g MessageObserverGroup) OnMessageReceive(msg *Message) {
-	for _, observer := range g {
-		observer.OnMessageReceive(msg)
+func (g MessageProcessorGroup) ProcessMessage(msg *Message) {
+	for _, processor := range g {
+		processor.ProcessMessage(msg)
 	}
 }
 
 // 保存消息原始内容
-type messageRowContentObserver struct{}
+type messageRowContentProcessor struct{}
 
-func (m *messageRowContentObserver) OnMessageReceive(msg *Message) {
+func (m *messageRowContentProcessor) ProcessMessage(msg *Message) {
 	raw, _ := json.Marshal(msg)
 	msg.Raw = raw
 	msg.RawContent = msg.Content
 }
 
 // 保存发送者在群里的用户名
-type senderInGroupObserver struct{}
+type senderInGroupMessageProcessor struct{}
 
-func (s *senderInGroupObserver) OnMessageReceive(msg *Message) {
+func (s *senderInGroupMessageProcessor) ProcessMessage(msg *Message) {
 	if !msg.IsSendByGroup() || msg.IsSystem() || msg.IsSendBySelf() {
 		return
 	}
@@ -43,9 +43,9 @@ func (s *senderInGroupObserver) OnMessageReceive(msg *Message) {
 }
 
 // 检查消息是否被@了, 不是特别严谨
-type atMessageObserver struct{}
+type atMessageProcessor struct{}
 
-func (g *atMessageObserver) OnMessageReceive(msg *Message) {
+func (g *atMessageProcessor) ProcessMessage(msg *Message) {
 	if !msg.IsSendByGroup() {
 		return
 	}
@@ -81,30 +81,30 @@ func (g *atMessageObserver) OnMessageReceive(msg *Message) {
 }
 
 // 处理消息中的换行符
-type wrapLineMessageObserver struct{}
+type wrapLineMessageProcessor struct{}
 
-func (w *wrapLineMessageObserver) OnMessageReceive(msg *Message) {
+func (w *wrapLineMessageProcessor) ProcessMessage(msg *Message) {
 	msg.Content = strings.Replace(msg.Content, `<br/>`, "\n", -1)
 }
 
 // 处理消息中的html转义字符
-type unescapeHTMLMessageObserver struct{}
+type unescapeHTMLMessageProcessor struct{}
 
-func (u *unescapeHTMLMessageObserver) OnMessageReceive(msg *Message) {
+func (u *unescapeHTMLMessageProcessor) ProcessMessage(msg *Message) {
 	msg.Content = html.UnescapeString(msg.Content)
 }
 
 // 处理消息中的emoji表情
-type emojiMessageObserver struct{}
+type emojiMessageProcessor struct{}
 
-func (e *emojiMessageObserver) OnMessageReceive(msg *Message) {
+func (e *emojiMessageProcessor) ProcessMessage(msg *Message) {
 	msg.Content = FormatEmoji(msg.Content)
 }
 
 // 尝试获取群聊中的消息的发送者
-type tryToFindGroupMemberObserver struct{}
+type tryToFindGroupMessageProcessor struct{}
 
-func (t *tryToFindGroupMemberObserver) OnMessageReceive(msg *Message) {
+func (t *tryToFindGroupMessageProcessor) ProcessMessage(msg *Message) {
 	if msg.IsSendByGroup() {
 		if msg.FromUserName == msg.Owner().UserName {
 			return
@@ -127,13 +127,13 @@ func (t *tryToFindGroupMemberObserver) OnMessageReceive(msg *Message) {
 }
 
 var (
-	defaultMessageObserver MessageObserver = MessageObserverGroup{
-		&messageRowContentObserver{},
-		&senderInGroupObserver{},
-		&atMessageObserver{},
-		&wrapLineMessageObserver{},
-		&unescapeHTMLMessageObserver{},
-		&emojiMessageObserver{},
-		&tryToFindGroupMemberObserver{},
+	defaultMessageProcessor MessageProcessor = MessageProcessorGroup{
+		&messageRowContentProcessor{},
+		&senderInGroupMessageProcessor{},
+		&atMessageProcessor{},
+		&wrapLineMessageProcessor{},
+		&unescapeHTMLMessageProcessor{},
+		&emojiMessageProcessor{},
+		&tryToFindGroupMessageProcessor{},
 	}
 )
