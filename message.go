@@ -284,7 +284,7 @@ func (m *Message) IsTransferAccounts() bool {
 	return m.IsMedia() && m.FileName == "微信转账"
 }
 
-// IsSendRedPacket 否发出红包判断当前是
+// IsSendRedPacket 判断当前是否发出红包
 func (m *Message) IsSendRedPacket() bool {
 	return m.IsSystem() && m.Content == "发出红包，请在手机上查看"
 }
