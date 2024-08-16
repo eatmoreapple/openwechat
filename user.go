@@ -693,12 +693,12 @@ func (s *Self) ForwardMessageToGroups(msg *SentMessage, delay time.Duration, gro
 type SendMessageFunc func() (*SentMessage, error)
 
 func (s *Self) sendMessageToMember(sendMessageFunc SendMessageFunc, delay time.Duration, members ...*User) error {
-	if len(members) == 0 {
-		return nil
-	}
 	msg, err := sendMessageFunc()
 	if err != nil {
 		return err
+	}
+	if len(members) == 0 {
+		return nil
 	}
 	return s.forwardMessage(msg, delay, members...)
 }
