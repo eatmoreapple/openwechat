@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"sync"
-	"time"
 	"unsafe"
 )
 
@@ -37,26 +36,6 @@ func fromCookieJar(jar http.CookieJar) *Jar {
 func NewJar() *Jar {
 	jar, _ := cookiejar.New(nil)
 	return fromCookieJar(jar)
-}
-
-type entry struct {
-	Name       string
-	Value      string
-	Domain     string
-	Path       string
-	SameSite   string
-	Secure     bool
-	HttpOnly   bool
-	Persistent bool
-	HostOnly   bool
-	Expires    time.Time
-	Creation   time.Time
-	LastAccess time.Time
-
-	// seqNum is a sequence number so that Jar returns cookies in a
-	// deterministic order, even for cookies that have equal Path length and
-	// equal Creation time. This simplifies testing.
-	seqNum uint64 // nolint:unused
 }
 
 // CookieGroup is a group of cookies
