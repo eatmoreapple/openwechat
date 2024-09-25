@@ -27,8 +27,8 @@ var (
 	// NetworkErr define wechat network error
 	NetworkErr = errors.New("wechat network error")
 
-	// ErrNoSuchUserFoundError define no such user found error
-	ErrNoSuchUserFoundError = errors.New("no such user found")
+	// ErrNoSuchUserFound define no such user found error
+	ErrNoSuchUserFound = errors.New("no such user found")
 
 	// ErrLoginTimeout define login timeout error
 	ErrLoginTimeout = errors.New("login timeout")

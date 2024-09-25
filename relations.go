@@ -246,7 +246,7 @@ func (g *Group) SearchMemberByUsername(username string) (*User, error) {
 	// 再次尝试获取
 	members = g.MemberList.SearchByUserName(1, username)
 	if members.Count() == 0 {
-		return nil, ErrNoSuchUserFoundError
+		return nil, ErrNoSuchUserFound
 	}
 	return members.First(), nil
 }

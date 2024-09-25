@@ -131,7 +131,7 @@ func (m *Message) Receiver() (*User, error) {
 			if err := group.Detail(); err == nil {
 				return group, nil
 			}
-			return nil, ErrNoSuchUserFoundError
+			return nil, ErrNoSuchUserFound
 		}
 		return users.First().User, nil
 	} else {
@@ -141,7 +141,7 @@ func (m *Message) Receiver() (*User, error) {
 		}
 		user, exist := members.GetByUserName(m.ToUserName)
 		if !exist {
-			return nil, ErrNoSuchUserFoundError
+			return nil, ErrNoSuchUserFound
 		}
 		return user, nil
 	}
