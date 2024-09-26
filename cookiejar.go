@@ -1,41 +1,68 @@
 package openwechat
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/cookiejar"
-	"sync"
-	"unsafe"
+	"net/url"
 )
 
 // Jar is a struct which as same as cookiejar.Jar
 // cookiejar.Jar's fields are private, so we can't use it directly
 type Jar struct {
-	PsList cookiejar.PublicSuffixList
-
-	// mu locks the remaining fields.
-	mu sync.Mutex
-
-	// Entries is a set of entries, keyed by their eTLD+1 and subkeyed by
-	// their name/Domain/path.
-	Entries map[string]map[string]entry
-
-	// nextSeqNum is the next sequence number assigned to a new cookie
-	// created SetCookies.
-	NextSeqNum uint64
+	jar   *cookiejar.Jar
+	hosts map[string]*url.URL
 }
 
-// AsCookieJar unsafe convert to http.CookieJar
-func (j *Jar) AsCookieJar() http.CookieJar {
-	return (*cookiejar.Jar)(unsafe.Pointer(j))
+// UnmarshalJSON implements the json.Unmarshaler interface
+func (j *Jar) UnmarshalJSON(bytes []byte) error {
+	var cookies map[string][]*http.Cookie
+	if err := json.Unmarshal(bytes, &cookies); err != nil {
+		return err
+	}
+	if j.jar == nil {
+		j.jar, _ = cookiejar.New(nil)
+	}
+	for u, cs := range cookies {
+		u, err := url.Parse(u)
+		if err != nil {
+			return err
+		}
+		j.jar.SetCookies(u, cs)
+	}
+	return nil
 }
 
-func fromCookieJar(jar http.CookieJar) *Jar {
-	return (*Jar)(unsafe.Pointer(jar.(*cookiejar.Jar)))
+// MarshalJSON implements the json.Marshaler interface
+func (j *Jar) MarshalJSON() ([]byte, error) {
+	var cookies = make(map[string][]*http.Cookie)
+	for path, u := range j.hosts {
+		cookies[path] = append(cookies[path], j.jar.Cookies(u)...)
+	}
+	return json.Marshal(cookies)
+}
+
+func (j *Jar) SetCookies(u *url.URL, cookies []*http.Cookie) {
+	if j.hosts == nil {
+		j.hosts = make(map[string]*url.URL)
+	}
+	path := u.Scheme + "://" + u.Host
+	if _, exists := j.hosts[path]; !exists {
+		j.hosts[path] = u
+	}
+	j.jar.SetCookies(u, cookies)
+}
+
+func (j *Jar) Cookies(u *url.URL) []*http.Cookie {
+	return j.jar.Cookies(u)
 }
 
 func NewJar() *Jar {
 	jar, _ := cookiejar.New(nil)
-	return fromCookieJar(jar)
+	return &Jar{
+		jar:   jar,
+		hosts: make(map[string]*url.URL),
+	}
 }
 
 // CookieGroup is a group of cookies

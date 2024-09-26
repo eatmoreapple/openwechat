@@ -312,7 +312,7 @@ func (b *Bot) DumpTo(writer io.Writer) error {
 	jar := b.Caller.Client.Jar()
 	item := HotReloadStorageItem{
 		BaseRequest:  b.Storage.Request,
-		Jar:          fromCookieJar(jar),
+		Jar:          jar,
 		LoginInfo:    b.Storage.LoginInfo,
 		WechatDomain: b.Caller.Client.Domain,
 		SyncKey:      b.Storage.Response.SyncKey,
