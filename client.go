@@ -166,15 +166,15 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 
 // Jar 返回当前client的 http.CookieJar
 // this http.CookieJar must be *Jar type
-func (c *Client) Jar() http.CookieJar {
-	return c.client.Jar
+func (c *Client) Jar() *Jar {
+	return c.client.Jar.(*Jar)
 }
 
 // SetCookieJar 设置cookieJar
 // 这里限制了cookieJar必须是Jar类型
 // 否则进行cookie序列化的时候因为字段的私有性无法进行所有字段的导出
 func (c *Client) SetCookieJar(jar *Jar) {
-	c.client.Jar = jar.AsCookieJar()
+	c.client.Jar = jar
 }
 
 // HTTPClient 返回http.Client
