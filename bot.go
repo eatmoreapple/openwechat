@@ -2,6 +2,7 @@ package openwechat
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"log"
@@ -18,7 +19,6 @@ type Bot struct {
 	SyncCheckCallback   func(resp SyncCheckResponse)  // 心跳回调
 	MessageHandler      MessageHandler                // 获取消息成功的handle
 	MessageErrorHandler MessageErrorHandler           // 获取消息发生错误的handle, 返回err == nil 则尝试继续监听
-	Serializer          Serializer                    // 序列化器, 默认为json
 	Caller              *Caller
 	Storage             *Session
 	err                 error
@@ -318,7 +318,7 @@ func (b *Bot) DumpTo(writer io.Writer) error {
 		SyncKey:      b.Storage.Response.SyncKey,
 		UUID:         b.uuid,
 	}
-	return b.Serializer.Encode(writer, item)
+	return json.NewEncoder(writer).Encode(item)
 }
 
 // IsHot returns true if is hot login otherwise false
@@ -344,11 +344,10 @@ func NewBot(c context.Context) *Bot {
 	caller.Client.SetMode(normal)
 	ctx, cancel := context.WithCancel(c)
 	return &Bot{
-		Caller:     caller,
-		Storage:    &Session{},
-		Serializer: &JsonSerializer{},
-		context:    ctx,
-		cancel:     cancel,
+		Caller:  caller,
+		Storage: &Session{},
+		context: ctx,
+		cancel:  cancel,
 	}
 }
 
