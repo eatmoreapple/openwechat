@@ -336,28 +336,6 @@ func (b *Bot) Context() context.Context {
 	return b.context
 }
 
-func (b *Bot) reload() error {
-	if b.hotReloadStorage == nil {
-		return errors.New("hotReloadStorage is nil")
-	}
-	var item HotReloadStorageItem
-	if err := b.Serializer.Decode(b.hotReloadStorage, &item); err != nil {
-		return err
-	}
-	b.Caller.Client.SetCookieJar(item.Jar)
-	b.Storage.LoginInfo = item.LoginInfo
-	b.Storage.Request = item.BaseRequest
-	b.Caller.Client.Domain = item.WechatDomain
-	b.uuid = item.UUID
-	if item.SyncKey != nil {
-		if b.Storage.Response == nil {
-			b.Storage.Response = &WebInitResponse{}
-		}
-		b.Storage.Response.SyncKey = item.SyncKey
-	}
-	return nil
-}
-
 // NewBot Bot的构造方法
 // 接收外部的 context.Context，用于控制Bot的存活
 func NewBot(c context.Context) *Bot {
