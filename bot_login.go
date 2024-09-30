@@ -2,6 +2,8 @@ package openwechat
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 )
 
 // LoginCode 定义登录状态码
@@ -186,8 +188,26 @@ func (s *ScanLogin) checkLogin(bot *Bot, uuid string) error {
 }
 
 func botReload(bot *Bot, storage HotReloadStorage) error {
+	if storage == nil {
+		return errors.New("storage is nil")
+	}
 	bot.hotReloadStorage = storage
-	return bot.reload()
+	var item HotReloadStorageItem
+	if err := json.NewDecoder(storage).Decode(&item); err != nil {
+		return err
+	}
+	bot.Caller.Client.SetCookieJar(item.Jar)
+	bot.Storage.LoginInfo = item.LoginInfo
+	bot.Storage.Request = item.BaseRequest
+	bot.Caller.Client.Domain = item.WechatDomain
+	bot.uuid = item.UUID
+	if item.SyncKey != nil {
+		if bot.Storage.Response == nil {
+			bot.Storage.Response = &WebInitResponse{}
+		}
+		bot.Storage.Response.SyncKey = item.SyncKey
+	}
+	return nil
 }
 
 // HotLogin 热登录模式
