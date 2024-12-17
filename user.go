@@ -601,7 +601,7 @@ func (s *Self) SendImageToGroup(group *Group, file io.Reader) (*SentMessage, err
 	return s.sendImageToUser(group.User.UserName, file)
 }
 
-// SendImageToGroup 发送图片消息给群组
+// SendEmoticonToGroup 发送图片消息给群组
 func (s *Self) SendEmoticonToGroup(group *Group, md5 string, file io.Reader) (*SentMessage, error) {
 	return s.sendEmoticonToUser(group.User.UserName, md5, file)
 }
