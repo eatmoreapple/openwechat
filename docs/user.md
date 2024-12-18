@@ -606,6 +606,33 @@ group.SendImage(img)
 
 
 
+#### 发送表情信息
+
+```go
+// 如果你不知道表情 md5 值但你有原文件
+emoticon, _ := os.Open("your Emoticon path")
+
+defer emoticon.Close()
+
+group.SendEmoticon("", emoticon)
+
+// 如果你有表情 md5，并且微信服务器包含该表情
+group.SendEmoticon("md5 string", nil)
+```
+
+
+#### 发送视频信息
+
+```go
+video, _ := os.Open("your video path")
+
+defer video.Close()
+
+group.SendVideo(img)
+```
+
+
+
 #### 发送文件消息
 
 ```go

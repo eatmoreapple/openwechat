@@ -181,17 +181,22 @@ func (g *Group) String() string {
 	return fmt.Sprintf("<Group:%s>", g.NickName)
 }
 
-// SendText 发行文本消息给当前的群组
+// SendText 发送文本消息给当前的群组
 func (g *Group) SendText(content string) (*SentMessage, error) {
 	return g.Self().SendTextToGroup(g, content)
 }
 
-// SendImage 发行图片消息给当前的群组
+// SendImage 发送图片消息给当前的群组
 func (g *Group) SendImage(file io.Reader) (*SentMessage, error) {
 	return g.Self().SendImageToGroup(g, file)
 }
 
-// SendVideo 发行视频消息给当前的群组
+// SendEmoticon 发送表情消息给当前的群组
+func (g *Group) SendEmoticon(md5 string, file io.Reader) (*SentMessage, error) {
+	return g.Self().SendEmoticonToGroup(g, md5, file)
+}
+
+// SendVideo 发送视频消息给当前的群组
 func (g *Group) SendVideo(file io.Reader) (*SentMessage, error) {
 	return g.Self().SendVideoToGroup(g, file)
 }

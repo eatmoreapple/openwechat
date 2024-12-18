@@ -174,12 +174,32 @@ msg.IsSendByGroup()
 msg.ReplyText("hello")
 ```
 
+#### 回复表情信息
+
+```go
+// 如果你不知道表情 md5 值但你有原文件
+emoticon, _ := os.Open("your Emoticon path")
+defer emoticon.Close()
+msg.ReplyEmoticon("", emoticon)
+
+// 如果你有表情 md5，并且微信服务器包含该表情
+msg.ReplyEmoticon("md5 string", nil)
+```
+
 #### 回复图片消息
 
 ```go
-img, _ := os.Open("your file path")
+img, _ := os.Open("your img path")
 defer img.Close()
 msg.ReplyImage(img)
+```
+
+#### 回复视频消息
+
+```go
+video, _ := os.Open("your video path")
+defer video.Close()
+msg.ReplyVideo(video)
 ```
 
 #### 回复文件消息
