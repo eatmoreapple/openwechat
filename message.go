@@ -714,7 +714,7 @@ func newFileAppMessage(stat os.FileInfo, attachId string) *appmsg {
 	m.AppAttach.AttachId = attachId
 	m.AppAttach.TotalLen = stat.Size()
 	m.Type = 6
-	m.AppAttach.FileExt = getFileExt(stat.Name())
+	m.AppAttach.FileExt = fileExtension(stat.Name())
 	return m
 }
 

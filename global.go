@@ -110,27 +110,27 @@ const (
 )
 
 const (
-	// 分块上传时每次上传的文件的大小
-	chunkSize int64 = (1 << 20) / 2 // 0.5m
-	// 需要检测的文件大小
-	needCheckSize int64 = 25 << 20 // nolint:unused
-	// 最大文件上传大小
-	maxFileUploadSize int64 = 50 << 20 // nolint:unused
-	// 最大图片上传大小
-	maxImageUploadSize int64 = 20 << 20 // nolint:unused
+	// 文件大小单位
+	_  = 1 << (10 * iota) // 1 << 0  = 1B
+	KB                    // 1 << 10 = 1KB
+	MB                    // 1 << 20 = 1MB
+)
+
+const (
+	// ChunkSize 分块上传时每次上传的文件大小 (512KB)
+	chunkSize = 512 * KB
+
+	// needCheckSize 需要检测的文件大小 (25MB)
+	needCheckSize = 25 * MB // nolint:unused
+
+	// maxFileUploadSize 最大文件上传大小 (50MB)
+	maxFileUploadSize = 50 * MB // nolint:unused
+
+	// maxImageUploadSize 最大图片上传大小 (20MB)
+	maxImageUploadSize = 20 * MB // nolint:unused
 )
 
 const TimeFormat = "Mon Jan 02 2006 15:04:05 GMT+0800 (中国标准时间)"
-
-var imageType = map[string]struct{}{
-	"bmp":  {},
-	"png":  {},
-	"jpeg": {},
-	"jpg":  {},
-	"gif":  {},
-}
-
-const videoType = "mp4"
 
 // FileHelper 文件传输助手
 const FileHelper = "filehelper"

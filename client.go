@@ -517,7 +517,7 @@ func (c *Client) WebWxUploadMediaByChunk(ctx context.Context, file *os.File, opt
 	}
 
 	// 获取文件的类型
-	mediaType := getMessageType(filename)
+	mediaType := messageType(filename)
 
 	path, err := url.Parse(c.Domain.FileHost() + webwxuploadmedia)
 	if err != nil {
