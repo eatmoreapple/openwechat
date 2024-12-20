@@ -45,28 +45,33 @@ func GetFileContentType(file io.Reader) (string, error) {
 	return http.DetectContentType(data), nil
 }
 
-func getFileExt(name string) string {
-	ext := filepath.Ext(name)
+// fileExtension
+func fileExtension(name string) string {
+	ext := strings.ToLower(filepath.Ext(name))
 	if len(ext) == 0 {
-		ext = "undefined"
+		return "undefined"
 	}
 	return strings.TrimPrefix(ext, ".")
 }
 
-const (
-	pic   = "pic"
-	video = "video"
-	doc   = "doc"
-)
+// 判断是否是图片
+func isImageType(imageType string) bool {
+	switch imageType {
+	case "bmp", "png", "jpeg", "jpg", "gif":
+		return true
+	default:
+		return false
+	}
+}
 
 // 微信匹配文件类型策略
-func getMessageType(filename string) string {
-	ext := getFileExt(filename)
-	if _, ok := imageType[ext]; ok {
-		return pic
+func messageType(filename string) string {
+	ext := fileExtension(filename)
+	if isImageType(ext) {
+		return "pic"
 	}
-	if ext == videoType {
-		return video
+	if ext == "mp4" {
+		return "video"
 	}
-	return doc
+	return "doc"
 }
