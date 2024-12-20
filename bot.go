@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/url"
@@ -137,117 +138,188 @@ func (b *Bot) loginFromURL(path *url.URL) error {
 	return b.webInit()
 }
 
-// WebInit 根据有效凭证获取和初始化用户信息
-func (b *Bot) webInit() error {
-	req := b.Storage.Request
-	info := b.Storage.LoginInfo
-	// 获取初始化的用户信息和一些必要的参数
-	resp, err := b.Caller.WebInit(b.Context(), req)
-	if err != nil {
-		return err
+func (b *Bot) initContacts(resp *WebInitResponse) {
+	if resp.ContactList != nil {
+		resp.ContactList.init(b.self)
 	}
-	// 设置当前的用户
-	b.self = &Self{bot: b, User: resp.User}
-	b.self.formatEmoji()
-	b.self.self = b.self
-	resp.ContactList.init(b.self)
-	// 读取和装载SyncKey
+}
+
+func (b *Bot) updateSyncKey(resp *WebInitResponse) {
 	if b.Storage.Response != nil {
 		resp.SyncKey = b.Storage.Response.SyncKey
 	}
 	b.Storage.Response = resp
+}
 
-	if b.hotReloadStorage != nil {
-		if err = b.DumpHotReloadStorage(); err != nil {
-			return err
-		}
-	}
-
-	// 构建通知手机客户端已经登录的参数
-	notifyOption := &CallerWebWxStatusNotifyOptions{
-		BaseRequest:     req,
-		WebInitResponse: resp,
-		LoginInfo:       info,
-	}
-	// 通知手机客户端已经登录
-	if err = b.Caller.WebWxStatusNotify(b.Context(), notifyOption); err != nil {
+// 拆分为小函数
+func (b *Bot) initUserInfo() error {
+	resp, err := b.Caller.WebInit(b.Context(), b.Storage.Request)
+	if err != nil {
 		return err
 	}
-	// 开启协程，轮询获取是否有新的消息返回
 
-	go func() {
-		if b.MessageErrorHandler == nil {
-			b.MessageErrorHandler = defaultMessageErrorHandler
-		}
-		for {
-			if !b.Alive() {
+	b.initSelf(resp)
+	b.initContacts(resp)
+	b.updateSyncKey(resp)
+
+	return nil
+}
+
+func (b *Bot) initSelf(resp *WebInitResponse) {
+	b.self = &Self{
+		bot:  b,
+		User: resp.User,
+	}
+	b.self.formatEmoji()
+	b.self.self = b.self
+}
+
+func (b *Bot) saveHotReloadData() error {
+	if b.hotReloadStorage == nil {
+		return nil
+	}
+	return b.DumpHotReloadStorage()
+}
+
+func (b *Bot) notifyMobileClient() error {
+	notifyOption := &CallerWebWxStatusNotifyOptions{
+		BaseRequest:     b.Storage.Request,
+		WebInitResponse: b.Storage.Response,
+		LoginInfo:       b.Storage.LoginInfo,
+	}
+	return b.Caller.WebWxStatusNotify(b.Context(), notifyOption)
+}
+
+func (b *Bot) startMessageSync() {
+	go b.runMessageLoop()
+}
+
+func (b *Bot) runMessageLoop() {
+	b.initMessageErrorHandler()
+
+	for b.Alive() {
+		if err := b.syncCheck(); err != nil {
+			if err = b.handleSyncError(err); err != nil {
+				b.ExitWith(err)
 				return
 			}
-			if err = b.syncCheck(); err != nil {
-				// 判断是否继续, 如果不继续则退出
-				if err = b.MessageErrorHandler(err); err != nil {
-					b.ExitWith(err)
-					return
-				}
-			}
 		}
-	}()
+	}
+}
+
+func (b *Bot) initMessageErrorHandler() {
+	if b.MessageErrorHandler == nil {
+		b.MessageErrorHandler = defaultMessageErrorHandler
+	}
+}
+
+func (b *Bot) handleSyncError(err error) error {
+	return b.MessageErrorHandler(err)
+}
+
+func (b *Bot) webInit() error {
+	// 1. 初始化用户信息
+	if err := b.initUserInfo(); err != nil {
+		return fmt.Errorf("init user info: %w", err)
+	}
+
+	// 2. 保存热重载数据
+	if err := b.saveHotReloadData(); err != nil {
+		return fmt.Errorf("save hot reload data: %w", err)
+	}
+
+	// 3. 通知移动端
+	if err := b.notifyMobileClient(); err != nil {
+		return fmt.Errorf("notify mobile client: %w", err)
+	}
+
+	// 4. 启动消息同步
+	b.startMessageSync()
+
 	return nil
+}
+
+func (b *Bot) executeSyncCallback(resp *SyncCheckResponse) {
+	if b.SyncCheckCallback != nil {
+		b.SyncCheckCallback(*resp)
+	}
+}
+
+func (b *Bot) handleMessages(messages []*Message) {
+	if b.MessageHandler == nil {
+		return
+	}
+
+	for _, msg := range messages {
+		msg.init(b)
+		b.MessageHandler(msg)
+	}
+}
+
+func (b *Bot) processNewMessages() error {
+	// 获取新消息
+	messages, err := b.syncMessage()
+	if err != nil {
+		return fmt.Errorf("sync message failed: %w", err)
+	}
+
+	// 保存热重载数据
+	_ = b.DumpHotReloadStorage()
+
+	// 处理消息
+	b.handleMessages(messages)
+
+	return nil
+}
+
+func (b *Bot) handleSyncSelector(selector Selector) error {
+	switch selector {
+	case SelectorNormal:
+		return nil
+	default:
+		return b.processNewMessages()
+	}
+}
+
+func (b *Bot) doSyncCheck(option *CallerSyncCheckOptions) error {
+	// 更新同步检查参数
+	b.updateSyncCheckOptions(option)
+
+	// 执行同步检查
+	resp, err := b.Caller.SyncCheck(b.Context(), option)
+	if err != nil {
+		return fmt.Errorf("sync check failed: %w", err)
+	}
+
+	// 执行心跳回调
+	b.executeSyncCallback(resp)
+
+	// 检查响应状态
+	if err := resp.Err(); err != nil {
+		return resp.Err()
+	}
+
+	// 处理消息
+	return b.handleSyncSelector(resp.Selector)
+}
+
+func (b *Bot) updateSyncCheckOptions(option *CallerSyncCheckOptions) {
+	option.BaseRequest = b.Storage.Request
+	option.WebInitResponse = b.Storage.Response
+	option.LoginInfo = b.Storage.LoginInfo
 }
 
 // 轮询请求
 // 根据状态码判断是否有新的请求
 func (b *Bot) syncCheck() error {
-	var (
-		err  error
-		resp *SyncCheckResponse
-	)
-
-	syncCheckOption := &CallerSyncCheckOptions{}
+	option := &CallerSyncCheckOptions{}
 
 	for b.Alive() {
-		// 重制相关参数，因为它们可能是动态的
-		syncCheckOption.BaseRequest = b.Storage.Request
-		syncCheckOption.WebInitResponse = b.Storage.Response
-		syncCheckOption.LoginInfo = b.Storage.LoginInfo
-		// 长轮询检查是否有消息返回
-		resp, err = b.Caller.SyncCheck(b.Context(), syncCheckOption)
-		if err != nil {
+		if err := b.doSyncCheck(option); err != nil {
 			return err
 		}
-		// 执行心跳回调
-		if b.SyncCheckCallback != nil {
-			b.SyncCheckCallback(*resp)
-		}
-		// 如果不是正常的状态码返回，发生了错误，直接退出
-		if !resp.Success() {
-			return resp.Err()
-		}
-		// TODO 添加更多的状态码处理
-		switch resp.Selector {
-		case SelectorNormal:
-			continue
-		default:
-			messages, err := b.syncMessage()
-			if err != nil {
-				return err
-			}
-			// todo 将这个错误处理交给用户
-			_ = b.DumpHotReloadStorage()
-
-			for _, message := range messages {
-				message.init(b)
-				// 默认同步调用
-				// 如果异步调用则需自行处理
-				// 如配合 openwechat.MessageMatchDispatcher 使用
-				// NOTE: 请确保 MessageHandler 不会阻塞，否则会导致收不到后续的消息
-				if b.MessageHandler != nil {
-					b.MessageHandler(message)
-				}
-			}
-		}
 	}
-	return err
+	return nil
 }
 
 // 获取新的消息
