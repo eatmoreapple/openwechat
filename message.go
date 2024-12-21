@@ -506,6 +506,7 @@ type SendMessage struct {
 	MediaId      string `json:"MediaId,omitempty"`
 	EmojiFlag    int    `json:"EmojiFlag,omitempty"`
 	EMoticonMd5  string `json:"EMoticonMd5,omitempty"`
+	Signature    string `json:"Signature,omitempty"`
 }
 
 // NewSendMessage SendMessage的构造方法
