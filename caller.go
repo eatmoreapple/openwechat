@@ -3,6 +3,8 @@ package openwechat
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
@@ -325,12 +327,63 @@ type CallerUploadMediaOptions struct {
 
 func (c *Caller) UploadMedia(ctx context.Context, file *os.File, opt *CallerUploadMediaOptions) (*UploadResponse, error) {
 	// 首先尝试上传图片
-	clientWebWxUploadMediaByChunkOpt := &ClientWebWxUploadMediaByChunkOptions{
-		FromUserName: opt.FromUserName,
-		ToUserName:   opt.ToUserName,
-		BaseRequest:  opt.BaseRequest,
-		LoginInfo:    opt.LoginInfo,
+	h := md5.New()
+	if _, err := io.Copy(h, file); err != nil {
+		return nil, err
 	}
+	fileMd5 := hex.EncodeToString(h.Sum(nil))
+	stat, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+	filename := file.Name()
+	filesize := stat.Size()
+
+	clientWebWxUploadMediaByChunkOpt := &ClientWebWxUploadMediaByChunkOptions{
+		FromUserName:     opt.FromUserName,
+		ToUserName:       opt.ToUserName,
+		BaseRequest:      opt.BaseRequest,
+		LoginInfo:        opt.LoginInfo,
+		Filename:         filename,
+		FileMD5:          fileMd5,
+		FileSize:         filesize,
+		LastModifiedDate: stat.ModTime(),
+	}
+
+	if filesize > needCheckSize {
+		checkUploadRequest := webWxCheckUploadRequest{
+			BaseRequest:  opt.BaseRequest,
+			FileMd5:      fileMd5,
+			FileName:     filename,
+			FileSize:     filesize,
+			FileType:     7,
+			FromUserName: opt.FromUserName,
+			ToUserName:   opt.ToUserName,
+		}
+		resp, err := c.Client.webWxCheckUploadRequest(ctx, checkUploadRequest)
+		if err != nil {
+			return nil, err
+		}
+		defer func() { _ = resp.Body.Close() }()
+		var checkUploadResponse webWxCheckUploadResponse
+		if err = json.NewDecoder(resp.Body).Decode(&checkUploadResponse); err != nil {
+			return nil, err
+		}
+		if err = checkUploadResponse.BaseResponse.Err(); err != nil {
+			return nil, err
+		}
+		// 如果已经上传过了，直接返回
+		if checkUploadResponse.MediaId != "" {
+			var item UploadResponse
+			item.MediaId = checkUploadResponse.MediaId
+			item.Signature = checkUploadResponse.Signature
+			item.BaseResponse = checkUploadResponse.BaseResponse
+			return &item, nil
+		}
+		clientWebWxUploadMediaByChunkOpt.AESKey = checkUploadResponse.AESKey
+		clientWebWxUploadMediaByChunkOpt.Signature = checkUploadResponse.Signature
+	}
+
 	resp, err := c.Client.WebWxUploadMediaByChunk(ctx, file, clientWebWxUploadMediaByChunkOpt)
 	// 无错误上传成功之后获取请求结果，判断结果是否正常
 	if err != nil {
@@ -347,6 +400,7 @@ func (c *Caller) UploadMedia(ctx context.Context, file *os.File, opt *CallerUplo
 	if len(item.MediaId) == 0 {
 		return &item, errors.New("upload failed")
 	}
+	item.Signature = clientWebWxUploadMediaByChunkOpt.Signature
 	return &item, nil
 }
 
@@ -418,13 +472,17 @@ func (c *Caller) WebWxSendFile(ctx context.Context, reader io.Reader, opt *Calle
 		return nil, err
 	}
 	// 构造新的文件类型的信息
-	stat, _ := file.Stat()
+	stat, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
 	appMsg := newFileAppMessage(stat, resp.MediaId)
 	content, err := appMsg.XmlByte()
 	if err != nil {
 		return nil, err
 	}
 	msg := NewSendMessage(AppMessage, string(content), opt.FromUserName, opt.ToUserName, "")
+	msg.Signature = resp.Signature
 	return c.WebWxSendAppMsg(ctx, msg, opt.BaseRequest)
 }
 

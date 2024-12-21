@@ -77,7 +77,7 @@ func (c CookieGroup) GetByName(cookieName string) (cookie *http.Cookie, exist bo
 	return nil, false
 }
 
-func getWebWxDataTicket(cookies []*http.Cookie) (string, error) {
+func wxDataTicket(cookies []*http.Cookie) (string, error) {
 	cookieGroup := CookieGroup(cookies)
 	cookie, exist := cookieGroup.GetByName("webwx_data_ticket")
 	if !exist {

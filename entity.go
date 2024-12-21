@@ -173,8 +173,9 @@ type MessageResponse struct {
 }
 
 type UploadResponse struct {
-	BaseResponse BaseResponse
-	MediaId      string
+	BaseResponse BaseResponse `json:"BaseResponse"`
+	MediaId      string       `json:"MediaId"`
+	Signature    string       `json:"Signature"`
 }
 
 type PushLoginResponse struct {
