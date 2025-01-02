@@ -38,6 +38,9 @@ var (
 
 	// ErrUserLogout define user logout error
 	ErrUserLogout = errors.New("user logout")
+
+	// ErrUserNotLogin define user not login
+	ErrUserNotLogin = errors.New("user not login")
 )
 
 // Error impl error interface

@@ -52,7 +52,7 @@ func (b *Bot) Alive() bool {
 //	fmt.Println(self.NickName)
 func (b *Bot) GetCurrentUser() (*Self, error) {
 	if b.self == nil {
-		return nil, errors.New("user not login")
+		return nil, ErrUserNotLogin
 	}
 	return b.self, nil
 }
@@ -98,15 +98,14 @@ func (b *Bot) PushLogin(storage HotReloadStorage, opts ...BotLoginOption) error 
 
 // Logout 用户退出
 func (b *Bot) Logout() error {
-	if b.Alive() {
-		info := b.Storage.LoginInfo
-		if err := b.Caller.Logout(b.Context(), info); err != nil {
-			return err
-		}
-		b.ExitWith(ErrUserLogout)
-		return nil
+	if !b.Alive() {
+		return ErrUserNotLogin
 	}
-	return errors.New("user not login")
+	if err := b.Caller.Logout(b.Context(), b.Storage.LoginInfo); err != nil {
+		return err
+	}
+	b.ExitWith(ErrUserLogout)
+	return nil
 }
 
 // loginFromURL 登录逻辑
